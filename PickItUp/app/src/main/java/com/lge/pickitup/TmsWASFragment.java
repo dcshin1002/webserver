@@ -73,10 +73,21 @@ public class TmsWASFragment extends Fragment {
     /**
      * Start non-blocking execution.
      */
-    public void startProcess() {
+    public void startProcess(String date, int clusterNum) {
         cancelProcess();
+
+        String finalUrl = urlString + "/set";
+        String[] strArr = date.split("-");
+        for (String s : strArr) {
+            finalUrl += "/";
+            finalUrl += s.replaceFirst("^0+(?!$)", "");
+        }
+        // TODO - How to pass cluster number?
+//        finalUrl += Integer.toString(clusterNum);
+        Log.i(TAG, "Final URL : " + finalUrl);
+
         processingTask = new ProcessingTask(callback);
-        processingTask.execute(urlString);
+        processingTask.execute(finalUrl);
     }
 
     /**

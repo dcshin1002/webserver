@@ -91,7 +91,7 @@ public class ClusterAndRouteActivity extends AppCompatActivity implements View.O
             }
         }, myCalendar.get(Calendar.YEAR), myCalendar.get(Calendar.MONTH), myCalendar.get(Calendar.DAY_OF_MONTH));
 
-        networkFragment = TmsWASFragment.getInstance(getSupportFragmentManager(), "https://tmsproto-py.herokuapp.com/");
+        networkFragment = TmsWASFragment.getInstance(getSupportFragmentManager(), "https://tmsproto-py.herokuapp.com");
     }
 
     @Override
@@ -102,7 +102,7 @@ public class ClusterAndRouteActivity extends AppCompatActivity implements View.O
                 if (!processing && networkFragment != null) {
                     Log.i(LOG_TAG, "Process Clustering & Routing");
                     processing = true;
-                    networkFragment.startProcess();
+                    networkFragment.startProcess(mTextCourierDate.getText().toString(), mCourierNumber);
                 }
                 break;
             case R.id.text_courier_date2:

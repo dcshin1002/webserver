@@ -5,11 +5,11 @@ from pymongo import MongoClient
 import pyrebase
 
 config = {
-    "apiKey": "AIzaSyBQnvKaeLDHrQY21TorMTt3F9D-1zejLUI",
-    "authDomain": "simpletms-dcc49.firebaseapp.com",
-    "databaseURL": "https://simpletms-dcc49.firebaseio.com",
-    "storageBucket": "simpletms-dcc49.appspot.com",
-    # "serviceAccount": "DBAuth/simpletms-dcc49-firebase-adminsdk-1qjxk-b085b1a7a9.json"
+    "apiKey": "AIzaSyBq9T5DgM3FUes-65pLo_rGlkiXO42EUzA",
+    "authDomain": "smart-router-17060.firebaseapp.com",
+    "databaseURL": "https://smart-router-17060.firebaseio.com",
+    "storageBucket": "smart-router-17060.appspot.com",
+    # "serviceAccount": "firebase-adminsdk.json"
 }
 
 firebase = pyrebase.initialize_app(config)
