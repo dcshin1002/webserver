@@ -31,12 +31,15 @@ public class MainMenuActivity extends AppCompatActivity implements View.OnClickL
     private ImageView mIvViewParcleListIcon;
     private ImageView mIvViewItemPerCourierIcon;
     private ImageView mIvViewInMapIcon;
-    private ImageView mIvViewClusterAndRouteIcon;
+    private ImageView mIvCaptureAndUploadIcon;
+    private ImageView mIvClusterAndRouteIcon;
 
     private TextView mTvUploadMenuTitle;
     private TextView mTvViewParcelListTitle;
     private TextView mTvViewItemPerCourierTitle;
     private TextView mTvViewInMapTitle;
+    private TextView mTvCaptureAndUploadTitle;
+    private TextView mTvClusterAndRouteTitle;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -66,7 +69,7 @@ public class MainMenuActivity extends AppCompatActivity implements View.OnClickL
                     Log.d(LOG_TAG, "onAuthStateChanged: signed_out");
 
                     Intent intent = new Intent(MainMenuActivity.this, LoginActivity.class);
-                    intent.setFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
+                    intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK | Intent.FLAG_ACTIVITY_NEW_TASK);
                     startActivity(intent);
                     finish();
                 }
@@ -128,13 +131,15 @@ public class MainMenuActivity extends AppCompatActivity implements View.OnClickL
         mIvViewParcleListIcon = findViewById(R.id.parcel_list_menu);
         mIvViewItemPerCourierIcon = findViewById(R.id.courier_menu);
         mIvViewInMapIcon = findViewById(R.id.mapview_menu);
-        mIvViewClusterAndRouteIcon = findViewById(R.id.cluster_and_route);
+        mIvCaptureAndUploadIcon = findViewById(R.id.send_msg_and_upload_img);
+        mIvClusterAndRouteIcon = findViewById(R.id.cluster_and_route);
 
         mIvUploadMenuIcon.setOnClickListener(this);
         mIvViewParcleListIcon.setOnClickListener(this);
         mIvViewItemPerCourierIcon.setOnClickListener(this);
         mIvViewInMapIcon.setOnClickListener(this);
-        mIvViewClusterAndRouteIcon.setOnClickListener(this);
+        mIvCaptureAndUploadIcon.setOnClickListener(this);
+        mIvClusterAndRouteIcon.setOnClickListener(this);
     }
 
     @Override
@@ -177,6 +182,9 @@ public class MainMenuActivity extends AppCompatActivity implements View.OnClickL
                 Log.d(LOG_TAG, "onClick to mapview menu");
                 break;
 
+            case R.id.send_msg_and_upload_img:
+                startActivity(new Intent(this, UploadImageActivity.class));
+                break;
             case R.id.cluster_and_route:
                 Log.d(LOG_TAG, "onClick to cluster_and_route menu");
                 startActivity(new Intent(this, ClusterAndRouteActivity.class));

@@ -92,7 +92,9 @@ public class LoginActivity extends AppCompatActivity {
 
             // No explanation needed, we can request the permission.
             ActivityCompat.requestPermissions(this,
-                    new String[]{Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.READ_EXTERNAL_STORAGE},
+                    new String[]{Manifest.permission.ACCESS_FINE_LOCATION,
+                            Manifest.permission.READ_EXTERNAL_STORAGE,
+                            Manifest.permission.CAMERA},
                     MY_PERMISSIONS);
         } else {
             // Do nothing
@@ -108,6 +110,7 @@ public class LoginActivity extends AppCompatActivity {
                 if (grantResults.length > 0
                         && grantResults[0] == PackageManager.PERMISSION_GRANTED
                         && grantResults[1] == PackageManager.PERMISSION_GRANTED
+                        && grantResults[2] == PackageManager.PERMISSION_GRANTED
                 ) {
 
                     // permission was granted, yay! Do the

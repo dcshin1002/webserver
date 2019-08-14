@@ -85,4 +85,9 @@
     <string name="cluster_route_str">물류분배 및 최적경로</string>
     <string name="title_activity_map_view">MapViewActivity</string>
     <string name="back_to_list">리스트 화면으로 돌아가기</string>
+    <string name="capture_camera">사진찍기</string>
+    <string name="pick_image_from_gallery">갤러리에서 불어오기</string>
+    <string name="upload_image_to_server">서버에 이미지 업로드</string>
+    <string name="send_message_with_image">메세지 보내기</string>
+    <string name="uploading_image">파일을 서버에 업로딩중입니다.</string>
 </resources>

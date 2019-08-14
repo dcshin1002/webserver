@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent" android:layout_height="match_parent">
+
+    <ImageView
+        android:id="@+id/ivImagePreview"
+        android:layout_width="300dp"
+        android:layout_height="240dp"
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="40dp"
+        android:background="@drawable/image_view_border"
+        app:srcCompat="@drawable/capture_image_icon"
+        android:padding="8dp"
+        android:scaleType="centerCrop"/>
+
+    <Button
+        android:id="@+id/btnCameraCapture"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:padding="5dp"
+        android:layout_marginTop="30dp"
+        android:layout_below="@id/ivImagePreview"
+        android:layout_alignLeft="@id/ivImagePreview"
+        android:layout_alignRight="@id/ivImagePreview"
+        android:background="#42A5F5"
+        android:textColor="#FFFFFF"
+        android:text="@string/capture_camera" />
+
+    <Button
+        android:id="@+id/btnPickImageFromGallery"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:padding="5dp"
+        android:layout_below="@id/btnCameraCapture"
+        android:layout_marginTop="20dp"
+        android:layout_alignLeft="@id/btnCameraCapture"
+        android:layout_alignRight="@id/btnCameraCapture"
+        android:background="#42A5F5"
+        android:textColor="#FFFFFF"
+        android:text="@string/pick_image_from_gallery" />
+
+    <Button
+        android:id="@+id/btnUploadImageToServer"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:padding="5dp"
+        android:layout_marginTop="20dp"
+        android:layout_below="@id/btnPickImageFromGallery"
+        android:layout_alignLeft="@id/btnPickImageFromGallery"
+        android:layout_alignRight="@id/btnPickImageFromGallery"
+        android:background="#42A5F5"
+        android:textColor="#FFFFFF"
+        android:text="@string/upload_image_to_server" />
+
+    <Button
+        android:id="@+id/btnSendMessage"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:padding="5dp"
+        android:layout_marginTop="20dp"
+        android:layout_below="@id/btnUploadImageToServer"
+        android:layout_alignLeft="@id/btnUploadImageToServer"
+        android:layout_alignRight="@id/btnUploadImageToServer"
+        android:background="#42A5F5"
+        android:textColor="#FFFFFF"
+        android:text="@string/send_message_with_image" />
+</RelativeLayout>
