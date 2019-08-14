@@ -107,15 +107,15 @@ public class MapViewActivity extends AppCompatActivity
             } else if (item.status.equals(TmsParcelItem.STATUS_GEOCODED)) {
                 marker.setMarkerType(MapPOIItem.MarkerType.RedPin);
             }
-            marker.setSelectedMarkerType(MapPOIItem.MarkerType.RedPin); // 마커를 클릭했을때, 기본으로 제공하는 RedPin 마커 모양.
-
+            marker.setSelectedMarkerType(MapPOIItem.MarkerType.YellowPin); // 마커를 클릭했을때, 기본으로 제공하는 RedPin 마커 모양.
             mMapView.addPOIItem(marker);
         }
     }
 
     private void getFirebaseList() {
-        mFbConnector.getParcelListFromFirebaseDatabase(selectedDate, mSort);
-        mFbConnector.getCourierListFromFirebaseDatabase(selectedDate, mSort);
+        mFbConnector.getParcelListFromFirebaseDatabase(selectedDate, TmsParcelItem.KEY_COURIER_NAME, selectedCourierName);
+        mFbConnector.getCourierListFromFirebaseDatabase(selectedDate, TmsParcelItem.KEY_ID);
+
     }
 
     @Override
@@ -192,7 +192,7 @@ public class MapViewActivity extends AppCompatActivity
     }
 
     @Override
-    public void onPOIItemSelected(MapView mapView, MapPOIItem mapPOIItem) {
+    public void onPOIItemSelected(MapView mapView, final MapPOIItem mapPOIItem) {
         RelativeLayout parcel_data =  (RelativeLayout) findViewById(R.id.parcel_data);
         parcel_data.setVisibility(View.VISIBLE);
         final TmsParcelItem item = (TmsParcelItem)mapPOIItem.getUserObject();
@@ -210,7 +210,7 @@ public class MapViewActivity extends AppCompatActivity
             btn_complete.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View view) {
-                    processLitBtnClick(item);
+                    processLitBtnClick(item, mapPOIItem);
                 }
             });
 
@@ -241,13 +241,16 @@ public class MapViewActivity extends AppCompatActivity
         TextView addrText = findViewById(R.id.listAddr);
         Button btn_complete = findViewById(R.id.btn_complete);
         ImageView statusIcon = findViewById(R.id.status_icon);
-        
         addrText.setTextColor(0xFF68c166);
         statusIcon.setImageDrawable(getDrawable(R.mipmap.tag_delivered_v2));
         btn_complete.setVisibility(View.INVISIBLE);
+
+    }
+    private void setMarkertToBlue(final MapPOIItem mapPOIItem) {
+        mapPOIItem.setMarkerType(MapPOIItem.MarkerType.BluePin);
     }
 
-    private void processLitBtnClick(final TmsParcelItem item) {
+    private void processLitBtnClick(final TmsParcelItem item, final MapPOIItem mapPOIItem) {
 
         Log.d(LOG_TAG, "Selected item\'s status will be chaanged to \"deliverd\"");
         mDeliveryCompleteDialog = new AlertDialog.Builder(this)
@@ -268,6 +271,7 @@ public class MapViewActivity extends AppCompatActivity
                         item.status = TmsParcelItem.STATUS_DELIVERED;
                         mFbConnector.postParcelItemToFirebaseDatabase(selectedDate, item);
                         updateStatusToComplete();
+                        setMarkertToBlue(mapPOIItem);
                     }
                 })
                 .setNeutralButton(R.string.cancel, new DialogInterface.OnClickListener() {
@@ -282,54 +286,14 @@ public class MapViewActivity extends AppCompatActivity
                         item.status = TmsParcelItem.STATUS_DELIVERED;
                         mFbConnector.postParcelItemToFirebaseDatabase(selectedDate, item);
                         updateStatusToComplete();
+                        setMarkertToBlue(mapPOIItem);
 
                     }
                 });
 
         mDeliveryCompleteDialog.show();
     }
- /*
-    protected void processLitBtnClick(final TmsParcelItem item) {
 
-        Log.d(LOG_TAG, "Selected item\'s status will be chaanged to \"deliverd\"");
-
-        mDeliveryCompleteDialog = new AlertDialog.Builder(this)
-                .setTitle("배송완료")
-                .setMessage("배송처리를 위해서 메세지를 보내시겠습니까?")
-                .setPositiveButton(R.string.complete_with_msg, new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialogInterface, int i) {
-                        try {
-                            Uri smsUri = Uri.parse("sms:" + "010-9050-5356");
-                            Intent sendIntent = new Intent(Intent.ACTION_SENDTO, smsUri);
-                            sendIntent.putExtra("sms_body", "테스트메세지입니다. 배송완료했습니다.");
-                            startActivity(sendIntent);
-                        } catch (Exception e) {
-                            e.printStackTrace();
-                        }
-                    }
-                })
-                .setNeutralButton(R.string.cancel, new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialogInterface, int i) {
-                        dialogInterface.cancel();
-                    }
-                })
-                .setNegativeButton(R.string.complete_without_msg, new DialogInterface.OnClickListener() {
-
-                    @Override
-                    public void onClick(DialogInterface dialogInterface, int i) {
-                        /*
-                        item.status = TmsParcelItem.STATUS_DELIVERED;
-                        mFbConnector.postParcelItemToFirebase(selectedDate, item);
-                        ParcelListActivity.processnotifyDataSetChanged();
-
-                    }
-                });
-
-        mDeliveryCompleteDialog.show();
-    }
- */
     @Override
     public void onCalloutBalloonOfPOIItemTouched(MapView mapView, MapPOIItem mapPOIItem) {
         Toast.makeText(this, "onCalloutBalloonOfPOIItemTouched", Toast.LENGTH_SHORT);
