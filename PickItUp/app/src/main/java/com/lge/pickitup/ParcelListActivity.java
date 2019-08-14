@@ -453,7 +453,11 @@ public class ParcelListActivity extends AppCompatActivity implements View.OnClic
                 });
 
                 if (addrText != null) {
-                    addrText.setText(item.consigneeAddr);
+                    String addrTextValue = "";
+                    if ((item.orderInRoute != -1) && !mTextCourierName.getText().toString().equals(getString(R.string.all_couriers))) {
+                        addrTextValue = (item.orderInRoute + " : ");
+                    }
+                    addrText.setText(addrTextValue + item.consigneeAddr);
                     if (isDeliverd) {
                         addrText.setTextColor(0xFF68c166);
                         statusIcon.setImageDrawable(getDrawable(R.mipmap.tag_delivered_v2));

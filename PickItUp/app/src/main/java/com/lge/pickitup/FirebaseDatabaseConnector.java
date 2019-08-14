@@ -14,6 +14,7 @@ import com.google.firebase.database.Query;
 import com.google.firebase.database.ValueEventListener;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -152,7 +153,6 @@ public class FirebaseDatabaseConnector {
 
     protected void getParcelListFromFirebaseDatabase(String pathString, String orderBy, String select) {
         Query firebaseQuery;
-
         if (TextUtils.isEmpty(select) || select.equals(mContext.getString(R.string.all_couriers)) || select == null) {
             firebaseQuery = mDatabaseRef.child(PARCEL_REF_NAME).child(pathString).orderByChild(orderBy);
         } else {
@@ -177,6 +177,8 @@ public class FirebaseDatabaseConnector {
 
                     Log.d(LOG_TAG, "mArrayValues size = " + mArrayValues.size());
                 }
+                Collections.sort(mArrayValues);
+
                 if (mListAdapter != null) {
                     mListAdapter.notifyDataSetChanged();
                 }

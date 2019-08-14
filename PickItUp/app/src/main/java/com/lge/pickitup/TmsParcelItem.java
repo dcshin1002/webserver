@@ -7,7 +7,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 @IgnoreExtraProperties
-public class TmsParcelItem {
+public class TmsParcelItem implements Comparable<TmsParcelItem>{
     public static final String STATUS_COLLECTED = "collected";    // Submitted to courier service initially
     public static final String STATUS_GEOCODED = "geocoded";      // Converted to geocode from address facade
     public static final String STATUS_DELIVERED = "delivered";    // Delivered
@@ -131,6 +131,16 @@ public class TmsParcelItem {
             //Todo: Need to check newStatus is valid or not
             this.status = newStatus;
         }
+    }
+
+    @Override
+    public int compareTo(TmsParcelItem s) {
+        if (this.orderInRoute < s.orderInRoute) {
+            return -1;
+        } else if (this.orderInRoute > s.orderInRoute) {
+            return 1;
+        }
+        return 0;
     }
 
     @Exclude

@@ -215,7 +215,11 @@ public class MapViewActivity extends AppCompatActivity
             });
 
             if (addrText != null) {
-                addrText.setText(item.consigneeAddr);
+                String addrTextValue = "";
+                if ( item.orderInRoute != -1)  {
+                    addrTextValue += item.orderInRoute + " : ";
+                }
+                addrText.setText(addrTextValue + item.consigneeAddr);
                 if (isDeliverd) {
                     updateStatusToComplete();
                 } else {
