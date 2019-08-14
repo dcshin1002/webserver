@@ -1,10 +1,14 @@
 package com.lge.pickitup;
 
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.fragment.app.Fragment;
 
 import android.app.AlertDialog;
 import android.app.DatePickerDialog;
+import android.content.Context;
 import android.content.DialogInterface;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.MotionEvent;
@@ -18,9 +22,11 @@ import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
 
-public class ClusterAndRouteActivity extends AppCompatActivity implements View.OnClickListener {
+public class ClusterAndRouteActivity extends AppCompatActivity implements View.OnClickListener, ProcessingCallback {
     private static final String LOG_TAG = "ClusterAndRouteActivity";
     private DatePickerDialog mDatePickerDialog;
+    private TmsWASFragment networkFragment;
+    private boolean processing = false;
     private SimpleDateFormat mSdf;
     private String mOldDateStr;
 
@@ -29,7 +35,7 @@ public class ClusterAndRouteActivity extends AppCompatActivity implements View.O
     private TextView mTextCourierDate;
     private Button mBtnClusterAndRoute;
     private View.OnTouchListener mTouchListner;
-    final Calendar myCalendar = Calendar.getInstance();
+    private final Calendar myCalendar = Calendar.getInstance();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -76,7 +82,6 @@ public class ClusterAndRouteActivity extends AppCompatActivity implements View.O
 
         mSdf = new SimpleDateFormat("yyyy-MM-dd");
 
-
         mDatePickerDialog = new DatePickerDialog(this, new DatePickerDialog.OnDateSetListener() {
             @Override
             public void onDateSet(DatePicker datePicker, int year, int monthOfYear, int dayOfMonth) {
@@ -85,15 +90,20 @@ public class ClusterAndRouteActivity extends AppCompatActivity implements View.O
                 mTextCourierDate.setText(mSdf.format(newDate.getTime()));
             }
         }, myCalendar.get(Calendar.YEAR), myCalendar.get(Calendar.MONTH), myCalendar.get(Calendar.DAY_OF_MONTH));
+
+        networkFragment = TmsWASFragment.getInstance(getSupportFragmentManager(), "https://tmsproto-py.herokuapp.com/");
     }
 
     @Override
     public void onClick(View view) {
         switch (view.getId()) {
             case R.id.btn_process_cluster_and_route:
-                Log.i(LOG_TAG, "Process Clustering & Routing");
-                process_cluster_and_route(
-                        mTextCourierDate.getText().toString(), mCourierNumber);
+                Log.i(LOG_TAG, "button clicked. processing="+Boolean.toString(processing)+", networkFragment="+Boolean.toString(networkFragment!=null));
+                if (!processing && networkFragment != null) {
+                    Log.i(LOG_TAG, "Process Clustering & Routing");
+                    processing = true;
+                    networkFragment.startProcess();
+                }
                 break;
             case R.id.text_courier_date2:
                 mDatePickerDialog.show();
@@ -101,8 +111,52 @@ public class ClusterAndRouteActivity extends AppCompatActivity implements View.O
         }
     }
 
-    private void process_cluster_and_route(String date, int clusterNum) {
-        TmsWASConnector conn = TmsWASConnector.getInstance();
-        conn.getCluster(0);
+    @Override
+    public void updateFromProcess(Object result) {
+        Log.i(LOG_TAG, "Clustering & Routing process updated !!");
+        // Update your UI here based on result of download.
+    }
+
+    @Override
+    public NetworkInfo getActiveNetworkInfo() {
+        ConnectivityManager connectivityManager =
+                (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
+
+        NetworkInfo networkInfo = null;
+        if (connectivityManager != null) {
+            networkInfo = connectivityManager.getActiveNetworkInfo();
+        }
+        return networkInfo;
+    }
+
+    @Override
+    public void onProgressUpdate(int progressCode, int percentComplete) {
+        Log.i(LOG_TAG, "onProgressUpdate(" +
+                        Integer.toString(progressCode) + "," +
+                        Integer.toString(percentComplete) + ")");
+        switch(progressCode) {
+            // You can add UI behavior for progress updates here.
+            case Progress.ERROR:
+                Log.i(LOG_TAG, "Clustering & Routing process encounter ERROR !!");
+                break;
+            case Progress.CONNECT_SUCCESS:
+                Log.i(LOG_TAG, "Clustering & Routing process connected !!");
+                break;
+            case Progress.PROCESS_IN_PROGRESS:
+                Log.i(LOG_TAG, "Clustering & Routing process is in progress !!");
+                break;
+            case Progress.PROCESS_SUCCESS:
+                Log.i(LOG_TAG, "Clustering & Routing process success !!");
+                break;
+        }
+    }
+
+    @Override
+    public void finishProcessing() {
+        Log.i(LOG_TAG, "finishProcessing()");
+        if (networkFragment != null) {
+            networkFragment.cancelProcess();
+        }
+        processing = false;
     }
 }
