@@ -42,24 +42,23 @@ public class ClusterAndRouteActivity extends AppCompatActivity implements View.O
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_cluster_and_route);
 
-        mTextCourierNumber = findViewById(R.id.text_courier_number);
-        mTextCourierDate = findViewById(R.id.text_courier_date2);
-        mBtnClusterAndRoute = findViewById(R.id.btn_process_cluster_and_route);
+        mTextCourierNumber = (TextView)findViewById(R.id.text_courier_number);
+        mTextCourierDate = (TextView)findViewById(R.id.text_courier_date2);
+        mBtnClusterAndRoute = (Button)findViewById(R.id.btn_process_cluster_and_route);
 
         mTouchListner = new View.OnTouchListener() {
             @Override
             public boolean onTouch(View view, MotionEvent motionEvent) {
-                if(motionEvent.getAction() == MotionEvent.ACTION_DOWN) {
-                    view.setBackgroundColor(0xFFE91E63);
-                } else if(motionEvent.getAction() == MotionEvent.ACTION_UP) {
-                    view.setBackgroundColor(0xFF42A5F5);
-                }
-                return false;
+            if(motionEvent.getAction() == MotionEvent.ACTION_DOWN) {
+                mTextCourierNumber.setText(Integer.toString(mCourierNumber));
+            }
+            return false;
             }
         };
-        mBtnClusterAndRoute.setOnTouchListener(mTouchListner);
+
         mBtnClusterAndRoute.setOnClickListener(this);
         mTextCourierDate.setOnClickListener(this);
+        mTextCourierNumber.setOnTouchListener(mTouchListner);
 
         Bundle b = getIntent().getExtras();
         String dateStr;
@@ -98,11 +97,21 @@ public class ClusterAndRouteActivity extends AppCompatActivity implements View.O
     public void onClick(View view) {
         switch (view.getId()) {
             case R.id.btn_process_cluster_and_route:
-                Log.i(LOG_TAG, "button clicked. processing="+Boolean.toString(processing)+", networkFragment="+Boolean.toString(networkFragment!=null));
                 if (!processing && networkFragment != null) {
-                    Log.i(LOG_TAG, "Process Clustering & Routing");
+                    try {
+                        int update = -1;
+                        if (!mTextCourierNumber.getText().toString().equals(getString(R.string.default_courier_number))) {
+                            update = Integer.parseInt(mTextCourierNumber.getText().toString());
+                        }
+                        mCourierNumber = update;
+                    } catch (Exception e){
+                        e.printStackTrace();
+                        throw e;
+                    }
                     processing = true;
                     networkFragment.startProcess(mTextCourierDate.getText().toString(), mCourierNumber);
+                    mBtnClusterAndRoute.setEnabled(false);
+                    Log.i(LOG_TAG, "Process Clustering & Routing");
                 }
                 break;
             case R.id.text_courier_date2:
@@ -147,6 +156,7 @@ public class ClusterAndRouteActivity extends AppCompatActivity implements View.O
                 break;
             case Progress.PROCESS_SUCCESS:
                 Log.i(LOG_TAG, "Clustering & Routing process success !!");
+                mBtnClusterAndRoute.setEnabled(true);
                 break;
         }
     }
