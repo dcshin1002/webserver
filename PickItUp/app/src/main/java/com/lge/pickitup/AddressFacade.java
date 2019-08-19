@@ -155,7 +155,7 @@ public class AddressFacade {
 
         private void makeAddressWithKakao(TmsParcelItem item) {
             String address = item.consigneeAddr;
-            String[] code = address.split("[,(]");
+            String[] code = address.split("[(,]|[0-9]+호|[0-9]+동");
 
             try {
                 URL url = new URL("https://dapi.kakao.com/v2/local/search/address.json?query="
