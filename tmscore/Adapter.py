@@ -2,7 +2,7 @@
 import json
 
 from django.shortcuts import render
-from django.http import HttpResponse
+from django.http import HttpResponse, JsonResponse
 from rq import Queue
 from worker import conn
 
@@ -15,17 +15,27 @@ q = Queue(connection=conn)
 
 
 def index(req):
-    dcon.loadDataFromFirebaseDB('2019-07-10')
-    return HttpResponse('<pre>' + 'Does Firebase activated???' + '</pre>')
+    dcon.loadDataFromFirebaseDB('2019-07-11')
+    return JsonResponse({
+        'msg': '<pre>Firebase activated</pre>',
+        'jobid': None,
+    })
 
 
 def setClusters(req, year, month, day):
     if year == None or month == None or day == None:
-        return HttpResponse('<pre>' + 'Invalid URL' + '</pre>')
+        return JsonResponse({
+            'msg': '<pre>Invalid URL</pre>',
+            'jobid': None
+        })
 
     result = q.enqueue(setClustersWork, args=(
         year, month, day), job_timeout=600)
-    return HttpResponse('<pre>' + 'setClusters() Processing...' + '</pre>')
+
+    return JsonResponse({
+        'msg': '<pre>setClusters() Processing...</pre>',
+        'jobid': result.get_id(),
+    })
 
 
 def setClustersWork(year, month, day, data=None):
@@ -47,6 +57,25 @@ def setClustersWork(year, month, day, data=None):
     print('success setClusters')
 
 
+def getWorkProgress(req, jobid):
+    job = None
+    if jobid:
+        job = q.fetch_job(jobid)
+
+    if job is None:
+        return JsonResponse({
+            'msg': '<pre>jobid is wrong !!</pre>',
+            'jobid': None,
+            'status': None
+        })
+
+    return JsonResponse({
+        'msg': '<pre>Getting status for job</pre>',
+        'jobid': jobid,
+        'status': job.get_status()
+    })
+
+
 def getClusters(req, date=None):
     DBobj = db.getTMSDB('tmssample')
     cursor = DBobj.distinct('clusterNum')  # , {'date': date})
@@ -57,7 +86,7 @@ def getClusters(req, date=None):
 
 
 def getEachCluster(clusterID, date=None):
-    #print(date, cluseterID)
+    # print(date, cluseterID)
     jsonStr = json.dumps(db.ParcelEncoder().encode(db.dict_Cluster[clusterID]))
     return jsonStr
 

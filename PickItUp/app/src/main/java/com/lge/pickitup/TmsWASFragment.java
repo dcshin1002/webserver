@@ -76,18 +76,20 @@ public class TmsWASFragment extends Fragment {
     public void startProcess(String date, int clusterNum) {
         cancelProcess();
 
-        String finalUrl = urlString + "/set";
+        String setUrl = urlString + "/set";
+        String getUrl = urlString + "/job";
         String[] strArr = date.split("-");
         for (String s : strArr) {
-            finalUrl += "/";
-            finalUrl += s.replaceFirst("^0+(?!$)", "");
+            setUrl += "/";
+            setUrl += s.replaceFirst("^0+(?!$)", "");
         }
         // TODO - How to pass cluster number?
-//        finalUrl += Integer.toString(clusterNum);
-        Log.i(TAG, "Final URL : " + finalUrl);
+//        setUrl += Integer.toString(clusterNum);
+        Log.i(TAG, "SetClusters URL : " + setUrl);
+        Log.i(TAG, "GetProgress URL : " + getUrl);
 
         processingTask = new ProcessingTask(callback);
-        processingTask.execute(finalUrl);
+        processingTask.execute(setUrl, getUrl);
     }
 
     /**
@@ -139,14 +141,15 @@ public class TmsWASFragment extends Fragment {
             return sb.toString();
         }
 
-        private String parseJSON(JSONObject json) throws JSONException {
+        private String parseJSON(JSONObject json, String field) throws JSONException {
+            return json.getString(field);
 //        Weather w = new Weather();
 //        w.setTemprature(json.getJSONObject("main").getInt("temp"));
 //        w.setCity(json.getString("name"));
-            return json.toString();
+//        return json.toString();
         }
 
-        private String processUrl(URL url) throws Exception {
+        private String processUrl(URL url, String jsonField) throws Exception {
             Log.i(TAG, "processUrl(" + url.toString() + ")");
             InputStream stream = null;
             HttpsURLConnection connection = null;
@@ -176,9 +179,8 @@ public class TmsWASFragment extends Fragment {
                 stream = new BufferedInputStream(connection.getInputStream());
 
                 // parse JSON
-//                json = new JSONObject(getStringFromInputStream(stream));
-//                result = parseJSON(json);
-                result = getStringFromInputStream(stream);
+                json = new JSONObject(getStringFromInputStream(stream));
+                result = parseJSON(json, jsonField);
                 Log.i(TAG, result);
             } catch (MalformedURLException e) {
                 System.err.println("Malformed URL");
@@ -225,20 +227,32 @@ public class TmsWASFragment extends Fragment {
         protected Result doInBackground(String... urls) {
             Result result = null;
             if (!isCancelled() && urls != null && urls.length > 0) {
-                String urlString = urls[0];
                 try {
-                    URL url = new URL(urlString);
-                    String resultString = processUrl(url);
-                    if (resultString != null) {
-                        result = new Result(resultString);
+                    URL setUrl = new URL(urls[0]);
+                    String jobId = processUrl(setUrl, "jobid");
+                    Log.i(TAG, "Returned jobid : " + jobId);
+                    if (jobId != null) {
+                        result = new Result(jobId);
                     } else {
                         throw new IOException("No response received.");
+                    }
+
+                    URL queryUrl = new URL(urls[1]+"/"+jobId);
+                    while (true) {
+                        Thread.sleep(1000);
+                        String status = processUrl(queryUrl, "status");
+                        if (status.equals("finished")) {
+                            publishProgress(ProcessingCallback.Progress.PROCESS_SUCCESS, 100);
+                            break;
+                        } else {
+                            publishProgress(ProcessingCallback.Progress.PROCESS_IN_PROGRESS, 50);
+                        }
                     }
                 } catch (Exception e) {
                     result = new Result(e);
                 }
             }
-            String msg = "doInBackground(" + urls[0] + ") ->";
+            String msg = "doInBackground([" + urls[0] + ", " + urls[1] + "]) ->";
             if (result != null) msg += result.resultValue;
             Log.i(TAG, msg);
             return result;
