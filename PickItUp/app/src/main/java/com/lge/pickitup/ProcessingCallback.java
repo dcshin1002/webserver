@@ -26,7 +26,7 @@ public interface ProcessingCallback<T> {
      * @param progressCode must be one of the constants defined in DownloadCallback.Progress.
      * @param percentComplete must be 0-100.
      */
-    void onProgressUpdate(int progressCode, int percentComplete);
+    void progressUpdate(int progressCode, int percentComplete);
 
     /**
      * Indicates that the download operation has finished. This method is called even if the

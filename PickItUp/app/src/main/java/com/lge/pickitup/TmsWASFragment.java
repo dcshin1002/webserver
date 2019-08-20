@@ -19,7 +19,6 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
 
@@ -169,7 +168,9 @@ public class TmsWASFragment extends Fragment {
                 connection.setDoInput(true);
                 // Open communications link (network traffic occurs here).
                 connection.connect();
-                publishProgress(ProcessingCallback.Progress.CONNECT_SUCCESS);
+                if (jsonField.equals("jobid")) {
+                    publishProgress(ProcessingCallback.Progress.CONNECT_SUCCESS, 5);
+                }
 //                int responseCode = connection.getResponseCode();
 //                if (responseCode != HttpsURLConnection.HTTP_OK) {
 //                    throw new IOException("HTTP error code: " + responseCode);
@@ -215,6 +216,7 @@ public class TmsWASFragment extends Fragment {
                         (networkInfo.getType() != ConnectivityManager.TYPE_WIFI
                                 && networkInfo.getType() != ConnectivityManager.TYPE_MOBILE)) {
                     // If no connectivity, cancel task and update Callback with null data.
+                    Log.w(TAG, "No connection !!");
                     callback.finishProcessing();
                 }
             }
@@ -236,16 +238,17 @@ public class TmsWASFragment extends Fragment {
                     } else {
                         throw new IOException("No response received.");
                     }
+                    publishProgress(ProcessingCallback.Progress.PROCESS_IN_PROGRESS, 50);
 
                     URL queryUrl = new URL(urls[1]+"/"+jobId);
                     while (true) {
-                        Thread.sleep(1000);
+                        Thread.sleep(5000);
                         String status = processUrl(queryUrl, "status");
                         if (status.equals("finished")) {
                             publishProgress(ProcessingCallback.Progress.PROCESS_SUCCESS, 100);
                             break;
                         } else {
-                            publishProgress(ProcessingCallback.Progress.PROCESS_IN_PROGRESS, 50);
+                            publishProgress(ProcessingCallback.Progress.PROCESS_IN_PROGRESS, 75);
                         }
                     }
                 } catch (Exception e) {
@@ -256,6 +259,14 @@ public class TmsWASFragment extends Fragment {
             if (result != null) msg += result.resultValue;
             Log.i(TAG, msg);
             return result;
+        }
+
+        @Override
+        protected void onProgressUpdate(Integer... values) {
+            Log.i(TAG, "onProgressUpdate(" +
+                    Integer.toString(values[0]) + "," +
+                    Integer.toString(values[1]) + ")");
+            callback.progressUpdate(values[0], values[1]);
         }
 
         /**

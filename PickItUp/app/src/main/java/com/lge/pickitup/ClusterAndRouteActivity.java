@@ -16,6 +16,7 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.DatePicker;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -108,9 +109,9 @@ public class ClusterAndRouteActivity extends AppCompatActivity implements View.O
                         e.printStackTrace();
                         throw e;
                     }
+                    mBtnClusterAndRoute.setEnabled(false);
                     processing = true;
                     networkFragment.startProcess(mTextCourierDate.getText().toString(), mCourierNumber);
-                    mBtnClusterAndRoute.setEnabled(false);
                     Log.i(LOG_TAG, "Process Clustering & Routing");
                 }
                 break;
@@ -139,10 +140,7 @@ public class ClusterAndRouteActivity extends AppCompatActivity implements View.O
     }
 
     @Override
-    public void onProgressUpdate(int progressCode, int percentComplete) {
-        Log.i(LOG_TAG, "onProgressUpdate(" +
-                        Integer.toString(progressCode) + "," +
-                        Integer.toString(percentComplete) + ")");
+    public void progressUpdate(int progressCode, int percentComplete) {
         switch(progressCode) {
             // You can add UI behavior for progress updates here.
             case Progress.ERROR:
@@ -156,7 +154,6 @@ public class ClusterAndRouteActivity extends AppCompatActivity implements View.O
                 break;
             case Progress.PROCESS_SUCCESS:
                 Log.i(LOG_TAG, "Clustering & Routing process success !!");
-                mBtnClusterAndRoute.setEnabled(true);
                 break;
         }
     }
@@ -168,5 +165,7 @@ public class ClusterAndRouteActivity extends AppCompatActivity implements View.O
             networkFragment.cancelProcess();
         }
         processing = false;
+        Toast.makeText(ClusterAndRouteActivity.this, "완료됨", Toast.LENGTH_SHORT).show();
+        mBtnClusterAndRoute.setEnabled(true);
     }
 }
