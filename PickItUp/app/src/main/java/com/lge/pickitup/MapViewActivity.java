@@ -4,6 +4,7 @@ import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.res.Resources;
 import android.media.Image;
 import android.net.Uri;
 import android.os.Bundle;
@@ -53,12 +54,19 @@ public class MapViewActivity extends AppCompatActivity
     private static ArrayList<TmsParcelItem> mArrayValues = new ArrayList<TmsParcelItem>();
 
     private static String mSort = "id";
+    private static ArrayList mArrayBluePinImg = new ArrayList();
+    private static ArrayList mArrayRedPinImg= new ArrayList();
+    private static ArrayList mArrayGreenPinImg= new ArrayList();
+
+    private static float mInitLatitude = 0;
+    private static float mInitLongitude = 0;
 
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_mapview);
+        initResources();
         MapLayout mapLayout = new MapLayout(this);
         mMapView = mapLayout.getMapView();
         mMapView.setDaumMapApiKey(DAUM_MAPS_ANDROID_APP_API_KEY);
@@ -81,12 +89,35 @@ public class MapViewActivity extends AppCompatActivity
         mFbConnector.setParcelValueArray(this.mArrayValues);
        getFirebaseList();
     }
+    protected void initResources() {
+
+        Resources res = this.getResources();
+        for (int i=0; i<= 99; i++) {
+            String imagename = "marker_bluepin_" + i;
+            int resID = res.getIdentifier(imagename, "drawable", this.getPackageName());
+            mArrayBluePinImg.add(resID);
+        }
+        for (int i=0; i<= 99; i++) {
+            String imagename = "marker_redpin_" + i;
+            int resID = res.getIdentifier(imagename, "drawable", this.getPackageName());
+            mArrayRedPinImg.add(resID);
+        }
+        for (int i=0; i<= 99; i++) {
+            String imagename = "marker_greenpin_" + i;
+            int resID = res.getIdentifier(imagename, "drawable", this.getPackageName());
+            mArrayGreenPinImg.add(resID);
+        }
+    }
 
     protected static void addMarker() {
         Log.i(LOG_TAG,	"mArrayValues.size = " + mArrayValues.size());
         for (TmsParcelItem item : mArrayValues) {
             String strLatitude = item.consigneeLatitude;
             String strLongitude = item.consigneeLongitude;
+            if (mInitLatitude == 0 || mInitLongitude == 0) {
+                mInitLatitude = Float.valueOf(item.consigneeLatitude);
+                mInitLongitude = Float.valueOf(item.consigneeLongitude);
+            }
             Log.i(LOG_TAG,	"addr = " + item.consigneeAddr);
             Log.i(LOG_TAG,	"lat = " + item.consigneeLatitude);
             Log.i(LOG_TAG,	"lon = " + item.consigneeLongitude);
@@ -102,12 +133,23 @@ public class MapViewActivity extends AppCompatActivity
             marker.setUserObject(item);
             marker.setMapPoint(MapPoint.mapPointWithGeoCoord(Double.parseDouble(strLatitude)
                     , Double.parseDouble(strLongitude)));
-            if (item.status.equals(TmsParcelItem.STATUS_DELIVERED)) {
-                marker.setMarkerType(MapPOIItem.MarkerType.BluePin);
-            } else if (item.status.equals(TmsParcelItem.STATUS_GEOCODED)) {
-                marker.setMarkerType(MapPOIItem.MarkerType.RedPin);
+
+            marker.setMarkerType(MapPOIItem.MarkerType.CustomImage);
+            if (item.orderInRoute == -1) {
+                if (item.status.equals(TmsParcelItem.STATUS_DELIVERED)) {
+                    marker.setCustomImageResourceId(R.drawable.marker_bluepin_0);
+                } else if (item.status.equals(TmsParcelItem.STATUS_GEOCODED)) {
+                    marker.setCustomImageResourceId(R.drawable.marker_redpin_0);
+                }
+            } else {
+                if (item.status.equals(TmsParcelItem.STATUS_DELIVERED)) {
+                    marker.setCustomImageResourceId((int)mArrayBluePinImg.get(item.orderInRoute+1));
+                } else if (item.status.equals(TmsParcelItem.STATUS_GEOCODED)) {
+                    marker.setCustomImageResourceId((int)mArrayRedPinImg.get(item.orderInRoute+1));
+                }
             }
-            marker.setSelectedMarkerType(MapPOIItem.MarkerType.YellowPin); // 마커를 클릭했을때, 기본으로 제공하는 RedPin 마커 모양.
+            marker.setSelectedMarkerType(MapPOIItem.MarkerType.CustomImage); // 마커를 클릭했을때, 기본으로 제공하는 RedPin 마커 모양.
+            marker.setCustomSelectedImageResourceId((int)mArrayGreenPinImg.get(item.orderInRoute+1));
             mMapView.addPOIItem(marker);
         }
     }
@@ -128,8 +170,10 @@ public class MapViewActivity extends AppCompatActivity
 
     public void onMapViewInitialized(MapView mapView) {
         Log.i(LOG_TAG, "MapView had loaded. Now, MapView APIs could be called safely");
+        Log.i(LOG_TAG, String.format("onMapViewInitialized %f, %f", mInitLatitude, mInitLongitude));
         //mMapView.setCurrentLocationTrackingMode(MapView.CurrentLocationTrackingMode.TrackingModeOnWithoutHeading);
-        mapView.setMapCenterPointAndZoomLevel(MapPoint.mapPointWithGeoCoord(37.537229,127.005515), 7, true);
+        //mapView.setMapCenterPointAndZoomLevel(MapPoint.mapPointWithGeoCoord(37.537229,127.005515), 7, true);
+        mapView.setMapCenterPointAndZoomLevel(MapPoint.mapPointWithGeoCoord(mInitLatitude,mInitLongitude), 6, true);
     }
 
     @Override
