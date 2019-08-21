@@ -296,11 +296,7 @@ public class ParcelListActivity extends AppCompatActivity implements View.OnClic
                     Toast.makeText(ParcelListActivity.this, R.string.need_manual_input, Toast.LENGTH_SHORT).show();
                     return;
                 }
-
-                String mapUrl = "daummaps://route?sp="+ Utils.mCurrent.getLatitude() + "," + Utils.mCurrent.getLongitude() +
-                        "&ep="+ LatitudeStr+ "," + LongitudeStr + "&by=CAR";
-                Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(mapUrl));
-                startActivity(intent);
+                Utils.startKakaoMapActivity(getApplication(), Double.valueOf(LatitudeStr), Double.valueOf(LongitudeStr));
             }
         });
 

@@ -90,4 +90,5 @@
     <string name="upload_image_to_server">서버에 이미지 업로드</string>
     <string name="send_message_with_image">메세지 보내기</string>
     <string name="uploading_image">파일을 서버에 업로딩중입니다.</string>
+    <string name="current_location">현재 위치</string>
 </resources>

@@ -1,6 +1,7 @@
 package com.lge.pickitup;
 
 import android.app.AlertDialog;
+import android.content.ActivityNotFoundException;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -57,9 +58,11 @@ public class MapViewActivity extends AppCompatActivity
     private static ArrayList mArrayBluePinImg = new ArrayList();
     private static ArrayList mArrayRedPinImg= new ArrayList();
     private static ArrayList mArrayGreenPinImg= new ArrayList();
+    private RelativeLayout mLayout_parcel_data;
 
     private static float mInitLatitude = 0;
     private static float mInitLongitude = 0;
+    private boolean flag_item_selected = false;
 
 
     @Override
@@ -76,7 +79,7 @@ public class MapViewActivity extends AppCompatActivity
         mMapView.setMapType(MapView.MapType.Standard);
         ViewGroup mapViewContainer = (ViewGroup) findViewById(R.id.map_view);
         mapViewContainer.addView(mapLayout);
-
+        addCurrentLocationMarker();
         Bundle b = getIntent().getExtras();
         if (b != null) {
             selectedDate = b.getString(Utils.KEY_DB_DATE);
@@ -87,10 +90,27 @@ public class MapViewActivity extends AppCompatActivity
         mFbConnector.setCourierHash(this.mCourierDatabaseHash);
         mFbConnector.setParcelKeyArray(this.mArrayKeys);
         mFbConnector.setParcelValueArray(this.mArrayValues);
-       getFirebaseList();
-    }
-    protected void initResources() {
+        getFirebaseList();
 
+    }
+
+    private void addCurrentLocationMarker() {
+        Log.i(LOG_TAG, "addCurrentLocationMarker");
+        Log.i(LOG_TAG, "mCurrent.getLatitude()=" + Utils.mCurrent.getLatitude() );
+        Log.i(LOG_TAG, "mCurrent.getLongitude()=" + Utils.mCurrent.getLongitude() );
+        MapPOIItem marker = new MapPOIItem();
+
+        marker.setItemName(getString(R.string.current_location));
+        marker.setMapPoint(MapPoint.mapPointWithGeoCoord(Utils.mCurrent.getLatitude(), Utils.mCurrent.getLongitude()));
+        marker.setMarkerType(MapPOIItem.MarkerType.CustomImage);
+        marker.setCustomImageResourceId(R.drawable.truck);
+        marker.setSelectedMarkerType(MapPOIItem.MarkerType.CustomImage);
+        marker.setCustomSelectedImageResourceId(R.drawable.truck_selected);
+        mMapView.addPOIItem(marker);
+    }
+
+    protected void initResources() {
+        mLayout_parcel_data =  (RelativeLayout) findViewById(R.id.parcel_data);
         Resources res = this.getResources();
         for (int i=0; i<= 99; i++) {
             String imagename = "marker_bluepin_" + i;
@@ -111,6 +131,7 @@ public class MapViewActivity extends AppCompatActivity
 
     protected static void addMarker() {
         Log.i(LOG_TAG,	"mArrayValues.size = " + mArrayValues.size());
+
         for (TmsParcelItem item : mArrayValues) {
             String strLatitude = item.consigneeLatitude;
             String strLongitude = item.consigneeLongitude;
@@ -143,13 +164,13 @@ public class MapViewActivity extends AppCompatActivity
                 }
             } else {
                 if (item.status.equals(TmsParcelItem.STATUS_DELIVERED)) {
-                    marker.setCustomImageResourceId((int)mArrayBluePinImg.get(item.orderInRoute+1));
+                    marker.setCustomImageResourceId((int)mArrayBluePinImg.get(item.orderInRoute));
                 } else if (item.status.equals(TmsParcelItem.STATUS_GEOCODED)) {
-                    marker.setCustomImageResourceId((int)mArrayRedPinImg.get(item.orderInRoute+1));
+                    marker.setCustomImageResourceId((int)mArrayRedPinImg.get(item.orderInRoute));
                 }
             }
             marker.setSelectedMarkerType(MapPOIItem.MarkerType.CustomImage); // 마커를 클릭했을때, 기본으로 제공하는 RedPin 마커 모양.
-            marker.setCustomSelectedImageResourceId((int)mArrayGreenPinImg.get(item.orderInRoute+1));
+            marker.setCustomSelectedImageResourceId((int)mArrayGreenPinImg.get(item.orderInRoute));
             mMapView.addPOIItem(marker);
         }
     }
@@ -173,7 +194,8 @@ public class MapViewActivity extends AppCompatActivity
         Log.i(LOG_TAG, String.format("onMapViewInitialized %f, %f", mInitLatitude, mInitLongitude));
         //mMapView.setCurrentLocationTrackingMode(MapView.CurrentLocationTrackingMode.TrackingModeOnWithoutHeading);
         //mapView.setMapCenterPointAndZoomLevel(MapPoint.mapPointWithGeoCoord(37.537229,127.005515), 7, true);
-        mapView.setMapCenterPointAndZoomLevel(MapPoint.mapPointWithGeoCoord(mInitLatitude,mInitLongitude), 6, true);
+        //mapView.setMapCenterPointAndZoomLevel(MapPoint.mapPointWithGeoCoord(mInitLatitude,mInitLongitude), 6, true);
+        mapView.setMapCenterPointAndZoomLevel(MapPoint.mapPointWithGeoCoord(Utils.mCurrent.getLatitude(),Utils.mCurrent.getLongitude()), 7, true);
     }
 
     @Override
@@ -187,23 +209,25 @@ public class MapViewActivity extends AppCompatActivity
 
         MapPoint.GeoCoordinate mapPointGeo = mapPoint.getMapPointGeoCoord();
 
+        /*
         AlertDialog.Builder alertDialog = new AlertDialog.Builder(this);
         alertDialog.setTitle("DaumMapLibrarySample");
         alertDialog.setMessage(String.format("Double-Tap on (%f,%f)", mapPointGeo.latitude, mapPointGeo.longitude));
         alertDialog.setPositiveButton("OK", null);
         alertDialog.show();
+        */
     }
 
     @Override
     public void onMapViewLongPressed(MapView mapView, MapPoint mapPoint) {
 
         MapPoint.GeoCoordinate mapPointGeo = mapPoint.getMapPointGeoCoord();
-
+        /*
         AlertDialog.Builder alertDialog = new AlertDialog.Builder(this);
         alertDialog.setTitle("DaumMapLibrarySample");
         alertDialog.setMessage(String.format("Long-Press on (%f,%f)", mapPointGeo.latitude, mapPointGeo.longitude));
         alertDialog.setPositiveButton("OK", null);
-        alertDialog.show();
+        alertDialog.show();*/
     }
 
     @Override
@@ -228,6 +252,9 @@ public class MapViewActivity extends AppCompatActivity
     public void onMapViewMoveFinished(MapView mapView, MapPoint mapPoint) {
         MapPoint.GeoCoordinate mapPointGeo = mapPoint.getMapPointGeoCoord();
         Log.i(LOG_TAG, String.format("MapView onMapViewMoveFinished (%f,%f)", mapPointGeo.latitude, mapPointGeo.longitude));
+        //if (!flag_item_selected)
+            //mLayout_parcel_data.setVisibility(View.GONE);
+        flag_item_selected = false;
     }
 
     @Override
@@ -237,13 +264,17 @@ public class MapViewActivity extends AppCompatActivity
 
     @Override
     public void onPOIItemSelected(MapView mapView, final MapPOIItem mapPOIItem) {
-        RelativeLayout parcel_data =  (RelativeLayout) findViewById(R.id.parcel_data);
-        parcel_data.setVisibility(View.VISIBLE);
+        Log.i(LOG_TAG, "onPOIItemSelected");
+        if (mapPOIItem.getItemName().equals(getString(R.string.current_location))) {
+            return;
+        }
+        flag_item_selected = true;
+
+        mLayout_parcel_data.setVisibility(View.VISIBLE);
+
         final TmsParcelItem item = (TmsParcelItem)mapPOIItem.getUserObject();
-
-        boolean isDeliverd = item.status.equals(TmsParcelItem.STATUS_DELIVERED);
-
         if (item != null) {
+            boolean isDeliverd = item.status.equals(TmsParcelItem.STATUS_DELIVERED);
             TextView addrText = findViewById(R.id.listAddr);
             TextView customerText = findViewById(R.id.listItemTextCustomer);
             TextView deliveryNote = findViewById(R.id.listItemTextDeliveryMemo);
@@ -347,11 +378,13 @@ public class MapViewActivity extends AppCompatActivity
         Toast.makeText(this, "onCalloutBalloonOfPOIItemTouched", Toast.LENGTH_SHORT);
     }
 
+
     @Override
     public void onCalloutBalloonOfPOIItemTouched(MapView mapView, MapPOIItem mapPOIItem, MapPOIItem.CalloutBalloonButtonType calloutBalloonButtonType) {
-        String url = "daummaps://route?sp="+ Utils.mCurrent.getLatitude() + "," + Utils.mCurrent.getLongitude() + "&ep="+mapPOIItem.getMapPoint().getMapPointGeoCoord().latitude+","+mapPOIItem.getMapPoint().getMapPointGeoCoord().longitude+"&by=CAR";
-        Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(url));
-        startActivity(intent);
+        if (mapPOIItem.getItemName().equals(getString(R.string.current_location))) {
+            return;
+        }
+        Utils.startKakaoMapActivity(getApplication(), mapPOIItem.getMapPoint().getMapPointGeoCoord().latitude, mapPOIItem.getMapPoint().getMapPointGeoCoord().longitude);
     }
 
     @Override

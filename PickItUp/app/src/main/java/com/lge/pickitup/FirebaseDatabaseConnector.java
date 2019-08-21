@@ -3,6 +3,7 @@ package com.lge.pickitup;
 import android.content.Context;
 import android.text.TextUtils;
 import android.util.Log;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 
@@ -177,7 +178,17 @@ public class FirebaseDatabaseConnector {
 
                     Log.d(LOG_TAG, "mArrayValues size = " + mArrayValues.size());
                 }
-                Collections.sort(mArrayValues);
+                if (mArrayValues.size() > 0) {
+                    Collections.sort(mArrayValues);
+                    int nearIdx = getNearIdx(mArrayValues);
+                    int newOrderInRoute = 1;
+
+                    for (int i=0; i < mArrayValues.size(); i++) {
+                        int idx = (nearIdx + i) % mArrayValues.size();
+                        mArrayValues.get(idx).orderInRoute = newOrderInRoute++;
+                    }
+                    Collections.sort(mArrayValues);
+                }
 
                 if (mListAdapter != null) {
                     mListAdapter.notifyDataSetChanged();
@@ -192,6 +203,25 @@ public class FirebaseDatabaseConnector {
                 Log.w(LOG_TAG,"getParcelListFromFirebaseDatabase, ValueEventListener.onCancelled", databaseError.toException());
             }
         });
+    }
+
+    private int getNearIdx(ArrayList<TmsParcelItem> mArrayValues) {
+        int nearIdx = 0;
+        double minDist = 100000000;
+
+        for (int i=0; i < mArrayValues.size(); i++ ){
+            TmsParcelItem item = mArrayValues.get(i);
+            double dist = Utils.distance(Utils.mCurrent.getLatitude(),
+                                         Utils.mCurrent.getLongitude(),
+                                         Double.valueOf(item.consigneeLatitude),
+                                         Double.valueOf(item.consigneeLongitude), "km");
+
+            if (dist < minDist) {
+                nearIdx = i;
+                minDist = dist;
+            }
+        }
+        return nearIdx;
     }
 
     private String getNumString(ArrayList<TmsParcelItem> items) {
