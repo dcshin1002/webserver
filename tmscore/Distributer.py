@@ -17,21 +17,21 @@ def clustering():
         db.dict_Cluster[cluster_idx].append(db.dict_Parcel[id])
         i +=1
 
-    DBObj = db.getTMSDB('tmssample')
-    db.dropDB('tmssample')
-    now = datetime.datetime.now()
-    todayDate = now.strftime('%Y-%m-%d')
+    # DBObj = db.getTMSDB('tmssample')
+    # db.dropDB('tmssample')
+    # now = datetime.datetime.now()
+    # todayDate = now.strftime('%Y-%m-%d')
 
-    for v in db.dict_Cluster:
-        cluster_num = str(v)
-        for c in db.dict_Cluster[v]:
-            DATA = {'id': c.id,
-                    'date': todayDate,
-                    'lat': c.lat,
-                    'lon': c.lon,
-                    'addr': c.addr,
-                    'clusterNum':cluster_num,
-                    'order':0,
-                    'state':0,
-                    'picName':''}
-            DBObj.insert_one(DATA)
+    # for v in db.dict_Cluster:
+    #     cluster_num = str(v)
+    #     for c in db.dict_Cluster[v]:
+    #         DATA = {'id': c.id,
+    #                 'date': todayDate,
+    #                 'lat': c.lat,
+    #                 'lon': c.lon,
+    #                 'addr': c.addr,
+    #                 'clusterNum':cluster_num,
+    #                 'order':0,
+    #                 'state':0,
+    #                 'picName':''}
+    #         DBObj.insert_one(DATA)

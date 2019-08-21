@@ -18,12 +18,12 @@ class RouteFinder:
     def __init__(self):
         pass
 
-    def route(self, tspFile):
+    def solve(self, tspFile):
         self.problem = read_tsp(tspFile)
         self.route = self.som(self.problem, 100000)
         self.problem = self.problem.reindex(self.route)
         self.distance = route_distance(self.problem)
-        #print('Route found of length {}'.format(distance))
+        print('Route found for problem in {}, length {}'.format(tspFile, self.distance))
         pass
 
     def som(self, problem, iterations, learning_rate=0.8):

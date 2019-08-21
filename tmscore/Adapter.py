@@ -51,7 +51,7 @@ def setClustersWork(year, month, day, data=None):
     dcon.saveTSPFile('data')
     finder = RouteFinder()
     for c, fname in enumerate(dcon.getTSPFilenames()):
-        finder.route(fname)
+        finder.solve(fname)
         dcon.saveDataToFirebaseDB(dateForm, c, finder.problem, finder.route)
         print('firebaseDB updated for cluster', c)
     print('success setClusters')
