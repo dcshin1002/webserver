@@ -4,6 +4,7 @@ import json
 from django.shortcuts import render
 from django.http import HttpResponse, JsonResponse
 from rq import Queue
+from rq.job import Job, get_current_job
 from worker import conn
 
 import tmscore.DataBase as db
@@ -28,8 +29,6 @@ def setClusters(req, year, month, day):
     result = q.enqueue(setClustersWork, args=(
         year, month, day), job_timeout=600)
 
-    dateForm = '-'.join([str(year), str("%02d" % month), str("%02d" % day)])
-    dcon.saveJobStateToFirebaseDB(dateForm, result.get_id().get_status())
 
     return JsonResponse({
         'msg': '<pre>setClusters() Processing...</pre>',
@@ -40,6 +39,7 @@ def setClusters(req, year, month, day):
 def setClustersWork(year, month, day, data=None):
     dateForm = '-'.join([str(year), str("%02d" % month), str("%02d" % day)])
     print(dateForm)
+    dcon.saveJobStateToFirebaseDB(dateForm, get_current_job().get_status())
     dcon.loadDataFromFirebaseDB(dateForm)
     # if data is None:
     #     dcon.loadDataFromCache()
@@ -53,6 +53,7 @@ def setClustersWork(year, month, day, data=None):
         finder.solve(fname)
         dcon.saveDataToFirebaseDB(dateForm, c, finder.problem, finder.route)
         print('firebaseDB updated for cluster', c)
+    dcon.saveJobStateToFirebaseDB(dateForm, "finished")
     print('setClusters Done')
 
 
