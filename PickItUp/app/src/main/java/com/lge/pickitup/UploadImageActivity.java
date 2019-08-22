@@ -3,18 +3,22 @@ package com.lge.pickitup;
 import android.Manifest;
 import android.app.AlertDialog;
 import android.app.ProgressDialog;
+import android.content.ActivityNotFoundException;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.drawable.BitmapDrawable;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
 import android.provider.MediaStore;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
+import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.Toast;
 
@@ -33,25 +37,41 @@ import com.google.firebase.storage.OnProgressListener;
 import com.google.firebase.storage.StorageReference;
 import com.google.firebase.storage.UploadTask;
 
+import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.InputStream;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
 public class UploadImageActivity extends AppCompatActivity {
     private static final String LOG_TAG = "UploadImageActivity";
+    private static final boolean enableLog = true;
+
+    // Which option to upload a file to Firebase Stroage
+    private static final String UPLOAD_BY_BYTES = "uploadByBytes";
+    private static final String UPLOAD_BY_FILE = "uploadByFile";
+    private static final String UPLOAD_BY_STREAM = "uploadByStream";
+    // Select option
+    private static final String mUploadMethod = UPLOAD_BY_BYTES;
 
     private Button mBtnCapture;
     private Button mBtnPickImgFromGallery;
-    private Button mBtnUploadToServer;
     private Button mBtnSendMsg;
     private ImageView mIvPreviewImage;
+    private EditText mEtMessageContent;
 
     private static final int CAPTURE_CAMERA_REQUEST_CODE = 1;
     private static final int PICK_IMAGE_REQUEST_CODE = 2;
+    private static final int MMS_REQUEST_IMG_SEND = 3;
+    private static final int KAKAOTALK_REQUEST_IMG_SEND = 4;
     private static final int FROM_CAMERA = 1;
     private static final int FROM_ALBUM = 2;
+
+    static final String EXTRA_SEND_RESULT = "send_result";
+    static final String EXTRA_UPLOADED_FILE_PATH = "uploaded_file_path";
 
     private FirebaseStorage mStorage;
     private FirebaseAuth mAuth;
@@ -62,11 +82,17 @@ public class UploadImageActivity extends AppCompatActivity {
     private int mFlag;
     private String mCurrentPhotoPath;
     private Uri mPhotoUri;
+    private TmsParcelItem mSelectedItem;
+    private String mSelectedDate;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_capture_and_upload);
+
+        Intent intent = getIntent();
+        mSelectedItem = intent.getParcelableExtra(ParcelListActivity.SELECTED_ITEM);
+        mSelectedDate = intent.getStringExtra(ParcelListActivity.SELECTED_DATE);
 
         initResources();
 
@@ -116,7 +142,9 @@ public class UploadImageActivity extends AppCompatActivity {
                         && grantResults[2] == PackageManager.PERMISSION_GRANTED) {
                     // permission was granted, yay! Do the
                     // contacts-related task you need to do.
-                    Log.d(LOG_TAG, "onRequestPermissionResul, Permission are granted");
+                    if (enableLog) {
+                        Log.d(LOG_TAG, "onRequestPermissionResul, Permission are granted");
+                    }
                     mBtnCapture.setEnabled(true);
                     mBtnPickImgFromGallery.setEnabled(true);
                     mIvPreviewImage.setClickable(true);
@@ -138,32 +166,40 @@ public class UploadImageActivity extends AppCompatActivity {
     protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
 
-        if (resultCode != RESULT_OK) {
-            Log.d(LOG_TAG, "onActivityResult, result code is not RESULT_OK");
-            return;
-        }
+//        if (resultCode != RESULT_OK) {
+//            if (enableLog) {
+//                Log.d(LOG_TAG, "onActivityResult, result code is not RESULT_OK");
+//            }
+//            return;
+//        }
 
         switch (requestCode) {
             case CAPTURE_CAMERA_REQUEST_CODE :
-                // Return after take picture
-                Log.d(LOG_TAG, "onActivityResult, requestCode is CAPTURE_CAMERA_REQUEST_CODE");
-                galleryAddPic();
-                setPic();
+                if (resultCode == RESULT_OK) {
+                    // Return after take picture
+                    if (enableLog) {
+                        Log.d(LOG_TAG, "onActivityResult, requestCode is CAPTURE_CAMERA_REQUEST_CODE");
+                    }
+                    galleryAddPic();
+                    setResizedTakenPic();
+                }
                 break;
 
             case PICK_IMAGE_REQUEST_CODE :
-                // Picking an image from gallery album
-                if (data.getData() != null) {
-                    try {
+                if (resultCode == RESULT_OK) {
+                    // Picking an image from gallery album
+                    if (data.getData() != null) {
                         mPhotoUri = data.getData();
-                        Bitmap bitmap = MediaStore.Images.Media.getBitmap(getContentResolver(), mPhotoUri);
-                        mIvPreviewImage.setImageBitmap(bitmap);
-                    } catch (FileNotFoundException e) {
-                        e.printStackTrace();
-                    } catch (IOException e) {
-                        e.printStackTrace();
+                        setResizedGalleryPic();
                     }
                 }
+                break;
+
+            case MMS_REQUEST_IMG_SEND :
+                if (enableLog) {
+                    Log.d(LOG_TAG, "onActivityResult, MMS_REQUEST_IMG_SEND");
+                }
+                uploadImageToServer();
                 break;
         }
     }
@@ -171,10 +207,11 @@ public class UploadImageActivity extends AppCompatActivity {
     private void initResources() {
         mBtnCapture = findViewById(R.id.btnCameraCapture);
         mBtnPickImgFromGallery = findViewById(R.id.btnPickImageFromGallery);
-        mBtnUploadToServer = findViewById(R.id.btnUploadImageToServer);
         mBtnSendMsg = findViewById(R.id.btnSendMessage);
         mIvPreviewImage = findViewById(R.id.ivImagePreview);
+        mEtMessageContent = findViewById(R.id.etMessageContent);
 
+        mEtMessageContent.setText("고객(" + mSelectedItem.consigneeName + ")님께서 배송요청하신 물품이 배송완료되었습니다.");
         mIvPreviewImage.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -198,10 +235,25 @@ public class UploadImageActivity extends AppCompatActivity {
             }
         });
 
-        mBtnUploadToServer.setOnClickListener(new View.OnClickListener() {
+        mBtnSendMsg.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                uploadImageToServer();
+                AlertDialog.Builder diag_bulder = new AlertDialog.Builder(UploadImageActivity.this)
+                    .setTitle(R.string.send_complete_message_title)
+                    .setMessage(R.string.send_complete_message_body)
+                    .setPositiveButton(R.string.send_mms_message, new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialogInterface, int i) {
+                            sendMmsMessage();
+                        }
+                    })
+                    .setNegativeButton(R.string.cancel, new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialogInterface, int i) {
+                            dialogInterface.cancel();
+                        }
+                    });
+                diag_bulder.show();
             }
         });
 
@@ -214,14 +266,18 @@ public class UploadImageActivity extends AppCompatActivity {
                 .setPositiveButton("카메라 촬영", new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialogInterface, int i) {
-                        Log.d(LOG_TAG, "\"Camera capture\" is selected");
+                        if (enableLog) {
+                            Log.d(LOG_TAG, "\"Camera capture\" is selected");
+                        }
                         mFlag = FROM_CAMERA;
                         dispatchTakePicureIntent();
                     }
                 }).setNeutralButton("앨범에서 선택", new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialogInterface, int i) {
-                        Log.d(LOG_TAG, "\"Pick image from gallery\" is selected");
+                        if (enableLog) {
+                            Log.d(LOG_TAG, "\"Pick image from gallery\" is selected");
+                        }
                         mFlag = FROM_ALBUM;
                         selectImgFromAlabum();
                     }
@@ -270,7 +326,9 @@ public class UploadImageActivity extends AppCompatActivity {
         String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date());
         String imageFileName = "JPEG_" + timeStamp + "_";
         File storageDir = getExternalFilesDir(Environment.DIRECTORY_PICTURES);
-        Log.d(LOG_TAG, "storageDir = " + storageDir);
+        if (enableLog) {
+            Log.d(LOG_TAG, "storageDir = " + storageDir);
+        }
         File image = File.createTempFile(
                 imageFileName,  /* prefix */
                 ".jpg",   /* suffix */
@@ -279,7 +337,9 @@ public class UploadImageActivity extends AppCompatActivity {
 
         // Save a file: path for use with ACTION_VIEW intents
         mCurrentPhotoPath = image.getAbsolutePath();
-        Log.e(LOG_TAG, "currentPhotoPath = " + mCurrentPhotoPath);
+        if (enableLog) {
+            Log.e(LOG_TAG, "currentPhotoPath = " + mCurrentPhotoPath);
+        }
         return image;
     }
 
@@ -291,7 +351,7 @@ public class UploadImageActivity extends AppCompatActivity {
         this.sendBroadcast(mediaScanIntent);
     }
 
-    private void setPic() {
+    private void setResizedTakenPic() {
         // Get the dimensions of the View
         int targetW = mIvPreviewImage.getWidth();
         int targetH = mIvPreviewImage.getHeight();
@@ -299,6 +359,8 @@ public class UploadImageActivity extends AppCompatActivity {
         // Get the dimensions of the bitmap
         BitmapFactory.Options bmOptions = new BitmapFactory.Options();
         bmOptions.inJustDecodeBounds = true;
+        bmOptions.inPreferredConfig = Bitmap.Config.RGB_565;
+        BitmapFactory.decodeFile(mCurrentPhotoPath, bmOptions);
 
         int photoW = bmOptions.outWidth;
         int photoH = bmOptions.outHeight;
@@ -315,6 +377,54 @@ public class UploadImageActivity extends AppCompatActivity {
         mIvPreviewImage.setImageBitmap(bitmap);
     }
 
+    private void setResizedGalleryPic() {
+        // Get the dimensions of the View
+        int targetW = mIvPreviewImage.getWidth();
+        int targetH = mIvPreviewImage.getHeight();
+
+        if (enableLog) {
+            Log.d(LOG_TAG, "targetW = " + targetW + ", targetH = " + targetH);
+        }
+
+        BitmapFactory.Options bmOptions = new BitmapFactory.Options();
+        bmOptions.inJustDecodeBounds = true;
+        bmOptions.inPreferredConfig = Bitmap.Config.RGB_565;
+        InputStream is = null;
+        Bitmap bitmap = null;
+
+        try {
+            bitmap = MediaStore.Images.Media.getBitmap(getContentResolver(), mPhotoUri);
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        int photoW = bitmap.getWidth();
+        int photoH = bitmap.getHeight();
+
+        if (enableLog) {
+            Log.d(LOG_TAG, "photoW = " + photoW + ", photoH = " + photoH);
+        }
+
+        // Determine how much to scale down the image
+        int scaleFactor = Math.min(photoW/targetW, photoH/targetH);
+
+        // Decode the image file into a Bitmap sized to fill the View
+        bmOptions.inJustDecodeBounds = false;
+        bmOptions.inSampleSize = scaleFactor;
+        bmOptions.inPurgeable = true;
+
+        try {
+            is = getContentResolver().openInputStream(mPhotoUri);
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        }
+
+        bitmap = BitmapFactory.decodeStream(is, null, bmOptions);
+        mIvPreviewImage.setImageBitmap(bitmap);
+    }
+
     private void uploadImageToServer() {
         final String currentUid = mAuth.getUid();
         String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date());
@@ -324,16 +434,10 @@ public class UploadImageActivity extends AppCompatActivity {
                 .child(Utils.getTodayDateStr() + "/")
                 .child("Images/" + filename);
 
-        UploadTask uploadTask;
-        Uri uri = null;
+        final String firebaseStoragePath = Utils.getTodayDateStr() + "/Images/" + filename +".jpg";
 
-        if (mFlag == FROM_CAMERA) {
-            uri = Uri.fromFile(new File(mCurrentPhotoPath));
-        } else if (mFlag == FROM_ALBUM) {
-            uri = mPhotoUri;
-        } else {
-            Log.e(LOG_TAG, "mFlag has some wrong value");
-        }
+        UploadTask uploadTask = null;
+        Uri uri = null;
 
         mProgressDialog = new ProgressDialog(this);
         mProgressDialog.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
@@ -341,17 +445,69 @@ public class UploadImageActivity extends AppCompatActivity {
         mProgressDialog.show();
 
 
-        uploadTask = storageRef.putFile(uri);
+        if (mUploadMethod.equals(UPLOAD_BY_FILE)) {
+            if (mFlag == FROM_CAMERA) {
+                uri = Uri.fromFile(new File(mCurrentPhotoPath));
+            } else if (mFlag == FROM_ALBUM) {
+                uri = mPhotoUri;
+            } else {
+                Log.e(LOG_TAG, "mFlag has some wrong value");
+            }
+
+            uploadTask = storageRef.putFile(uri);
+        } else if (mUploadMethod.equals(UPLOAD_BY_BYTES)) {
+            mIvPreviewImage.setDrawingCacheEnabled(true);
+            mIvPreviewImage.buildDrawingCache();
+            Bitmap bm = ((BitmapDrawable) mIvPreviewImage.getDrawable()).getBitmap();
+            ByteArrayOutputStream baos = new ByteArrayOutputStream();
+            bm.compress(Bitmap.CompressFormat.JPEG, 80, baos);
+            byte[] outputData = baos.toByteArray();
+            uploadTask = storageRef.putBytes(outputData);
+        } else if (mUploadMethod.equals(UPLOAD_BY_STREAM)){
+            InputStream is = null;
+            if (mFlag == FROM_CAMERA) {
+                try {
+                    is = new FileInputStream(new File(mCurrentPhotoPath));
+                } catch (FileNotFoundException e) {
+                    e.printStackTrace();
+                }
+            } else if (mFlag == FROM_ALBUM) {
+                try {
+                    is = getContentResolver().openInputStream(mPhotoUri);
+                } catch (FileNotFoundException e) {
+                    e.printStackTrace();
+                }
+            }
+            uploadTask = storageRef.putStream(is);
+        } else {
+            Log.e(LOG_TAG, "Unknown uploading methodology");
+        }
+
         uploadTask.addOnSuccessListener(new OnSuccessListener<UploadTask.TaskSnapshot>() {
             @Override
             public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
-                Toast.makeText(UploadImageActivity.this, "Complete uploading", Toast.LENGTH_LONG).show();;
+                Toast.makeText(UploadImageActivity.this, getString(R.string.success_to_upload), Toast.LENGTH_LONG).show();;
                 mProgressDialog.dismiss();
+
+                // Make result intent
+                Intent resultIntent = new Intent();
+                resultIntent.putExtra(EXTRA_SEND_RESULT, "success");
+                resultIntent.putExtra(EXTRA_UPLOADED_FILE_PATH, firebaseStoragePath);
+                setResult(RESULT_OK, resultIntent);
+                UploadImageActivity.this.finish();
             }
         }).addOnFailureListener(new OnFailureListener() {
             @Override
             public void onFailure(@NonNull Exception e) {
+                Toast.makeText(UploadImageActivity.this, getString(R.string.fail_to_upload), Toast.LENGTH_LONG).show();;
+                mProgressDialog.dismiss();
 
+                // Make result intent
+                Intent resultIntent = new Intent();
+                resultIntent.putExtra(EXTRA_SEND_RESULT, "fail");
+                resultIntent.putExtra(EXTRA_UPLOADED_FILE_PATH, "");
+                setResult(RESULT_OK, resultIntent);
+                UploadImageActivity.this.finish();
             }
         }).addOnProgressListener(new OnProgressListener<UploadTask.TaskSnapshot>() {
             @Override
@@ -362,5 +518,65 @@ public class UploadImageActivity extends AppCompatActivity {
                 mProgressDialog.setProgress((int) (taskSnapshot.getBytesTransferred() / 1024));
             }
         });
+    }
+
+    private void sendMmsMessage() {
+        try {
+            Uri imageUri = null;
+
+            if (mFlag == FROM_CAMERA) {
+                if (Build.VERSION.SDK_INT < 24) {
+                    imageUri = Uri.fromFile(new File(mCurrentPhotoPath));
+                } else {
+                    imageUri = FileProvider.getUriForFile(UploadImageActivity.this,
+                            "com.lge.pickitup.fileprovider", new File(mCurrentPhotoPath));
+                }
+            } else if (mFlag == FROM_ALBUM) {
+                imageUri = mPhotoUri;
+            } else {
+                Log.e(LOG_TAG, "mFlag has some wrong value");
+            }
+
+            // Make intent to send a MMS message including message
+            Intent sendIntent = new Intent(Intent.ACTION_SEND);
+            sendIntent.putExtra("address", mSelectedItem.consigneeContact);
+            sendIntent.putExtra(Intent.EXTRA_SUBJECT, getString(R.string.message_title));
+            sendIntent.putExtra(Intent.EXTRA_TEXT, mEtMessageContent.getText().toString());
+            sendIntent.setType("image/*");
+            sendIntent.putExtra(Intent.EXTRA_STREAM, imageUri);
+            sendIntent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+            startActivityForResult(/*Intent.createChooser(sendIntent, "Send")*/ sendIntent, MMS_REQUEST_IMG_SEND);
+        } catch (ActivityNotFoundException e) {
+            Toast.makeText(UploadImageActivity.this, R.string.alert_no_sms_activity, Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    private void sendKakaoTaskMessage() {
+        Uri imageUri = null;
+
+        if (mFlag == FROM_CAMERA) {
+            if (Build.VERSION.SDK_INT < 24) {
+                imageUri = Uri.fromFile(new File(mCurrentPhotoPath));
+            } else {
+                imageUri = FileProvider.getUriForFile(UploadImageActivity.this,
+                        "com.lge.pickitup.fileprovider", new File(mCurrentPhotoPath));
+            }
+        } else if (mFlag == FROM_ALBUM) {
+            imageUri = mPhotoUri;
+        } else {
+            Log.e(LOG_TAG, "mFlag has some wrong value");
+        }
+
+        try {
+            Intent sendIntent = new Intent(Intent.ACTION_SEND);
+            sendIntent.setType("image/*");
+            sendIntent.putExtra(Intent.EXTRA_STREAM, imageUri);
+            sendIntent.setPackage("com.kakako.talk");
+            startActivityForResult(sendIntent, KAKAOTALK_REQUEST_IMG_SEND);
+        } catch (ActivityNotFoundException e) {
+            Uri uriMarket = Uri.parse("market://deatils?id=com.kakao.talk");
+            Intent intent = new Intent(Intent.ACTION_VIEW, uriMarket);
+            startActivity(intent);
+        }
     }
 }

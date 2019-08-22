@@ -266,7 +266,7 @@ public class TmsWASFragment extends Fragment {
             Log.i(TAG, "onProgressUpdate(" +
                     Integer.toString(values[0]) + "," +
                     Integer.toString(values[1]) + ")");
-            callback.progressUpdate(values[0], values[1]);
+            callback.onProgressUpdate(values[0], values[1]);
         }
 
         /**

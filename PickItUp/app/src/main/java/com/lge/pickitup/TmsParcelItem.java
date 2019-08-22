@@ -1,5 +1,8 @@
 package com.lge.pickitup;
 
+import android.os.Parcel;
+import android.os.Parcelable;
+
 import com.google.firebase.database.Exclude;
 import com.google.firebase.database.IgnoreExtraProperties;
 
@@ -7,7 +10,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 @IgnoreExtraProperties
-public class TmsParcelItem implements Comparable<TmsParcelItem>{
+public class TmsParcelItem implements Comparable<TmsParcelItem>, Parcelable {
     public static final String STATUS_COLLECTED = "collected";    // Submitted to courier service initially
     public static final String STATUS_GEOCODED = "geocoded";      // Converted to geocode from address facade
     public static final String STATUS_DELIVERED = "delivered";    // Delivered
@@ -37,6 +40,7 @@ public class TmsParcelItem implements Comparable<TmsParcelItem>{
     public static final String KEY_SECTOR_ID = "sectorId";
     public static final String KEY_ORDER_ID = "orderInRoute";
     public static final String KEY_STATUS = "status";
+    public static final String KEY_COMPLTE_MSG_IMG = "completeImage";
 
     public String id;
     public String trackingNum = UNSET;
@@ -67,6 +71,7 @@ public class TmsParcelItem implements Comparable<TmsParcelItem>{
     public int sectorId = -1;
     public int orderInRoute = -1;
     public String status = STATUS_COLLECTED;
+    public String completeImage = UNSET;
 
     public TmsParcelItem() {
         // Default constructor required for calls to DataSnapshot.getValue(TmsParcelItem.class)
@@ -165,6 +170,70 @@ public class TmsParcelItem implements Comparable<TmsParcelItem>{
         result.put(KEY_SECTOR_ID, sectorId);
         result.put(KEY_ORDER_ID, orderInRoute);
         result.put(KEY_STATUS, status);
+        result.put(KEY_COMPLTE_MSG_IMG, completeImage);
         return result;
     }
+
+    @Override
+    public int describeContents() {
+        return 0;
+    }
+
+    @Override
+    public void writeToParcel(Parcel parcel, int i) {
+        parcel.writeString(id);
+        parcel.writeString(trackingNum);
+        parcel.writeString(packageType);
+        parcel.writeString(date);
+        parcel.writeString(consignorName);
+        parcel.writeString(consignorContact);
+        parcel.writeString(consigneeName);
+        parcel.writeString(consigneeAddr);
+        parcel.writeString(consigneeContact);
+        parcel.writeString(consigneeLongitude);
+        parcel.writeString(consigneeLatitude);
+        parcel.writeString(courierName);
+        parcel.writeString(courierContact);
+        parcel.writeString(remark);
+        parcel.writeString(deliveryNote);
+        parcel.writeString(regionalCode);
+        parcel.writeInt(sectorId);
+        parcel.writeInt(orderInRoute);
+        parcel.writeString(status);
+        parcel.writeString(completeImage);
+    }
+
+    public static final Parcelable.Creator<TmsParcelItem> CREATOR = new Creator<TmsParcelItem>() {
+        @Override
+        public TmsParcelItem createFromParcel(Parcel parcel) {
+            TmsParcelItem item = new TmsParcelItem();
+            item.id = parcel.readString();
+            item.trackingNum = parcel.readString();
+            item.packageType = parcel.readString();
+            item.date = parcel.readString();
+            item.consignorName = parcel.readString();
+            item.consignorContact = parcel.readString();
+            item.consigneeName = parcel.readString();
+            item.consigneeAddr = parcel.readString();
+            item.consigneeContact = parcel.readString();
+            item.consigneeLongitude = parcel.readString();
+            item.consigneeLatitude = parcel.readString();
+            item.courierName = parcel.readString();
+            item.courierContact = parcel.readString();
+            item.remark = parcel.readString();
+            item.deliveryNote = parcel.readString();
+            item.regionalCode = parcel.readString();
+            item.sectorId = parcel.readInt();
+            item.orderInRoute = parcel.readInt();
+            item.status = parcel.readString();
+            item.completeImage = parcel.readString();
+
+            return item;
+        }
+
+        @Override
+        public TmsParcelItem[] newArray(int i) {
+            return null;
+        }
+    };
 }

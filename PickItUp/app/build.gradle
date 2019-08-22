@@ -28,10 +28,12 @@ dependencies {
     implementation 'com.google.firebase:firebase-database:17.0.0'
     implementation 'com.google.firebase:firebase-storage:17.0.0'
     implementation 'com.google.android.material:material:1.0.0'
+    implementation 'com.google.firebase:firebase-messaging:19.0.0'
     testImplementation 'junit:junit:4.12'
     androidTestImplementation 'androidx.test:runner:1.2.0'
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.2.0'
     api 'com.opencsv:opencsv:3.9'
+    implementation 'androidx.work:work-runtime:2.2.0'
 }
 
 apply plugin: 'com.google.gms.google-services'

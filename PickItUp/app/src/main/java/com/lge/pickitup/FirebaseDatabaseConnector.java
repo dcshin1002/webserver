@@ -3,6 +3,7 @@ package com.lge.pickitup;
 import android.content.Context;
 import android.text.TextUtils;
 import android.util.Log;
+import android.widget.ArrayAdapter;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
@@ -30,7 +31,7 @@ public class FirebaseDatabaseConnector {
     private HashMap<String, TmsCourierItem> mCourierHash;
     private ArrayList<String> mArrayKeys;
     private ArrayList<TmsParcelItem> mArrayValues;
-    private ParcelListActivity.TmsItemAdapter mListAdapter;
+    private ArrayAdapter<TmsParcelItem> mListAdapter;
 
     public FirebaseDatabaseConnector(Context context) {
         this.mContext = context;
@@ -73,7 +74,7 @@ public class FirebaseDatabaseConnector {
         }
     }
 
-    protected void setListAdapter(ParcelListActivity.TmsItemAdapter listAdapter) {
+    protected void setListAdapter(ArrayAdapter<TmsParcelItem> listAdapter) {
         if (listAdapter != null) {
             this.mListAdapter = listAdapter;
         } else {
@@ -157,7 +158,11 @@ public class FirebaseDatabaseConnector {
         if (TextUtils.isEmpty(select) || select.equals(mContext.getString(R.string.all_couriers)) || select == null) {
             firebaseQuery = mDatabaseRef.child(PARCEL_REF_NAME).child(pathString).orderByChild(orderBy);
         } else {
-            firebaseQuery = mDatabaseRef.child(PARCEL_REF_NAME).child(pathString).orderByChild(orderBy).equalTo(select);
+            if (orderBy.equals(TmsParcelItem.KEY_ORDER_ID)) {
+                firebaseQuery = mDatabaseRef.child(PARCEL_REF_NAME).child(pathString).orderByChild(orderBy).equalTo(Integer.valueOf(select));
+            }else {
+                firebaseQuery = mDatabaseRef.child(PARCEL_REF_NAME).child(pathString).orderByChild(orderBy).equalTo(select);
+            }
         }
 
         firebaseQuery.addValueEventListener(new ValueEventListener() {
@@ -211,16 +216,17 @@ public class FirebaseDatabaseConnector {
 
         for (int i=0; i < mArrayValues.size(); i++ ){
             TmsParcelItem item = mArrayValues.get(i);
-            double dist = Utils.distance(Utils.mCurrent.getLatitude(),
-                                         Utils.mCurrent.getLongitude(),
-                                         Double.valueOf(item.consigneeLatitude),
-                                         Double.valueOf(item.consigneeLongitude), "km");
-
-            if (dist < minDist) {
-                nearIdx = i;
-                minDist = dist;
+            if (!item.consigneeLatitude.isEmpty() && !item.consigneeLongitude.isEmpty()) {
+                double dist = Utils.distance( Utils.mCurrent.getLatitude(),
+                                              Utils.mCurrent.getLongitude(),
+                                              Double.valueOf(item.consigneeLatitude),
+                                              Double.valueOf(item.consigneeLongitude), "km");
+                if (dist < minDist) {
+                    nearIdx = i;
+                    minDist = dist;
+                }
             }
-        }
+         }
         return nearIdx;
     }
 

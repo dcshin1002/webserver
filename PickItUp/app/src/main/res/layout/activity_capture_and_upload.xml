@@ -5,8 +5,8 @@
 
     <ImageView
         android:id="@+id/ivImagePreview"
-        android:layout_width="300dp"
-        android:layout_height="240dp"
+        android:layout_width="256dp"
+        android:layout_height="192dp"
         android:layout_centerHorizontal="true"
         android:layout_marginTop="40dp"
         android:background="@drawable/image_view_border"
@@ -14,15 +14,27 @@
         android:padding="8dp"
         android:scaleType="centerCrop"/>
 
+    <EditText
+        android:id="@+id/etMessageContent"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/ivImagePreview"
+        android:layout_marginTop="20dp"
+        android:layout_alignLeft="@id/ivImagePreview"
+        android:layout_alignRight="@id/ivImagePreview"
+        android:ems="10"
+        android:inputType="textMultiLine"
+        android:text="Here is area for message contents" />
+
     <Button
         android:id="@+id/btnCameraCapture"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:padding="5dp"
         android:layout_marginTop="30dp"
-        android:layout_below="@id/ivImagePreview"
-        android:layout_alignLeft="@id/ivImagePreview"
-        android:layout_alignRight="@id/ivImagePreview"
+        android:layout_below="@id/etMessageContent"
+        android:layout_alignLeft="@id/etMessageContent"
+        android:layout_alignRight="@id/etMessageContent"
         android:background="#42A5F5"
         android:textColor="#FFFFFF"
         android:text="@string/capture_camera" />
@@ -40,18 +52,6 @@
         android:textColor="#FFFFFF"
         android:text="@string/pick_image_from_gallery" />
 
-    <Button
-        android:id="@+id/btnUploadImageToServer"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:padding="5dp"
-        android:layout_marginTop="20dp"
-        android:layout_below="@id/btnPickImageFromGallery"
-        android:layout_alignLeft="@id/btnPickImageFromGallery"
-        android:layout_alignRight="@id/btnPickImageFromGallery"
-        android:background="#42A5F5"
-        android:textColor="#FFFFFF"
-        android:text="@string/upload_image_to_server" />
 
     <Button
         android:id="@+id/btnSendMessage"
@@ -59,9 +59,9 @@
         android:layout_height="wrap_content"
         android:padding="5dp"
         android:layout_marginTop="20dp"
-        android:layout_below="@id/btnUploadImageToServer"
-        android:layout_alignLeft="@id/btnUploadImageToServer"
-        android:layout_alignRight="@id/btnUploadImageToServer"
+        android:layout_below="@id/btnPickImageFromGallery"
+        android:layout_alignLeft="@id/btnPickImageFromGallery"
+        android:layout_alignRight="@id/btnPickImageFromGallery"
         android:background="#42A5F5"
         android:textColor="#FFFFFF"
         android:text="@string/send_message_with_image" />

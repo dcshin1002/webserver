@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">Parcel Router</string>
+    <string name="app_name">Beyond Logis</string>
     <string name="login_actvity_title">로그인</string>
     <string name="login_guide_title">사용을 위해서는 먼저 로그인해주세요</string>
     <string name="user_account_title">이메일 계정</string>
@@ -60,8 +60,10 @@
     <string name="upload_item_from_file">배송목록 업로드</string>
     <string name="translate_address">고객주소를 위치정보로 변환하여, 서버에 저장하는 중입니다.</string>
     <string name="all_couriers">모든 배송기사</string>
+    <string name="select_sector">선택</string>
     <string name="default_courier_number">기본값(60개/명)</string>
     <string name="courier_name_title">배송 기사명 : </string>
+    <string name="section_name_title">Section 명 : </string>
     <string name="courier_number_title">배송 기사 수 : </string>
     <string name="courier_date_title">배송 날짜 : </string>
     <string name="default_courier_name">모든 배송기사</string>
@@ -86,9 +88,19 @@
     <string name="title_activity_map_view">MapViewActivity</string>
     <string name="back_to_list">리스트 화면으로 돌아가기</string>
     <string name="capture_camera">사진찍기</string>
-    <string name="pick_image_from_gallery">갤러리에서 불어오기</string>
+    <string name="pick_image_from_gallery">갤러리에서 가져오기</string>
     <string name="upload_image_to_server">서버에 이미지 업로드</string>
-    <string name="send_message_with_image">메세지 보내기</string>
+    <string name="send_message_with_image">메세지 전송하고 이미지 저장</string>
     <string name="uploading_image">파일을 서버에 업로딩중입니다.</string>
     <string name="current_location">현재 위치</string>
+    <string name="alert_no_sms_activity">메세지를 보낼 앱이 없습니다.</string>
+    <string name="send_complete_message_title">배송완료 메세지 보내기</string>
+    <string name="send_complete_message_body">배송완료 메세지를 보낼 방법을 선택해주세요.</string>
+    <string name="send_mms_message">메세지 보내기</string>
+    <string name="send_kakako_talk_message">카카오톡 보내기</string>
+    <string name="success_to_upload">이미지 업로딩이 성공적으로 완료되었습니다.</string>
+    <string name="fail_to_upload">이미지 업로딩에 실패하였습니다.</string>
+    <string name="message_title">배송완료 문자</string>
+    <string name="default_notification_channel_id">fcm_default_channel</string>
+    <string name="default_notification_channel_name">Assign</string>
 </resources>

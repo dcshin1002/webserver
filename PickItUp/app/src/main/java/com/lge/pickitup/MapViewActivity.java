@@ -143,6 +143,7 @@ public class MapViewActivity extends AppCompatActivity
             Log.i(LOG_TAG,	"lat = " + item.consigneeLatitude);
             Log.i(LOG_TAG,	"lon = " + item.consigneeLongitude);
             Log.i(LOG_TAG,	"status = " + item.status);
+            Log.i(LOG_TAG,	"orderInRoute = " + item.orderInRoute);
 
             if (   strLatitude  == null  || strLatitude.length()  == 0
                     || strLongitude == null || strLongitude.length() == 0) {

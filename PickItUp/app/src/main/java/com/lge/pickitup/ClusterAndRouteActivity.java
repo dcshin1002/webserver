@@ -7,6 +7,7 @@ import android.app.AlertDialog;
 import android.app.DatePickerDialog;
 import android.content.Context;
 import android.content.DialogInterface;
+import android.content.Intent;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.os.Bundle;
@@ -35,6 +36,7 @@ public class ClusterAndRouteActivity extends AppCompatActivity implements View.O
     private TextView mTextCourierNumber;
     private TextView mTextCourierDate;
     private Button mBtnClusterAndRoute;
+    private Button mBtnMachingCourierSection;
     private View.OnTouchListener mTouchListner;
     private final Calendar myCalendar = Calendar.getInstance();
 
@@ -46,6 +48,7 @@ public class ClusterAndRouteActivity extends AppCompatActivity implements View.O
         mTextCourierNumber = (TextView)findViewById(R.id.text_courier_number);
         mTextCourierDate = (TextView)findViewById(R.id.text_courier_date2);
         mBtnClusterAndRoute = (Button)findViewById(R.id.btn_process_cluster_and_route);
+        mBtnMachingCourierSection = (Button)findViewById(R.id.btn_matchingCourierSection);
 
         mTouchListner = new View.OnTouchListener() {
             @Override
@@ -59,6 +62,7 @@ public class ClusterAndRouteActivity extends AppCompatActivity implements View.O
 
         mBtnClusterAndRoute.setOnClickListener(this);
         mTextCourierDate.setOnClickListener(this);
+        mBtnMachingCourierSection.setOnClickListener(this);
         mTextCourierNumber.setOnTouchListener(mTouchListner);
 
         Bundle b = getIntent().getExtras();
@@ -118,6 +122,9 @@ public class ClusterAndRouteActivity extends AppCompatActivity implements View.O
             case R.id.text_courier_date2:
                 mDatePickerDialog.show();
                 break;
+            case R.id.btn_matchingCourierSection:
+                startActivity(new Intent(this,CourierSectionMatchingActivity.class));
+                break;
         }
     }
 
@@ -140,7 +147,7 @@ public class ClusterAndRouteActivity extends AppCompatActivity implements View.O
     }
 
     @Override
-    public void progressUpdate(int progressCode, int percentComplete) {
+    public void onProgressUpdate(int progressCode, int percentComplete) {
         switch(progressCode) {
             // You can add UI behavior for progress updates here.
             case Progress.ERROR:
