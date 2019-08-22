@@ -15,11 +15,7 @@ q = Queue(connection=conn)
 
 
 def index(req):
-    dcon.loadDataFromFirebaseDB('2019-07-11')
-    return JsonResponse({
-        'msg': '<pre>Firebase activated</pre>',
-        'jobid': None,
-    })
+    return HttpResponse("<pre>Welcome to Beyond TMS system !</pre>")
 
 
 def setClusters(req, year, month, day):
@@ -31,6 +27,9 @@ def setClusters(req, year, month, day):
 
     result = q.enqueue(setClustersWork, args=(
         year, month, day), job_timeout=600)
+
+    dateForm = '-'.join([str(year), str("%02d" % month), str("%02d" % day)])
+    dcon.saveJobStateToFirebaseDB(dateForm, result.get_id().get_status())
 
     return JsonResponse({
         'msg': '<pre>setClusters() Processing...</pre>',
@@ -54,7 +53,7 @@ def setClustersWork(year, month, day, data=None):
         finder.solve(fname)
         dcon.saveDataToFirebaseDB(dateForm, c, finder.problem, finder.route)
         print('firebaseDB updated for cluster', c)
-    print('success setClusters')
+    print('setClusters Done')
 
 
 def getWorkProgress(req, jobid):

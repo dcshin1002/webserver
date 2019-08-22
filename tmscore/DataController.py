@@ -79,6 +79,11 @@ def saveDataToFirebaseDB(dateForm, cluster, problem, route):
             city).update({"sectorId": cluster, "orderInRoute": i})
 
 
+def saveJobStateToFirebaseDB(dateForm, status):
+    print(status)
+    db.firebaseDB.child("backend_status").child(dateForm).update({"route_job": status})
+
+
 def saveTSPFile(fbase):
     for k, items in db.dict_Cluster.items():
         fname = fbase + '_' + str(k) + '.tsp'

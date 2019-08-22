@@ -5,6 +5,9 @@ from tmscore.RouteFinder import RouteFinder
 import tmscore.Adapter as adap
 
 def testMain():
+    if len(sys.argv)<5:
+        print("arguments are not matched")
+        return
     if sys.argv[1] == "set":
         year = sys.argv[2]
         month = sys.argv[3]
