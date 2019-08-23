@@ -84,7 +84,7 @@
 
     <EditText
         android:id="@+id/text_courier_number"
-        android:layout_width="wrap_content"
+        android:layout_width="140dp"
         android:layout_height="wrap_content"
         android:layout_marginStart="8dp"
         android:layout_marginTop="32dp"
@@ -103,9 +103,9 @@
         android:id="@+id/btn_process_cluster_and_route"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginStart="147dp"
+        android:layout_marginStart="100dp"
         android:layout_marginTop="48dp"
-        android:text="Start"
+        android:text="물류분배 및 최적경로 탐색"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/text_courier_date2" />
 
@@ -113,9 +113,9 @@
         android:id="@+id/btn_matchingCourierSection"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginStart="147dp"
-        android:layout_marginTop="48dp"
-        android:text="Matching"
+        android:layout_marginStart="140dp"
+        android:layout_marginTop="44dp"
+        android:text="배송기사 설정"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/btn_process_cluster_and_route" />
 

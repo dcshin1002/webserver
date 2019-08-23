@@ -32,5 +32,5 @@ public interface ProcessingCallback<T> {
      * Indicates that the download operation has finished. This method is called even if the
      * download hasn't completed successfully.
      */
-    void finishProcessing();
+    void finishProcessing(boolean sucess);
 }

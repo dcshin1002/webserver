@@ -1,12 +1,7 @@
 package com.lge.pickitup;
 
-import androidx.appcompat.app.AppCompatActivity;
-import androidx.fragment.app.Fragment;
-
-import android.app.AlertDialog;
 import android.app.DatePickerDialog;
 import android.content.Context;
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
@@ -19,50 +14,55 @@ import android.widget.DatePicker;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.annotation.NonNull;
+import androidx.appcompat.app.AppCompatActivity;
+
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.ValueEventListener;
+
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
 import java.util.Calendar;
-import java.util.List;
 
 public class ClusterAndRouteActivity extends AppCompatActivity implements View.OnClickListener, ProcessingCallback {
     private static final String LOG_TAG = "ClusterAndRouteActivity";
+    private final Calendar myCalendar = Calendar.getInstance();
     private DatePickerDialog mDatePickerDialog;
     private TmsWASFragment networkFragment;
     private boolean processing = false;
     private SimpleDateFormat mSdf;
     private String mOldDateStr;
-
     private int mCourierNumber;
     private TextView mTextCourierNumber;
     private TextView mTextCourierDate;
     private Button mBtnClusterAndRoute;
-    private Button mBtnMachingCourierSection;
+    private Button mBtnMatchingCourierSection;
     private View.OnTouchListener mTouchListner;
-    private final Calendar myCalendar = Calendar.getInstance();
+    private FirebaseDatabaseConnector mFbConnector;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_cluster_and_route);
 
-        mTextCourierNumber = (TextView)findViewById(R.id.text_courier_number);
-        mTextCourierDate = (TextView)findViewById(R.id.text_courier_date2);
-        mBtnClusterAndRoute = (Button)findViewById(R.id.btn_process_cluster_and_route);
-        mBtnMachingCourierSection = (Button)findViewById(R.id.btn_matchingCourierSection);
+        mTextCourierNumber = (TextView) findViewById(R.id.text_courier_number);
+        mTextCourierDate = (TextView) findViewById(R.id.text_courier_date2);
+        mBtnClusterAndRoute = (Button) findViewById(R.id.btn_process_cluster_and_route);
+        mBtnMatchingCourierSection = (Button) findViewById(R.id.btn_matchingCourierSection);
 
         mTouchListner = new View.OnTouchListener() {
             @Override
             public boolean onTouch(View view, MotionEvent motionEvent) {
-            if(motionEvent.getAction() == MotionEvent.ACTION_DOWN) {
-                mTextCourierNumber.setText(Integer.toString(mCourierNumber));
-            }
-            return false;
+                if (motionEvent.getAction() == MotionEvent.ACTION_DOWN) {
+                    mTextCourierNumber.setText(Integer.toString(mCourierNumber));
+                }
+                return false;
             }
         };
 
         mBtnClusterAndRoute.setOnClickListener(this);
         mTextCourierDate.setOnClickListener(this);
-        mBtnMachingCourierSection.setOnClickListener(this);
+        mBtnMatchingCourierSection.setOnClickListener(this);
         mTextCourierNumber.setOnTouchListener(mTouchListner);
 
         Bundle b = getIntent().getExtras();
@@ -84,6 +84,10 @@ public class ClusterAndRouteActivity extends AppCompatActivity implements View.O
             mTextCourierNumber.setText(Integer.toString(mCourierNumber));
         }
 
+        // initially disabled buttons
+        mBtnClusterAndRoute.setEnabled(false);
+        mBtnMatchingCourierSection.setEnabled(false);
+
         mSdf = new SimpleDateFormat("yyyy-MM-dd");
 
         mDatePickerDialog = new DatePickerDialog(this, new DatePickerDialog.OnDateSetListener() {
@@ -92,10 +96,61 @@ public class ClusterAndRouteActivity extends AppCompatActivity implements View.O
                 Calendar newDate = Calendar.getInstance();
                 newDate.set(year, monthOfYear, dayOfMonth);
                 mTextCourierDate.setText(mSdf.format(newDate.getTime()));
+
+                // parcel list gathering
+                mFbConnector.getJobStatusFromFirebaseDatabase(mTextCourierDate.getText().toString(), new ValueEventListener() {
+                    @Override
+                    public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                        long numElements = dataSnapshot.getChildrenCount();
+                        if (numElements == 0) {
+                            mBtnClusterAndRoute.setEnabled(false);
+                            mBtnMatchingCourierSection.setEnabled(false);
+                        } else {
+                            mBtnClusterAndRoute.setEnabled(true);
+                            TmsStatusItem jobStatus = dataSnapshot.getValue(TmsStatusItem.class);
+                            if (jobStatus.route_job.equals("finished")) {
+                                mBtnMatchingCourierSection.setEnabled(true);
+                            } else {
+                                mBtnMatchingCourierSection.setEnabled(false);
+                            }
+                        }
+                    }
+
+                    @Override
+                    public void onCancelled(@NonNull DatabaseError databaseError) {
+                        Log.w(LOG_TAG, "getParcelListFromFirebaseDatabase, ValueEventListener.onCancelled", databaseError.toException());
+                    }
+                });
             }
         }, myCalendar.get(Calendar.YEAR), myCalendar.get(Calendar.MONTH), myCalendar.get(Calendar.DAY_OF_MONTH));
 
         networkFragment = TmsWASFragment.getInstance(getSupportFragmentManager(), "https://tmsproto-py.herokuapp.com");
+
+        mFbConnector = new FirebaseDatabaseConnector(this);
+
+        // parcel list gathering
+        mFbConnector.getParcelListFromFirebaseDatabase(mTextCourierDate.getText().toString(), "id", null, new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                long numElements = dataSnapshot.getChildrenCount();
+                if (numElements > 0) {
+                    mBtnClusterAndRoute.setEnabled(true);
+
+                    TmsStatusItem jobStatus = dataSnapshot.getValue(TmsStatusItem.class);
+                    if (jobStatus.route_job.equals("finished")) {
+                        mBtnMatchingCourierSection.setEnabled(true);
+                    } else {
+                        mBtnMatchingCourierSection.setEnabled(false);
+                    }
+
+                }
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError databaseError) {
+                Log.w(LOG_TAG, "getParcelListFromFirebaseDatabase, ValueEventListener.onCancelled", databaseError.toException());
+            }
+        });
     }
 
     @Override
@@ -109,7 +164,7 @@ public class ClusterAndRouteActivity extends AppCompatActivity implements View.O
                             update = Integer.parseInt(mTextCourierNumber.getText().toString());
                         }
                         mCourierNumber = update;
-                    } catch (Exception e){
+                    } catch (Exception e) {
                         e.printStackTrace();
                         throw e;
                     }
@@ -123,7 +178,7 @@ public class ClusterAndRouteActivity extends AppCompatActivity implements View.O
                 mDatePickerDialog.show();
                 break;
             case R.id.btn_matchingCourierSection:
-                startActivity(new Intent(this,CourierSectionMatchingActivity.class));
+                startActivity(new Intent(this, CourierSectionMatchingActivity.class));
                 break;
         }
     }
@@ -148,7 +203,7 @@ public class ClusterAndRouteActivity extends AppCompatActivity implements View.O
 
     @Override
     public void onProgressUpdate(int progressCode, int percentComplete) {
-        switch(progressCode) {
+        switch (progressCode) {
             // You can add UI behavior for progress updates here.
             case Progress.ERROR:
                 Log.i(LOG_TAG, "Clustering & Routing process encounter ERROR !!");
@@ -166,13 +221,14 @@ public class ClusterAndRouteActivity extends AppCompatActivity implements View.O
     }
 
     @Override
-    public void finishProcessing() {
+    public void finishProcessing(boolean sucess) {
         Log.i(LOG_TAG, "finishProcessing()");
         if (networkFragment != null) {
             networkFragment.cancelProcess();
         }
         processing = false;
-        Toast.makeText(ClusterAndRouteActivity.this, "완료됨", Toast.LENGTH_SHORT).show();
+        Toast.makeText(ClusterAndRouteActivity.this,
+                (sucess ? "완료" : "실패"), Toast.LENGTH_SHORT).show();
         mBtnClusterAndRoute.setEnabled(true);
     }
 }

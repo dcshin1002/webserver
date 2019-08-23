@@ -25,6 +25,7 @@ public class FirebaseDatabaseConnector {
     private static final String PARCEL_REF_NAME = "parcel_list";
     private static final String COURIER_REF_NAME = "courier_list";
     private static final String REGISTERED_COURIER_REF_NAME = "registered_courier";
+    private static final String JOB_STATUS_NAME = "backend_status";
     private Context mContext;
     private DatabaseReference mDatabaseRef;
 
@@ -132,7 +133,6 @@ public class FirebaseDatabaseConnector {
         getCourierListFromFirebaseDatabase(pathString, orderBy, null);
     }
 
-
     protected void getCourierListFromFirebaseDatabase(String pathString, String orderBy, String select) {
         Query firebaseQuery;
 
@@ -142,7 +142,7 @@ public class FirebaseDatabaseConnector {
             firebaseQuery = mDatabaseRef.child(COURIER_REF_NAME).child(pathString).orderByChild(orderBy).equalTo(select);
         }
 
-        firebaseQuery.addValueEventListener(new ValueEventListener() {
+        firebaseQuery.addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
                 mCourierHash.clear();
@@ -168,7 +168,7 @@ public class FirebaseDatabaseConnector {
 
         firebaseQuery = mDatabaseRef.child(REGISTERED_COURIER_REF_NAME).orderByChild(orderBy);
 
-        firebaseQuery.addValueEventListener(new ValueEventListener() {
+        firebaseQuery.addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
                 mCourierHash.clear();
@@ -189,6 +189,21 @@ public class FirebaseDatabaseConnector {
         });
     }
 
+    protected void getParcelListFromFirebaseDatabase(String pathString, String orderBy, String select, ValueEventListener listener) {
+        Query firebaseQuery;
+        if (TextUtils.isEmpty(select) || select.equals(mContext.getString(R.string.all_couriers)) || select == null) {
+            firebaseQuery = mDatabaseRef.child(PARCEL_REF_NAME).child(pathString).orderByChild(orderBy);
+        } else {
+            if (orderBy.equals(TmsParcelItem.KEY_SECTOR_ID)) {
+                firebaseQuery = mDatabaseRef.child(PARCEL_REF_NAME).child(pathString).orderByChild(orderBy).equalTo(Integer.valueOf(select));
+            } else {
+                firebaseQuery = mDatabaseRef.child(PARCEL_REF_NAME).child(pathString).orderByChild(orderBy).equalTo(select);
+            }
+        }
+
+        firebaseQuery.addListenerForSingleValueEvent(listener);
+    }
+
     protected void getParcelListFromFirebaseDatabase(String pathString, String orderBy) {
         getParcelListFromFirebaseDatabase(pathString, orderBy, null);
     }
@@ -205,7 +220,7 @@ public class FirebaseDatabaseConnector {
             }
         }
 
-        firebaseQuery.addValueEventListener(new ValueEventListener() {
+        firebaseQuery.addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
                 mParcelHash.clear();
@@ -249,6 +264,13 @@ public class FirebaseDatabaseConnector {
             }
         });
     }
+
+    protected void getJobStatusFromFirebaseDatabase(String pathString, ValueEventListener listener) {
+        Query firebaseQuery;
+        firebaseQuery = mDatabaseRef.child(JOB_STATUS_NAME).child(pathString);
+        firebaseQuery.addListenerForSingleValueEvent(listener);
+    }
+
 
     private int getNearIdx(ArrayList<TmsParcelItem> mArrayValues) {
         int nearIdx = 0;

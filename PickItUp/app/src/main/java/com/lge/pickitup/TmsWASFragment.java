@@ -217,7 +217,7 @@ public class TmsWASFragment extends Fragment {
                                 && networkInfo.getType() != ConnectivityManager.TYPE_MOBILE)) {
                     // If no connectivity, cancel task and update Callback with null data.
                     Log.w(TAG, "No connection !!");
-                    callback.finishProcessing();
+                    callback.finishProcessing(false);
                 }
             }
         }
@@ -280,7 +280,7 @@ public class TmsWASFragment extends Fragment {
                 } else if (result.resultValue != null) {
                     callback.updateFromProcess(result.resultValue);
                 }
-                callback.finishProcessing();
+                callback.finishProcessing(true);
             }
             String msg = "onPostExecute(";
             if (result != null) msg += result.resultValue;
