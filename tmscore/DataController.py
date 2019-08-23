@@ -76,7 +76,7 @@ def saveDataToFirebaseDB(dateForm, cluster, problem, route):
     for i, v in enumerate(route):
         city = problem.iloc[v][0]
         db.firebaseDB.child("parcel_list").child(dateForm).child(
-            city).update({"sectorId": cluster, "orderInRoute": i})
+            city).update({"sectorId": cluster, "orderInRoute": i+1})
 
 
 def saveJobStateToFirebaseDB(dateForm, status):

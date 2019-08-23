@@ -279,7 +279,7 @@ public class FirebaseDatabaseConnector {
                 if (mArrayValues.size() > 0) {
                     Collections.sort(mArrayValues);
                     int nearIdx = getNearIdx(mArrayValues);
-                    int newOrderInRoute = 0;
+                    int newOrderInRoute = 1;
 
                     for (int i=0; i < mArrayValues.size(); i++) {
                         int idx = (nearIdx + i) % mArrayValues.size();

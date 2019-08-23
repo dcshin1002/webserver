@@ -591,7 +591,7 @@ public class CourierSectionMatchingActivity extends AppCompatActivity implements
                 if (addrText != null) {
                     String addrTextValue = "";
                     if ((item.orderInRoute != -1) && !mTextCourierName.getText().toString().equals(getString(R.string.all_couriers))) {
-                        addrTextValue = ((item.orderInRoute + 1) + " : ");
+                        addrTextValue = (item.orderInRoute + " : ");
                     }
                     addrText.setText(addrTextValue + item.consigneeAddr);
                     if (isDeliverd) {

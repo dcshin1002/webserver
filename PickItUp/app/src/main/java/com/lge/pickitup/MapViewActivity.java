@@ -191,12 +191,10 @@ public class MapViewActivity extends AppCompatActivity
                 Bitmap seleted_pin=greenpin;
                 if (item.status.equals(TmsParcelItem.STATUS_DELIVERED)) {
                     pin = bluepin;
-                    //marker.setCustomImageResourceId((int)mArrayBluePinImg.get(item.orderInRoute+1));
                 } else if (item.status.equals(TmsParcelItem.STATUS_GEOCODED)) {
                     pin = redpin;
-                    //marker.setCustomImageResourceId((int)mArrayRedPinImg.get(item.orderInRoute+1));
                 }
-                int textVal = item.orderInRoute+1;
+                int textVal = item.orderInRoute;
 
                 Paint paint = new Paint();
                 paint.setStyle(Paint.Style.FILL);
@@ -347,7 +345,7 @@ public class MapViewActivity extends AppCompatActivity
             if (addrText != null) {
                 String addrTextValue = "";
                 if ( item.orderInRoute != -1)  {
-                    addrTextValue += (item.orderInRoute+1) + " : ";
+                    addrTextValue += item.orderInRoute + " : ";
                 }
                 addrText.setText(addrTextValue + item.consigneeAddr);
                 if (isDeliverd) {

@@ -39,7 +39,7 @@ def setClusters(req, year, month, day):
 def setClustersWork(year, month, day, data=None):
     dateForm = '-'.join([str(year), str("%02d" % month), str("%02d" % day)])
     print(dateForm)
-    dcon.saveJobStateToFirebaseDB(dateForm, get_current_job().get_status())
+    # dcon.saveJobStateToFirebaseDB(dateForm, get_current_job().get_status())
     dcon.loadDataFromFirebaseDB(dateForm)
 
     distributer.clustering()
@@ -47,8 +47,8 @@ def setClustersWork(year, month, day, data=None):
     finder = RouteFinder()
     for c, fname in enumerate(dcon.getTSPFilenames()):
         finder.solve(dateForm, fname)
-        dcon.saveDataToFirebaseDB(dateForm, c, finder.problem, finder.route)
-        print('firebaseDB updated for cluster', c)
+        dcon.saveDataToFirebaseDB(dateForm, c+1, finder.problem, finder.route)
+        print('firebaseDB updated for cluster', c+1)
     dcon.saveJobStateToFirebaseDB(dateForm, "finished")
     print('setClusters Done')
 
