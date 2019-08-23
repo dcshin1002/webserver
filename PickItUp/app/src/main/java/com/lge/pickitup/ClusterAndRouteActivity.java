@@ -178,7 +178,9 @@ public class ClusterAndRouteActivity extends AppCompatActivity implements View.O
                 mDatePickerDialog.show();
                 break;
             case R.id.btn_matchingCourierSection:
-                startActivity(new Intent(this, CourierSectionMatchingActivity.class));
+                Intent intent = new Intent(this, CourierSectionMatchingActivity.class);
+                intent.putExtra(Utils.KEY_DB_DATE, mTextCourierDate.getText().toString());
+                startActivity(intent);
                 break;
         }
     }
