@@ -3,7 +3,6 @@ package com.lge.pickitup;
 
 import android.Manifest;
 import android.app.AlertDialog;
-import android.app.DatePickerDialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -19,7 +18,6 @@ import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
-import android.widget.DatePicker;
 import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.TextView;
@@ -36,7 +34,6 @@ import com.google.firebase.auth.FirebaseUser;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Calendar;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -44,42 +41,32 @@ import java.util.List;
 public class CourierSectionMatchingActivity extends AppCompatActivity implements View.OnClickListener {
 
     private static final String LOG_TAG = "CourierSection";
+    private static String mSort = "id";
+    final int MY_PERMISSIONS = 998;
     private FirebaseAuth mAuth;
     private FirebaseAuth.AuthStateListener mAuthListener;
     private FirebaseUser mCurrentUser;
     private FirebaseDatabaseConnector mFbConnector;
-
     private CourierSectionMatchingActivity.TmsItemAdapter mArrayAdapter;
-
     private TextView mTvAccountName;
     private TextView mTvSignOutText;
     private ImageView mIvConnStatus;
-
     private HashMap<String, TmsParcelItem> mParcelDatabaseHash = new HashMap<>();
     private HashMap<String, TmsCourierItem> mCourierDatabaseHash = new HashMap<>();
     private ArrayList<String> mArrayKeys = new ArrayList<String>();
     private ArrayList<TmsParcelItem> mArrayValues = new ArrayList<TmsParcelItem>();
-
     private TextView mTextSectionName;
     private TextView mTextCourierName;
     private TextView mTextCourierDate;
     private TextView mTextCount;
     private Button mBtnAssignCourier;
     private Button mBtnChangeView;
-    private DatePickerDialog mDatePickerDialog;
     private AlertDialog.Builder mCourierPickerDialog;
     private AlertDialog.Builder mDeliveryCompleteDialog;
     private SimpleDateFormat mSdf;
     private View.OnTouchListener mTouchListner;
-
     private String mOldDateStr;
-    private static String mSort = "id";
 
-    final int MY_PERMISSIONS = 998;
-    private String[] mSectionItems;
-
-    final Calendar myCalendar = Calendar.getInstance();
-    private boolean isDataChangedByDatePicker=false;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -95,11 +82,10 @@ public class CourierSectionMatchingActivity extends AppCompatActivity implements
 
         if (b != null) {
             dateStr = b.getString(Utils.KEY_DB_DATE);
-            courierStr = b.getString(Utils.KEY_COURIER_NAME);
         } else {
             dateStr = Utils.getTodayDateStr();
-            courierStr = getString(R.string.select_courier);
         }
+        courierStr = getString(R.string.select_courier);
 
         mTextCourierDate.setText(dateStr);
         mTextCourierName.setText(courierStr);
@@ -206,7 +192,7 @@ public class CourierSectionMatchingActivity extends AppCompatActivity implements
     private void updateConnectUI() {
         if (mCurrentUser != null) {
             mIvConnStatus.setImageDrawable(getDrawable(R.mipmap.activity_connect_account_settings_connected));
-            mTvAccountName.setText(mCurrentUser.getDisplayName() + " (" +mCurrentUser.getEmail() +")");
+            mTvAccountName.setText(mCurrentUser.getDisplayName() + " (" + mCurrentUser.getEmail() + ")");
             mTvAccountName.setBackground(getDrawable(R.drawable.connected_account_border));
             mTvSignOutText.setBackground(getDrawable(R.drawable.active_border2));
             mTvSignOutText.setClickable(true);
@@ -218,7 +204,6 @@ public class CourierSectionMatchingActivity extends AppCompatActivity implements
             mTvSignOutText.setClickable(false);
         }
     }
-
 
 
     private void initResources() {
@@ -259,9 +244,9 @@ public class CourierSectionMatchingActivity extends AppCompatActivity implements
         mTouchListner = new View.OnTouchListener() {
             @Override
             public boolean onTouch(View view, MotionEvent motionEvent) {
-                if(motionEvent.getAction() == MotionEvent.ACTION_DOWN) {
+                if (motionEvent.getAction() == MotionEvent.ACTION_DOWN) {
                     view.setBackgroundColor(0xFFE91E63);
-                } else if(motionEvent.getAction() == MotionEvent.ACTION_UP) {
+                } else if (motionEvent.getAction() == MotionEvent.ACTION_UP) {
                     view.setBackgroundColor(0xFF42A5F5);
                 }
                 return false;
@@ -271,7 +256,6 @@ public class CourierSectionMatchingActivity extends AppCompatActivity implements
         mBtnAssignCourier.setOnTouchListener(mTouchListner);
         mBtnChangeView.setOnTouchListener(mTouchListner);
         mTextSectionName.setOnClickListener(this);
-        mTextCourierDate.setOnClickListener(this);
         mTextCourierName.setOnClickListener(this);
         mBtnAssignCourier.setOnClickListener(this);
         mBtnChangeView.setOnClickListener(this);
@@ -303,27 +287,12 @@ public class CourierSectionMatchingActivity extends AppCompatActivity implements
                 Utils.startKakaoMapActivity(getApplication(), Double.valueOf(LatitudeStr), Double.valueOf(LongitudeStr));
             }
         });
-
-        mDatePickerDialog = new DatePickerDialog(this, new DatePickerDialog.OnDateSetListener() {
-            @Override
-            public void onDateSet(DatePicker datePicker, int year, int monthOfYear, int dayOfMonth) {
-                Calendar newDate = Calendar.getInstance();
-                newDate.set(year, monthOfYear, dayOfMonth);
-                String newDateStr = mSdf.format(newDate.getTime());
-
-                if (!newDateStr.equals(mOldDateStr)) {
-                    resetCourierText();
-                }
-                mTextCourierDate.setText(newDateStr);
-                refreshList(mTextCourierName.getText().toString());
-                isDataChangedByDatePicker = true;
-            }
-        }, myCalendar.get(Calendar.YEAR), myCalendar.get(Calendar.MONTH), myCalendar.get(Calendar.DAY_OF_MONTH));
     }
 
     public boolean isTextSectionNameDefaultValue() {
         return mTextSectionName.getText().toString().equals(getString(R.string.select_sector));
     }
+
     public boolean isTextCourierNameDefaultValue() {
         return mTextCourierName.getText().toString().equals(getString(R.string.select_courier));
     }
@@ -333,7 +302,7 @@ public class CourierSectionMatchingActivity extends AppCompatActivity implements
         switch (view.getId()) {
             case R.id.btn_assign:
 
-                if (isTextSectionNameDefaultValue()){
+                if (isTextSectionNameDefaultValue()) {
                     Toast.makeText(getApplicationContext(), getString(R.string.please_select_sector), Toast.LENGTH_SHORT).show();
                     break;
                 }
@@ -363,7 +332,7 @@ public class CourierSectionMatchingActivity extends AppCompatActivity implements
                 break;
 
             case R.id.btn_change_view:
-                if (isTextSectionNameDefaultValue()){
+                if (isTextSectionNameDefaultValue()) {
                     Toast.makeText(getApplicationContext(), getString(R.string.please_select_sector), Toast.LENGTH_SHORT).show();
                     break;
                 }
@@ -374,7 +343,6 @@ public class CourierSectionMatchingActivity extends AppCompatActivity implements
                 break;
 
             case R.id.text_courier_date:
-                mDatePickerDialog.show();
                 break;
 
             case R.id.text_courier_name:
@@ -394,7 +362,7 @@ public class CourierSectionMatchingActivity extends AppCompatActivity implements
     }
 
     private void showSectionPicker() {
-        final String[] items = mSectionItems;
+        final String[] items = prepareSectionArray();
         mCourierPickerDialog = new AlertDialog.Builder(this);
         mCourierPickerDialog.setTitle(getString(R.string.sector_sel_dialog_title));
 
@@ -471,19 +439,19 @@ public class CourierSectionMatchingActivity extends AppCompatActivity implements
         mCourierPickerDialog.show();
     }
 
-    private void prepareSectionArray() {
+    private String[] prepareSectionArray() {
         HashSet<String> sectionSet = new HashSet<String>();
         for (TmsParcelItem item : mArrayValues) {
             sectionSet.add(String.valueOf(item.sectorId));
         }
 
         String[] result = new String[sectionSet.size()];
-        int i=0;
+        int i = 0;
         for (String sec : sectionSet) {
             result[i] = sec;
             i++;
         }
-        mSectionItems = result;
+        return result;
     }
 
     private String[] prepareCourierArray() {
@@ -492,7 +460,7 @@ public class CourierSectionMatchingActivity extends AppCompatActivity implements
 
         Log.d(LOG_TAG, "prepareCourierArray, size = " + mCourierDatabaseHash.size());
         courierArrayList.addAll(mCourierDatabaseHash.values());
-        for(TmsCourierItem item : courierArrayList) {
+        for (TmsCourierItem item : courierArrayList) {
             strArrayList.add(item.name);
         }
         String[] result = strArrayList.toArray(new String[strArrayList.size()]);
@@ -510,82 +478,9 @@ public class CourierSectionMatchingActivity extends AppCompatActivity implements
         }
 
         Log.d(LOG_TAG, "ParcelList size = " + mParcelDatabaseHash.size());
-        Log.d(LOG_TAG, "CourierList size = "  + mCourierDatabaseHash.size());
+        Log.d(LOG_TAG, "CourierList size = " + mCourierDatabaseHash.size());
         Log.d(LOG_TAG, "KeyArray size = " + mArrayKeys.size());
         Log.d(LOG_TAG, "ValueArray size = " + mArrayValues.size());
-    }
-
-    protected class TmsItemAdapter extends ArrayAdapter<TmsParcelItem> {
-
-        public TmsItemAdapter(Context context, int resource, List<TmsParcelItem> list) {
-            super(context, resource, list);
-        }
-
-        @Override
-        public void notifyDataSetChanged() {
-            super.notifyDataSetChanged();
-            mTextCount.setText(getItemString(mArrayValues));
-            if (isDataChangedByDatePicker) {
-                prepareSectionArray();
-                isDataChangedByDatePicker = false;
-            }
-        }
-
-        @Override
-        public View getView(int position, View convertView, ViewGroup parent) {
-            View v = convertView;
-
-            if (v == null) {
-                LayoutInflater inflater = (LayoutInflater) getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-                v = inflater.inflate(R.layout.parcel_listview_row, null);
-            }
-
-            final TmsParcelItem item = getItem(position);
-            boolean isDeliverd = item.status.equals(TmsParcelItem.STATUS_DELIVERED);
-
-            if (item != null) {
-                TextView addrText = v.findViewById(R.id.listAddr);
-                TextView customerText = v.findViewById(R.id.listItemTextCustomer);
-                TextView deliveryNote = v.findViewById(R.id.listItemTextDeliveryMemo);
-                TextView remark = v.findViewById(R.id.listItemTextRemark);
-                Button btn_complete = v.findViewById(R.id.btn_complete);
-                ImageView statusIcon = v.findViewById(R.id.status_icon);
-
-                btn_complete.setOnClickListener(new View.OnClickListener() {
-                    @Override
-                    public void onClick(View view) {
-                        processLitBtnClick(item);
-                    }
-                });
-
-                if (addrText != null) {
-                    String addrTextValue = "";
-                    if ((item.orderInRoute != -1) && !mTextCourierName.getText().toString().equals(getString(R.string.all_couriers))) {
-                        addrTextValue = ((item.orderInRoute+1) + " : ");
-                    }
-                    addrText.setText(addrTextValue + item.consigneeAddr);
-                    if (isDeliverd) {
-                        addrText.setTextColor(0xFF68c166);
-                        statusIcon.setImageDrawable(getDrawable(R.mipmap.tag_delivered_v2));
-                        btn_complete.setVisibility(View.INVISIBLE);
-                    } else {
-                        addrText.setTextColor(0xFF4F4F4F);
-                        statusIcon.setImageDrawable(getDrawable(R.mipmap.tag_in_transit_v2));
-                        btn_complete.setVisibility(View.VISIBLE);
-                    }
-                }
-                if(customerText != null) {
-                    customerText.setText(getString(R.string.customer) + " : " + item.consigneeName + " (" + item.consigneeContact + ")");
-                }
-                if(deliveryNote != null) {
-                    deliveryNote.setText(getString(R.string.delivery_note) + " : " + item.deliveryNote);
-                }
-                if (remark != null) {
-                    remark.setText(getString(R.string.remark) + " : " + item.remark);
-                }
-            }
-            return v;
-        }
     }
 
     private String getItemString(ArrayList<TmsParcelItem> items) {
@@ -641,6 +536,75 @@ public class CourierSectionMatchingActivity extends AppCompatActivity implements
                 });
 
         mDeliveryCompleteDialog.show();
+    }
+
+    protected class TmsItemAdapter extends ArrayAdapter<TmsParcelItem> {
+
+        public TmsItemAdapter(Context context, int resource, List<TmsParcelItem> list) {
+            super(context, resource, list);
+        }
+
+        @Override
+        public void notifyDataSetChanged() {
+            super.notifyDataSetChanged();
+            mTextCount.setText(getItemString(mArrayValues));
+        }
+
+        @Override
+        public View getView(int position, View convertView, ViewGroup parent) {
+            View v = convertView;
+
+            if (v == null) {
+                LayoutInflater inflater = (LayoutInflater) getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+                v = inflater.inflate(R.layout.parcel_listview_row, null);
+            }
+
+            final TmsParcelItem item = getItem(position);
+            boolean isDeliverd = item.status.equals(TmsParcelItem.STATUS_DELIVERED);
+
+            if (item != null) {
+                TextView addrText = v.findViewById(R.id.listAddr);
+                TextView customerText = v.findViewById(R.id.listItemTextCustomer);
+                TextView deliveryNote = v.findViewById(R.id.listItemTextDeliveryMemo);
+                TextView remark = v.findViewById(R.id.listItemTextRemark);
+                Button btn_complete = v.findViewById(R.id.btn_complete);
+                ImageView statusIcon = v.findViewById(R.id.status_icon);
+
+                btn_complete.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View view) {
+                        processLitBtnClick(item);
+                    }
+                });
+
+                if (addrText != null) {
+                    String addrTextValue = "";
+                    if ((item.orderInRoute != -1) && !mTextCourierName.getText().toString().equals(getString(R.string.all_couriers))) {
+                        addrTextValue = ((item.orderInRoute + 1) + " : ");
+                    }
+                    addrText.setText(addrTextValue + item.consigneeAddr);
+                    if (isDeliverd) {
+                        addrText.setTextColor(0xFF68c166);
+                        statusIcon.setImageDrawable(getDrawable(R.mipmap.tag_delivered_v2));
+                        btn_complete.setVisibility(View.INVISIBLE);
+                    } else {
+                        addrText.setTextColor(0xFF4F4F4F);
+                        statusIcon.setImageDrawable(getDrawable(R.mipmap.tag_in_transit_v2));
+                        btn_complete.setVisibility(View.VISIBLE);
+                    }
+                }
+                if (customerText != null) {
+                    customerText.setText(getString(R.string.customer) + " : " + item.consigneeName + " (" + item.consigneeContact + ")");
+                }
+                if (deliveryNote != null) {
+                    deliveryNote.setText(getString(R.string.delivery_note) + " : " + item.deliveryNote);
+                }
+                if (remark != null) {
+                    remark.setText(getString(R.string.remark) + " : " + item.remark);
+                }
+            }
+            return v;
+        }
     }
 }
 
