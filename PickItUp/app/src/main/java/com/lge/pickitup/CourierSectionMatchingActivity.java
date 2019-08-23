@@ -349,6 +349,17 @@ public class CourierSectionMatchingActivity extends AppCompatActivity implements
                 }
                 // Let update those on FirebaseDdatabse
                 mFbConnector.postParcelListToFirebaseDatabase2(mTextCourierDate.getText().toString(), mArrayValues);
+                AlertDialog.Builder builder = new AlertDialog.Builder(CourierSectionMatchingActivity.this);
+                builder.setTitle(getString(R.string.assign_is_completed));
+                builder.setMessage(String.format(getResources().getString(R.string.alert_message_after_assign), mTextSectionName.getText().toString(), mTextCourierName.getText().toString()));
+                builder.setCancelable(true);
+                builder.setPositiveButton("확인", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialogInterface, int i) {
+
+                    }
+                });
+                builder.show();
                 break;
 
             case R.id.btn_change_view:
@@ -489,6 +500,7 @@ public class CourierSectionMatchingActivity extends AppCompatActivity implements
     }
 
     private void refreshList(String select) {
+        // if
         if (select.equals(getString(R.string.select_courier))) {
             mFbConnector.getParcelListFromFirebaseDatabase(mTextCourierDate.getText().toString(), TmsParcelItem.KEY_ID);
             //mFbConnector.getCourierListFromFirebaseDatabase(mTextCourierDate.getText().toString(), TmsParcelItem.KEY_ID);
