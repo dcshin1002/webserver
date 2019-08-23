@@ -90,6 +90,18 @@ public class FirebaseDatabaseConnector {
         }
     }
 
+    protected void postParcelListToFirebaseDatabase2(String pathString, ArrayList<TmsParcelItem> list) {
+        DatabaseReference ref = mDatabaseRef.child(PARCEL_REF_NAME);
+        Map<String, Object> childUpdates = new HashMap<>();
+        Map<String, Object> postValues = null;
+
+        for (TmsParcelItem item : list) {
+            postValues = item.toMap();
+            childUpdates.put("/" + pathString + "/" + item.id, postValues);
+        }
+        ref.updateChildren(childUpdates);
+    }
+
     protected void postParcelItemToFirebaseDatabase(String pathString, TmsParcelItem item) {
         DatabaseReference ref = mDatabaseRef.child(PARCEL_REF_NAME);
         Map<String, Object> childUpdates = new HashMap<>();

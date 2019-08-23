@@ -348,7 +348,7 @@ public class CourierSectionMatchingActivity extends AppCompatActivity implements
                     //mFbConnector.postParcelItemToFirebaseDatabase(mTextCourierDate.getText().toString(),item);
                 }
                 // Let update those on FirebaseDdatabse
-                mFbConnector.postParcelListToFirebaseDatabase(mTextCourierDate.getText().toString(), mArrayValues);
+                mFbConnector.postParcelListToFirebaseDatabase2(mTextCourierDate.getText().toString(), mArrayValues);
                 break;
 
             case R.id.btn_change_view:

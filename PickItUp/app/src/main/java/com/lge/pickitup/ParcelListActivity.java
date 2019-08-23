@@ -353,6 +353,9 @@ public class ParcelListActivity extends AppCompatActivity implements View.OnClic
             }
         }, myCalendar.get(Calendar.YEAR), myCalendar.get(Calendar.MONTH), myCalendar.get(Calendar.DAY_OF_MONTH));
     }
+    private boolean isCourierNameHasDefaultText(){
+        return mTextCourierName.getText().equals(getString(R.string.all_couriers));
+    }
 
     @Override
     public void onClick(View view) {
@@ -362,6 +365,10 @@ public class ParcelListActivity extends AppCompatActivity implements View.OnClic
                 break;
 
             case R.id.btn_change_view:
+                if (isCourierNameHasDefaultText()) {
+                    Toast.makeText(getApplicationContext(), getString(R.string.please_select_courier),Toast.LENGTH_SHORT).show();
+                    break;
+                }
                 Intent intent = new Intent(ParcelListActivity.this, MapViewActivity.class);
                 intent.putExtra(TmsParcelItem.KEY_DATE, mTextCourierDate.getText().toString());
                 intent.putExtra(TmsParcelItem.KEY_COURIER_NAME, mTextCourierName.getText().toString());
