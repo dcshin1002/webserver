@@ -80,15 +80,14 @@
         android:layout_alignBaseline="@id/text_date_title"
         android:layout_toRightOf="@id/text_date_title"
         android:layout_alignStart="@id/text_courier_name"
-        android:paddingLeft="14dp"
+        android:paddingLeft="0dp"
         android:paddingRight="14dp"
         android:paddingTop="8dp"
         android:paddingBottom="8dp"
         android:text="@string/default_courier_date"
         android:textSize="16dp"
-        android:background="@drawable/active_border"
-        android:textColor="#FFFFFF"
-        android:clickable="true" />
+        android:textColor="#000000"
+        android:clickable="false" />
     <ImageView
         android:id="@+id/section_icn"
         android:layout_width="20dp"

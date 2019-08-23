@@ -56,9 +56,6 @@ public class MapViewActivity extends AppCompatActivity
     private static ArrayList<TmsParcelItem> mArrayValues = new ArrayList<TmsParcelItem>();
 
     private static String mSort = "id";
-    private static ArrayList mArrayBluePinImg = new ArrayList();
-    private static ArrayList mArrayRedPinImg= new ArrayList();
-    private static ArrayList mArrayGreenPinImg= new ArrayList();
     private RelativeLayout mLayout_parcel_data;
 
     private static float mInitLatitude = 0;
@@ -66,10 +63,6 @@ public class MapViewActivity extends AppCompatActivity
     private boolean flag_item_selected = false;
     private TmsParcelItem mCompleteTarget;
     private static final int SEND_COMPLETED_MESSAGE = 1;
-
-
-    ArrayList pinList = new ArrayList(Arrays.asList(R.drawable.redpin, R.drawable.bluepin, R.drawable.greenpin));
-    ArrayList<String> strList = new ArrayList(Arrays.asList("marker_redpin_", "marker_bluepin_", "marker_greenpin_"));
     private static Bitmap bluepin;
     private static Bitmap redpin;
     private static Bitmap greenpin;
@@ -123,25 +116,6 @@ public class MapViewActivity extends AppCompatActivity
     protected void initResources() {
         mLayout_parcel_data =  (RelativeLayout) findViewById(R.id.parcel_data);
         GlobalRes = getResources();
-        Resources res = this.getResources();
-
-
-
-        for (int i=0; i<= 99; i++) {
-            String imagename = "marker_bluepin_" + i;
-            int resID = res.getIdentifier(imagename, "drawable", this.getPackageName());
-            mArrayBluePinImg.add(resID);
-        }
-        for (int i=0; i<= 99; i++) {
-            String imagename = "marker_redpin_" + i;
-            int resID = res.getIdentifier(imagename, "drawable", this.getPackageName());
-            mArrayRedPinImg.add(resID);
-        }
-        for (int i=0; i<= 99; i++) {
-            String imagename = "marker_greenpin_" + i;
-            int resID = res.getIdentifier(imagename, "drawable", this.getPackageName());
-            mArrayGreenPinImg.add(resID);
-        }
     }
 
     protected static void addMarker() {
