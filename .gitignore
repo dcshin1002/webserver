@@ -1,4 +1,6 @@
 *.pyc
 *.tsp
-DBAuth/*
-venv/*
+**/venv
+**/.vscode
+DBAuth
+

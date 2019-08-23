@@ -86,10 +86,10 @@ def saveJobStateToFirebaseDB(dateForm, status):
 
 def saveTSPFile(fbase):
     for k, items in db.dict_Cluster.items():
-        fname = fbase + '_' + str(k) + '.tsp'
+        fname = fbase + '_' + str(k+1) + '.tsp'
         f = open(fname, 'w', encoding='utf-8')
         # dummy information
-        f.write('NAME : TMS test data_' + str(k) + '\n')
+        f.write('NAME : TMS test data_' + str(k+1) + '\n')
         f.write('COMMENT : TMS test data of about 300 spots to deliever\n')
         f.write('TYPE : TSP\n')
         f.write('DIMENSION : ' + str(len(items))+'\n')
