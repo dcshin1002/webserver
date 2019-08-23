@@ -91,8 +91,8 @@ public class UploadImageActivity extends AppCompatActivity {
         setContentView(R.layout.activity_capture_and_upload);
 
         Intent intent = getIntent();
-        mSelectedItem = intent.getParcelableExtra(ParcelListActivity.SELECTED_ITEM);
-        mSelectedDate = intent.getStringExtra(ParcelListActivity.SELECTED_DATE);
+        mSelectedItem = intent.getParcelableExtra(Utils.SELECTED_ITEM);
+        mSelectedDate = intent.getStringExtra(Utils.SELECTED_DATE);
 
         initResources();
 

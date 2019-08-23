@@ -24,6 +24,7 @@ public class FirebaseDatabaseConnector {
     private static final String LOG_TAG = "FirebaseConnector";
     private static final String PARCEL_REF_NAME = "parcel_list";
     private static final String COURIER_REF_NAME = "courier_list";
+    private static final String REGISTERED_COURIER_REF_NAME = "registered_courier";
     private Context mContext;
     private DatabaseReference mDatabaseRef;
 
@@ -119,6 +120,7 @@ public class FirebaseDatabaseConnector {
         getCourierListFromFirebaseDatabase(pathString, orderBy, null);
     }
 
+
     protected void getCourierListFromFirebaseDatabase(String pathString, String orderBy, String select) {
         Query firebaseQuery;
 
@@ -127,6 +129,32 @@ public class FirebaseDatabaseConnector {
         } else {
             firebaseQuery = mDatabaseRef.child(COURIER_REF_NAME).child(pathString).orderByChild(orderBy).equalTo(select);
         }
+
+        firebaseQuery.addValueEventListener(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                mCourierHash.clear();
+
+                Log.d(LOG_TAG, "getCourierListFromFirebaseDatabase : size " + dataSnapshot.getChildrenCount());
+                for (DataSnapshot postSnapshot : dataSnapshot.getChildren()) {
+                    String key = postSnapshot.getKey();
+                    TmsCourierItem value = postSnapshot.getValue(TmsCourierItem.class);
+
+                    mCourierHash.put(key, value);
+                }
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError databaseError) {
+                Log.w(LOG_TAG,"getCouriersFromFirebase, ValueEventListener.onCancelled", databaseError.toException());
+            }
+        });
+    }
+
+    protected void getRegisteredCourierListFromFirebaseDatabase(String orderBy) {
+        Query firebaseQuery;
+
+        firebaseQuery = mDatabaseRef.child(REGISTERED_COURIER_REF_NAME).orderByChild(orderBy);
 
         firebaseQuery.addValueEventListener(new ValueEventListener() {
             @Override
@@ -158,7 +186,7 @@ public class FirebaseDatabaseConnector {
         if (TextUtils.isEmpty(select) || select.equals(mContext.getString(R.string.all_couriers)) || select == null) {
             firebaseQuery = mDatabaseRef.child(PARCEL_REF_NAME).child(pathString).orderByChild(orderBy);
         } else {
-            if (orderBy.equals(TmsParcelItem.KEY_ORDER_ID)) {
+            if (orderBy.equals(TmsParcelItem.KEY_SECTOR_ID)) {
                 firebaseQuery = mDatabaseRef.child(PARCEL_REF_NAME).child(pathString).orderByChild(orderBy).equalTo(Integer.valueOf(select));
             }else {
                 firebaseQuery = mDatabaseRef.child(PARCEL_REF_NAME).child(pathString).orderByChild(orderBy).equalTo(select);
@@ -186,7 +214,7 @@ public class FirebaseDatabaseConnector {
                 if (mArrayValues.size() > 0) {
                     Collections.sort(mArrayValues);
                     int nearIdx = getNearIdx(mArrayValues);
-                    int newOrderInRoute = 1;
+                    int newOrderInRoute = 0;
 
                     for (int i=0; i < mArrayValues.size(); i++) {
                         int idx = (nearIdx + i) % mArrayValues.size();

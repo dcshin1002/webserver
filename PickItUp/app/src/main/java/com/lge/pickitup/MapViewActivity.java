@@ -1,21 +1,23 @@
 package com.lge.pickitup;
 
 import android.app.AlertDialog;
-import android.content.ActivityNotFoundException;
-import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.res.Resources;
-import android.media.Image;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.graphics.Canvas;
+import android.graphics.Color;
+import android.graphics.Paint;
+import android.graphics.Typeface;
 import android.net.Uri;
 import android.os.Bundle;
 
 
+import android.text.TextUtils;
 import android.util.Log;
-import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.RelativeLayout;
@@ -26,16 +28,14 @@ import net.daum.mf.map.api.MapLayout;
 import net.daum.mf.map.api.MapPOIItem;
 import net.daum.mf.map.api.MapPoint;
 import net.daum.mf.map.api.MapView;
-import androidx.appcompat.app.AppCompatActivity;
-import com.google.android.material.floatingactionbutton.FloatingActionButton;
-import com.google.android.material.snackbar.Snackbar;
 
+import androidx.annotation.ColorRes;
+import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.appcompat.widget.Toolbar;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
-import java.util.List;
 
 
 public class MapViewActivity extends AppCompatActivity
@@ -46,8 +46,9 @@ public class MapViewActivity extends AppCompatActivity
     private static MapView mMapView;
     public static final String DAUM_MAPS_ANDROID_APP_API_KEY = "8be996dd99057764a9876591b3270e31";
     private AlertDialog.Builder mDeliveryCompleteDialog;
-    private String selectedDate;
-    private String selectedCourierName;
+    private String mSelectedDate;
+    private String mSelectedCourierName;
+    private String mSelectedSectionID;
 
     private HashMap<String, TmsParcelItem> mParcelDatabaseHash = new HashMap<>();
     private HashMap<String, TmsCourierItem> mCourierDatabaseHash = new HashMap<>();
@@ -63,7 +64,16 @@ public class MapViewActivity extends AppCompatActivity
     private static float mInitLatitude = 0;
     private static float mInitLongitude = 0;
     private boolean flag_item_selected = false;
+    private TmsParcelItem mCompleteTarget;
+    private static final int SEND_COMPLETED_MESSAGE = 1;
 
+
+    ArrayList pinList = new ArrayList(Arrays.asList(R.drawable.redpin, R.drawable.bluepin, R.drawable.greenpin));
+    ArrayList<String> strList = new ArrayList(Arrays.asList("marker_redpin_", "marker_bluepin_", "marker_greenpin_"));
+    private static Bitmap bluepin;
+    private static Bitmap redpin;
+    private static Bitmap greenpin;
+    private static Resources GlobalRes;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -82,8 +92,9 @@ public class MapViewActivity extends AppCompatActivity
         addCurrentLocationMarker();
         Bundle b = getIntent().getExtras();
         if (b != null) {
-            selectedDate = b.getString(Utils.KEY_DB_DATE);
-            selectedCourierName = b.getString(Utils.KEY_COURIER_NAME);
+            mSelectedDate = b.getString(TmsParcelItem.KEY_DATE);
+            mSelectedCourierName = b.getString(TmsParcelItem.KEY_COURIER_NAME);
+            mSelectedSectionID = b.getString(TmsParcelItem.KEY_SECTOR_ID);
         }
         mFbConnector = new FirebaseDatabaseConnector(this);
         mFbConnector.setParcelHash(this.mParcelDatabaseHash);
@@ -111,7 +122,11 @@ public class MapViewActivity extends AppCompatActivity
 
     protected void initResources() {
         mLayout_parcel_data =  (RelativeLayout) findViewById(R.id.parcel_data);
+        GlobalRes = getResources();
         Resources res = this.getResources();
+
+
+
         for (int i=0; i<= 99; i++) {
             String imagename = "marker_bluepin_" + i;
             int resID = res.getIdentifier(imagename, "drawable", this.getPackageName());
@@ -157,28 +172,67 @@ public class MapViewActivity extends AppCompatActivity
                     , Double.parseDouble(strLongitude)));
 
             marker.setMarkerType(MapPOIItem.MarkerType.CustomImage);
+            marker.setSelectedMarkerType(MapPOIItem.MarkerType.CustomImage); // 마커를 클릭했을때, 기본으로 제공하는 RedPin 마커 모양.
             if (item.orderInRoute == -1) {
                 if (item.status.equals(TmsParcelItem.STATUS_DELIVERED)) {
-                    marker.setCustomImageResourceId(R.drawable.marker_bluepin_0);
+                    marker.setCustomImageResourceId(R.drawable.bluepin);
                 } else if (item.status.equals(TmsParcelItem.STATUS_GEOCODED)) {
-                    marker.setCustomImageResourceId(R.drawable.marker_redpin_0);
+                    marker.setCustomImageResourceId(R.drawable.redpin);
+                } else {
+                    marker.setCustomImageResourceId(R.drawable.greenpin);
                 }
             } else {
+                BitmapFactory.Options bmOptions = new BitmapFactory.Options();
+                bmOptions.inScaled = false;
+                bluepin = BitmapFactory.decodeResource(GlobalRes, R.drawable.bluepin,bmOptions).copy(Bitmap.Config.ARGB_8888,true);
+                redpin = BitmapFactory.decodeResource(GlobalRes, R.drawable.redpin,bmOptions).copy(Bitmap.Config.ARGB_8888,true);
+                greenpin = BitmapFactory.decodeResource(GlobalRes, R.drawable.greenpin,bmOptions).copy(Bitmap.Config.ARGB_8888,true);
+                Bitmap pin=greenpin;
+                Bitmap seleted_pin=greenpin;
                 if (item.status.equals(TmsParcelItem.STATUS_DELIVERED)) {
-                    marker.setCustomImageResourceId((int)mArrayBluePinImg.get(item.orderInRoute));
+                    pin = bluepin;
+                    //marker.setCustomImageResourceId((int)mArrayBluePinImg.get(item.orderInRoute+1));
                 } else if (item.status.equals(TmsParcelItem.STATUS_GEOCODED)) {
-                    marker.setCustomImageResourceId((int)mArrayRedPinImg.get(item.orderInRoute));
+                    pin = redpin;
+                    //marker.setCustomImageResourceId((int)mArrayRedPinImg.get(item.orderInRoute+1));
                 }
+                int textVal = item.orderInRoute+1;
+
+                Paint paint = new Paint();
+                paint.setStyle(Paint.Style.FILL);
+                paint.setColor(Color.WHITE); // Text Color
+                paint.setTypeface(Typeface.create(Typeface.DEFAULT, Typeface.BOLD));
+
+                int posX= 37; // 1 digit
+                if (textVal >= 10) posX = 21; // 2 digit
+                if (textVal >= 100) { // 3 digit
+                    posX = 18;
+                    paint.setTextSize(35);
+                } else {
+                    paint.setTextSize(50);
+                }
+                Canvas canvas = new Canvas(pin);
+                canvas.drawText(String.valueOf(textVal), posX , 57 , paint); // 63
+
+                Canvas canvas2 = new Canvas(seleted_pin);
+                canvas2.drawText(String.valueOf(textVal), posX , 57 , paint); // 63
+
+                marker.setCustomImageBitmap(pin);
+                marker.setCustomSelectedImageBitmap(seleted_pin);
+
             }
-            marker.setSelectedMarkerType(MapPOIItem.MarkerType.CustomImage); // 마커를 클릭했을때, 기본으로 제공하는 RedPin 마커 모양.
-            marker.setCustomSelectedImageResourceId((int)mArrayGreenPinImg.get(item.orderInRoute));
+
             mMapView.addPOIItem(marker);
         }
     }
 
     private void getFirebaseList() {
-        mFbConnector.getParcelListFromFirebaseDatabase(selectedDate, TmsParcelItem.KEY_COURIER_NAME, selectedCourierName);
-        mFbConnector.getCourierListFromFirebaseDatabase(selectedDate, TmsParcelItem.KEY_ID);
+        if (mSelectedCourierName != null) {
+            mFbConnector.getParcelListFromFirebaseDatabase(mSelectedDate, TmsParcelItem.KEY_COURIER_NAME, mSelectedCourierName);
+        } else if (mSelectedSectionID != null) {
+            mFbConnector.getParcelListFromFirebaseDatabase(mSelectedDate, TmsParcelItem.KEY_SECTOR_ID, mSelectedSectionID);
+        }
+        mFbConnector.getCourierListFromFirebaseDatabase(mSelectedDate, TmsParcelItem.KEY_ID);
 
     }
 
@@ -293,7 +347,7 @@ public class MapViewActivity extends AppCompatActivity
             if (addrText != null) {
                 String addrTextValue = "";
                 if ( item.orderInRoute != -1)  {
-                    addrTextValue += item.orderInRoute + " : ";
+                    addrTextValue += (item.orderInRoute+1) + " : ";
                 }
                 addrText.setText(addrTextValue + item.consigneeAddr);
                 if (isDeliverd) {
@@ -326,52 +380,62 @@ public class MapViewActivity extends AppCompatActivity
         btn_complete.setVisibility(View.INVISIBLE);
 
     }
-    private void setMarkertToBlue(final MapPOIItem mapPOIItem) {
-        mapPOIItem.setMarkerType(MapPOIItem.MarkerType.BluePin);
-    }
 
     private void processLitBtnClick(final TmsParcelItem item, final MapPOIItem mapPOIItem) {
 
         Log.d(LOG_TAG, "Selected item\'s status will be chaanged to \"deliverd\"");
+
         mDeliveryCompleteDialog = new AlertDialog.Builder(this)
                 .setTitle(getText(R.string.query_delivery_complete_title))
                 .setMessage(getText(R.string.query_delivery_complete_message))
                 .setPositiveButton(R.string.complete_with_msg, new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialogInterface, int i) {
-                        try {
-                            Uri smsUri = Uri.parse("sms:" + item.consigneeContact);
-                            Intent sendIntent = new Intent(Intent.ACTION_SENDTO, smsUri);
-                            sendIntent.putExtra("sms_body", "고객(" + item.consigneeName + ")님께서 요청하신 물품 배송완료되었습니다.");
-                            startActivity(sendIntent);
-                        } catch (Exception e) {
-                            e.printStackTrace();
-                        }
+                        mCompleteTarget = item;
 
-                        item.status = TmsParcelItem.STATUS_DELIVERED;
-                        mFbConnector.postParcelItemToFirebaseDatabase(selectedDate, item);
-                        updateStatusToComplete();
-                        setMarkertToBlue(mapPOIItem);
+                        Intent intent = new Intent(MapViewActivity.this, UploadImageActivity.class);
+                        intent.putExtra(Utils.SELECTED_ITEM, item);
+                        intent.putExtra(Utils.SELECTED_DATE, mSelectedDate);
+                        startActivityForResult(intent, SEND_COMPLETED_MESSAGE);
                     }
                 })
-                .setNeutralButton(R.string.cancel, new DialogInterface.OnClickListener() {
+                .setNegativeButton(R.string.cancel, new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialogInterface, int i) {
                         dialogInterface.cancel();
                     }
-                })
-                .setNegativeButton(R.string.complete_without_msg, new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialogInterface, int i) {
-                        item.status = TmsParcelItem.STATUS_DELIVERED;
-                        mFbConnector.postParcelItemToFirebaseDatabase(selectedDate, item);
-                        updateStatusToComplete();
-                        setMarkertToBlue(mapPOIItem);
-
-                    }
                 });
 
+
         mDeliveryCompleteDialog.show();
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+
+        if (resultCode != RESULT_OK) {
+            Log.d(LOG_TAG, "onActivityResult, result code is not RESULT_OK");
+            return;
+        }
+
+        switch (requestCode) {
+            case SEND_COMPLETED_MESSAGE :
+                Log.d(LOG_TAG, "onActivityResult, SEND_COMPLETED_MESSAGE");
+                if (data != null) {
+                    String sendResult = data.getStringExtra(UploadImageActivity.EXTRA_SEND_RESULT);
+                    if (TextUtils.equals(sendResult, "success")) {
+                        String filePath = data.getStringExtra(UploadImageActivity.EXTRA_UPLOADED_FILE_PATH);
+                        //makeComplete(filePath);
+                        Utils.makeComplete(mFbConnector, mCompleteTarget,mSelectedDate,filePath);
+
+                    } else {
+
+                    }
+                }
+
+                break;
+        }
     }
 
     @Override

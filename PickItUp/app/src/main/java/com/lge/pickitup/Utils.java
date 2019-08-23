@@ -33,6 +33,8 @@ public class Utils {
     static Location mCurrent;
     static LocationManager mLocationMgr;
     static Context mContext;
+    static final String SELECTED_ITEM = "selected_item";
+    static final String SELECTED_DATE = "selected_date";
 
     public static String getKeyHash(final Context context) {
         PackageManager pm = context.getPackageManager();
@@ -99,6 +101,14 @@ public class Utils {
         }
 
     }
+    public static void makeComplete(FirebaseDatabaseConnector mFbConnector,  TmsParcelItem item, String date, String path) {
+        Log.d(LOG_TAG, "uploaded path = " + path);
+        item.completeImage = path;
+        item.status = TmsParcelItem.STATUS_DELIVERED;
+        mFbConnector.postParcelItemToFirebaseDatabase(date.toString(), item);
+        //mArrayAdapter.notifyDataSetChanged();
+        item = null;
+    }
 
     @SuppressLint("MissingPermission")
     protected static void initLocation(Context context) {
@@ -131,7 +141,6 @@ public class Utils {
             } else {
                 mCurrent = bestLocation;
                 Log.i(LOG_TAG, "current : " + bestLocation.getLatitude() + "/" + bestLocation.getLongitude());
-                Toast.makeText(context, "bestLocation", Toast.LENGTH_SHORT).show();
             }
         }
     }

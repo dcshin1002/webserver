@@ -37,12 +37,9 @@ import com.google.firebase.auth.FirebaseUser;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
-import java.util.Set;
 
 public class CourierSectionMatchingActivity extends AppCompatActivity implements View.OnClickListener {
 
@@ -67,7 +64,7 @@ public class CourierSectionMatchingActivity extends AppCompatActivity implements
     private TextView mTextCourierName;
     private TextView mTextCourierDate;
     private TextView mTextCount;
-    private Button mBtnUpdateList;
+    private Button mBtnAssignCourier;
     private Button mBtnChangeView;
     private DatePickerDialog mDatePickerDialog;
     private AlertDialog.Builder mCourierPickerDialog;
@@ -79,9 +76,10 @@ public class CourierSectionMatchingActivity extends AppCompatActivity implements
     private static String mSort = "id";
 
     final int MY_PERMISSIONS = 998;
+    private String[] mSectionItems;
 
     final Calendar myCalendar = Calendar.getInstance();
-    private boolean mIsUpdateStatus;
+    private boolean isDataChangedByDatePicker=false;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -100,7 +98,7 @@ public class CourierSectionMatchingActivity extends AppCompatActivity implements
             courierStr = b.getString(Utils.KEY_COURIER_NAME);
         } else {
             dateStr = Utils.getTodayDateStr();
-            courierStr = getString(R.string.all_couriers);
+            courierStr = getString(R.string.select_courier);
         }
 
         mTextCourierDate.setText(dateStr);
@@ -202,7 +200,7 @@ public class CourierSectionMatchingActivity extends AppCompatActivity implements
 
     private void getFirebaseList() {
         mFbConnector.getParcelListFromFirebaseDatabase(mTextCourierDate.getText().toString(), mSort);
-        mFbConnector.getCourierListFromFirebaseDatabase(mTextCourierDate.getText().toString(), mSort);
+        mFbConnector.getRegisteredCourierListFromFirebaseDatabase(mSort);
     }
 
     private void updateConnectUI() {
@@ -255,7 +253,7 @@ public class CourierSectionMatchingActivity extends AppCompatActivity implements
         mTextCourierDate = findViewById(R.id.text_courier_date);
 
 
-        mBtnUpdateList = findViewById(R.id.btn_update);
+        mBtnAssignCourier = findViewById(R.id.btn_assign);
         mBtnChangeView = findViewById(R.id.btn_change_view);
 
         mTouchListner = new View.OnTouchListener() {
@@ -270,12 +268,12 @@ public class CourierSectionMatchingActivity extends AppCompatActivity implements
             }
         };
 
-        mBtnUpdateList.setOnTouchListener(mTouchListner);
+        mBtnAssignCourier.setOnTouchListener(mTouchListner);
         mBtnChangeView.setOnTouchListener(mTouchListner);
         mTextSectionName.setOnClickListener(this);
         mTextCourierDate.setOnClickListener(this);
         mTextCourierName.setOnClickListener(this);
-        mBtnUpdateList.setOnClickListener(this);
+        mBtnAssignCourier.setOnClickListener(this);
         mBtnChangeView.setOnClickListener(this);
 
 
@@ -318,21 +316,49 @@ public class CourierSectionMatchingActivity extends AppCompatActivity implements
                 }
                 mTextCourierDate.setText(newDateStr);
                 refreshList(mTextCourierName.getText().toString());
+                isDataChangedByDatePicker = true;
             }
         }, myCalendar.get(Calendar.YEAR), myCalendar.get(Calendar.MONTH), myCalendar.get(Calendar.DAY_OF_MONTH));
+    }
+
+    public boolean isTextSectionNameDefaultValue() {
+        return mTextSectionName.getText().toString().equals(getString(R.string.select_sector));
+    }
+    public boolean isTextCourierNameDefaultValue() {
+        return mTextCourierName.getText().toString().equals(getString(R.string.select_courier));
     }
 
     @Override
     public void onClick(View view) {
         switch (view.getId()) {
-            case R.id.btn_update:
-                refreshList(mTextCourierName.getText().toString());
+            case R.id.btn_assign:
+
+                if (isTextSectionNameDefaultValue()){
+                    Toast.makeText(getApplicationContext(), getString(R.string.please_select_sector), Toast.LENGTH_SHORT).show();
+                    break;
+                }
+                if (isTextCourierNameDefaultValue()) {
+                    Toast.makeText(getApplicationContext(), getString(R.string.please_select_courier), Toast.LENGTH_SHORT).show();
+                    break;
+                }
+
+                // Update courier filed to selected one
+                for (TmsParcelItem item : mArrayValues) {
+                    item.courierName = mTextCourierName.getText().toString();
+                    //mFbConnector.postParcelItemToFirebaseDatabase(mTextCourierDate.getText().toString(),item);
+                }
+                // Let update those on FirebaseDdatabse
+                mFbConnector.postParcelListToFirebaseDatabase(mTextCourierDate.getText().toString(), mArrayValues);
                 break;
 
             case R.id.btn_change_view:
+                if (isTextSectionNameDefaultValue()){
+                    Toast.makeText(getApplicationContext(), getString(R.string.please_select_sector), Toast.LENGTH_SHORT).show();
+                    break;
+                }
                 Intent intent = new Intent(CourierSectionMatchingActivity.this, MapViewActivity.class);
-                intent.putExtra(Utils.KEY_DB_DATE, mTextCourierDate.getText().toString());
-                intent.putExtra(Utils.KEY_COURIER_NAME, mTextCourierName.getText().toString());
+                intent.putExtra(TmsParcelItem.KEY_DATE, mTextCourierDate.getText().toString());
+                intent.putExtra(TmsParcelItem.KEY_SECTOR_ID, mTextSectionName.getText().toString());
                 startActivity(intent);
                 break;
 
@@ -351,15 +377,24 @@ public class CourierSectionMatchingActivity extends AppCompatActivity implements
     }
 
     private void resetCourierText() {
-        mTextCourierName.setText(getString(R.string.default_courier_name));
+        mTextCourierName.setText(getString(R.string.select_courier));
+        mTextSectionName.setText(getString(R.string.select_sector));
+
     }
 
     private void showSectionPicker() {
-        final String[] items = prepareSectionArray();
+        final String[] items = mSectionItems;
         mCourierPickerDialog = new AlertDialog.Builder(this);
-        mCourierPickerDialog.setTitle(getString(R.string.courier_sel_dialog_title));
-        int defaultIdx = 0;
+        mCourierPickerDialog.setTitle(getString(R.string.sector_sel_dialog_title));
+
         final List selectedItems = new ArrayList<>();
+        int defaultIdx;
+
+        if (mTextSectionName.getText().toString().equals(getString(R.string.select_sector))) {
+            defaultIdx = 0;
+        } else {
+            defaultIdx = Integer.valueOf(mTextSectionName.getText().toString());
+        }
         selectedItems.add(defaultIdx);
 
         mCourierPickerDialog.setSingleChoiceItems(items, defaultIdx, new DialogInterface.OnClickListener() {
@@ -408,12 +443,11 @@ public class CourierSectionMatchingActivity extends AppCompatActivity implements
             @Override
             public void onClick(DialogInterface dialogInterface, int pos) {
                 Log.d(LOG_TAG, "Select button is pressed");
-
                 if (!selectedItems.isEmpty()) {
                     int index = (int) selectedItems.get(0);
                     mTextCourierName.setText(items[index]);
                 }
-                refreshList(mTextCourierName.getText().toString());
+                //refreshList(mTextCourierName.getText().toString());
             }
         }).setNegativeButton(R.string.cancel, new DialogInterface.OnClickListener() {
             @Override
@@ -426,7 +460,7 @@ public class CourierSectionMatchingActivity extends AppCompatActivity implements
         mCourierPickerDialog.show();
     }
 
-    private String[] prepareSectionArray() {
+    private void prepareSectionArray() {
         HashSet<String> sectionSet = new HashSet<String>();
         for (TmsParcelItem item : mArrayValues) {
             sectionSet.add(String.valueOf(item.sectorId));
@@ -438,7 +472,7 @@ public class CourierSectionMatchingActivity extends AppCompatActivity implements
             result[i] = sec;
             i++;
         }
-        return result;
+        mSectionItems = result;
     }
 
     private String[] prepareCourierArray() {
@@ -447,7 +481,6 @@ public class CourierSectionMatchingActivity extends AppCompatActivity implements
 
         Log.d(LOG_TAG, "prepareCourierArray, size = " + mCourierDatabaseHash.size());
         courierArrayList.addAll(mCourierDatabaseHash.values());
-        strArrayList.add(getString(R.string.default_courier_name));
         for(TmsCourierItem item : courierArrayList) {
             strArrayList.add(item.name);
         }
@@ -456,13 +489,13 @@ public class CourierSectionMatchingActivity extends AppCompatActivity implements
     }
 
     private void refreshList(String select) {
-        /*if (select.equals(getString(R.string.all_couriers))) {
+        if (select.equals(getString(R.string.select_courier))) {
             mFbConnector.getParcelListFromFirebaseDatabase(mTextCourierDate.getText().toString(), TmsParcelItem.KEY_ID);
-            mFbConnector.getCourierListFromFirebaseDatabase(mTextCourierDate.getText().toString(), TmsParcelItem.KEY_ID);
-        } else {*/
+            //mFbConnector.getCourierListFromFirebaseDatabase(mTextCourierDate.getText().toString(), TmsParcelItem.KEY_ID);
+        } else {
             mFbConnector.getParcelListFromFirebaseDatabase(mTextCourierDate.getText().toString(), TmsParcelItem.KEY_SECTOR_ID, select);
-            mFbConnector.getCourierListFromFirebaseDatabase(mTextCourierDate.getText().toString(), TmsParcelItem.KEY_ID);
-        //}
+            //mFbConnector.getCourierListFromFirebaseDatabase(mTextCourierDate.getText().toString(), TmsParcelItem.KEY_ID);
+        }
 
         Log.d(LOG_TAG, "ParcelList size = " + mParcelDatabaseHash.size());
         Log.d(LOG_TAG, "CourierList size = "  + mCourierDatabaseHash.size());
@@ -480,6 +513,10 @@ public class CourierSectionMatchingActivity extends AppCompatActivity implements
         public void notifyDataSetChanged() {
             super.notifyDataSetChanged();
             mTextCount.setText(getItemString(mArrayValues));
+            if (isDataChangedByDatePicker) {
+                prepareSectionArray();
+                isDataChangedByDatePicker = false;
+            }
         }
 
         @Override
@@ -512,7 +549,7 @@ public class CourierSectionMatchingActivity extends AppCompatActivity implements
                 if (addrText != null) {
                     String addrTextValue = "";
                     if ((item.orderInRoute != -1) && !mTextCourierName.getText().toString().equals(getString(R.string.all_couriers))) {
-                        addrTextValue = (item.orderInRoute + " : ");
+                        addrTextValue = ((item.orderInRoute+1) + " : ");
                     }
                     addrText.setText(addrTextValue + item.consigneeAddr);
                     if (isDeliverd) {
@@ -555,7 +592,6 @@ public class CourierSectionMatchingActivity extends AppCompatActivity implements
     private void processLitBtnClick(final TmsParcelItem item) {
 
         Log.d(LOG_TAG, "Selected item\'s status will be chaanged to \"deliverd\"");
-        mIsUpdateStatus = false;
 
         mDeliveryCompleteDialog = new AlertDialog.Builder(this)
                 .setTitle(getText(R.string.query_delivery_complete_title))

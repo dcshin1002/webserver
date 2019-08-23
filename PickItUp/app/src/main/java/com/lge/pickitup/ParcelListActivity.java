@@ -80,10 +80,8 @@ public class ParcelListActivity extends AppCompatActivity implements View.OnClic
     final int MY_PERMISSIONS = 998;
 
     final Calendar myCalendar = Calendar.getInstance();
-    private boolean mIsUpdateStatus;
 
-    static final String SELECTED_ITEM = "selected_item";
-    static final String SELECTED_DATE = "selected_date";
+
     private static final int SEND_COMPLETED_MESSAGE = 1;
 
     @Override
@@ -186,8 +184,7 @@ public class ParcelListActivity extends AppCompatActivity implements View.OnClic
 
                     if (TextUtils.equals(sendResult, "success")) {
                         String filePath = data.getStringExtra(UploadImageActivity.EXTRA_UPLOADED_FILE_PATH);
-                        makeComplete(filePath);
-
+                        Utils.makeComplete(mFbConnector, mCompleteTarget,mTextCourierDate.getText().toString(),filePath);
                     } else {
 
                     }
@@ -366,8 +363,8 @@ public class ParcelListActivity extends AppCompatActivity implements View.OnClic
 
             case R.id.btn_change_view:
                 Intent intent = new Intent(ParcelListActivity.this, MapViewActivity.class);
-                intent.putExtra(Utils.KEY_DB_DATE, mTextCourierDate.getText().toString());
-                intent.putExtra(Utils.KEY_COURIER_NAME, mTextCourierName.getText().toString());
+                intent.putExtra(TmsParcelItem.KEY_DATE, mTextCourierDate.getText().toString());
+                intent.putExtra(TmsParcelItem.KEY_COURIER_NAME, mTextCourierName.getText().toString());
                 startActivity(intent);
                 break;
 
@@ -493,7 +490,7 @@ public class ParcelListActivity extends AppCompatActivity implements View.OnClic
                 if (addrText != null) {
                     String addrTextValue = "";
                     if ((item.orderInRoute != -1) && !mTextCourierName.getText().toString().equals(getString(R.string.all_couriers))) {
-                        addrTextValue = (item.orderInRoute + " : ");
+                        addrTextValue = ((item.orderInRoute+1) + " : ");
                     }
                     addrText.setText(addrTextValue + item.consigneeAddr);
                     if (isDeliverd) {
@@ -536,7 +533,6 @@ public class ParcelListActivity extends AppCompatActivity implements View.OnClic
     private void processListBtnClick(final TmsParcelItem item) {
 
         Log.d(LOG_TAG, "Selected item\'s status will be chaanged to \"deliverd\"");
-        mIsUpdateStatus = false;
 
         mDeliveryCompleteDialog = new AlertDialog.Builder(this)
                 .setTitle(getText(R.string.query_delivery_complete_title))
@@ -547,8 +543,8 @@ public class ParcelListActivity extends AppCompatActivity implements View.OnClic
                         mCompleteTarget = item;
 
                         Intent intent = new Intent(ParcelListActivity.this, UploadImageActivity.class);
-                        intent.putExtra(SELECTED_ITEM, item);
-                        intent.putExtra(SELECTED_DATE, mTextCourierDate.getText().toString());
+                        intent.putExtra(Utils.SELECTED_ITEM, item);
+                        intent.putExtra(Utils.SELECTED_DATE, mTextCourierDate.getText().toString());
                         startActivityForResult(intent, SEND_COMPLETED_MESSAGE);
                     }
                 })
@@ -561,15 +557,6 @@ public class ParcelListActivity extends AppCompatActivity implements View.OnClic
 
 
         mDeliveryCompleteDialog.show();
-    }
-
-    private void makeComplete(String path) {
-        Log.d(LOG_TAG, "uploaded path = " + path);
-        mCompleteTarget.completeImage = path;
-        mCompleteTarget.status = TmsParcelItem.STATUS_DELIVERED;
-        mFbConnector.postParcelItemToFirebaseDatabase(mTextCourierDate.getText().toString(), mCompleteTarget);
-        mArrayAdapter.notifyDataSetChanged();
-        mCompleteTarget = null;
     }
 }
 
