@@ -59,8 +59,9 @@ public class CourierSectionMatchingActivity extends AppCompatActivity implements
     private HashMap<String, TmsCourierItem> mCourierDatabaseHash = new HashMap<>();
     private ArrayList<String> mArrayKeys = new ArrayList<String>();
     private ArrayList<TmsParcelItem> mArrayValues = new ArrayList<TmsParcelItem>();
+    private ArrayList<String> mSectorList = new ArrayList<String>();
 
-    private TextView mTextSectionName;
+    private TextView mTextSectorName;
     private TextView mTextCourierName;
     private TextView mTextCourierDate;
     private TextView mTextCount;
@@ -110,6 +111,7 @@ public class CourierSectionMatchingActivity extends AppCompatActivity implements
         mFbConnector.setParcelKeyArray(this.mArrayKeys);
         mFbConnector.setParcelValueArray(this.mArrayValues);
         mFbConnector.setListAdapter(this.mArrayAdapter);
+        mFbConnector.setSectorList(this.mSectorList);
 
 
         // Here, thisActivity is the current activity
@@ -248,7 +250,7 @@ public class CourierSectionMatchingActivity extends AppCompatActivity implements
 
             }
         });
-        mTextSectionName = findViewById(R.id.text_section_name);
+        mTextSectorName = findViewById(R.id.text_section_name);
         mTextCourierName = findViewById(R.id.text_courier_name);
         mTextCourierDate = findViewById(R.id.text_courier_date);
 
@@ -270,7 +272,7 @@ public class CourierSectionMatchingActivity extends AppCompatActivity implements
 
         mBtnAssignCourier.setOnTouchListener(mTouchListner);
         mBtnChangeView.setOnTouchListener(mTouchListner);
-        mTextSectionName.setOnClickListener(this);
+        mTextSectorName.setOnClickListener(this);
         mTextCourierDate.setOnClickListener(this);
         mTextCourierName.setOnClickListener(this);
         mBtnAssignCourier.setOnClickListener(this);
@@ -316,13 +318,15 @@ public class CourierSectionMatchingActivity extends AppCompatActivity implements
                 }
                 mTextCourierDate.setText(newDateStr);
                 refreshList(mTextCourierName.getText().toString());
+                mFbConnector.getSectorListFromFirebaseDatabase(mTextCourierDate.getText().toString());
                 isDataChangedByDatePicker = true;
             }
         }, myCalendar.get(Calendar.YEAR), myCalendar.get(Calendar.MONTH), myCalendar.get(Calendar.DAY_OF_MONTH));
     }
 
+
     public boolean isTextSectionNameDefaultValue() {
-        return mTextSectionName.getText().toString().equals(getString(R.string.select_sector));
+        return mTextSectorName.getText().toString().equals(getString(R.string.select_sector));
     }
     public boolean isTextCourierNameDefaultValue() {
         return mTextCourierName.getText().toString().equals(getString(R.string.select_courier));
@@ -351,7 +355,7 @@ public class CourierSectionMatchingActivity extends AppCompatActivity implements
                 mFbConnector.postParcelListToFirebaseDatabase2(mTextCourierDate.getText().toString(), mArrayValues);
                 AlertDialog.Builder builder = new AlertDialog.Builder(CourierSectionMatchingActivity.this);
                 builder.setTitle(getString(R.string.assign_is_completed));
-                builder.setMessage(String.format(getResources().getString(R.string.alert_message_after_assign), mTextSectionName.getText().toString(), mTextCourierName.getText().toString()));
+                builder.setMessage(String.format(getResources().getString(R.string.alert_message_after_assign), mTextSectorName.getText().toString(), mTextCourierName.getText().toString()));
                 builder.setCancelable(true);
                 builder.setPositiveButton("확인", new DialogInterface.OnClickListener() {
                     @Override
@@ -369,7 +373,7 @@ public class CourierSectionMatchingActivity extends AppCompatActivity implements
                 }
                 Intent intent = new Intent(CourierSectionMatchingActivity.this, MapViewActivity.class);
                 intent.putExtra(TmsParcelItem.KEY_DATE, mTextCourierDate.getText().toString());
-                intent.putExtra(TmsParcelItem.KEY_SECTOR_ID, mTextSectionName.getText().toString());
+                intent.putExtra(TmsParcelItem.KEY_SECTOR_ID, mTextSectorName.getText().toString());
                 startActivity(intent);
                 break;
 
@@ -381,7 +385,7 @@ public class CourierSectionMatchingActivity extends AppCompatActivity implements
                 showCourierPicker();
                 break;
             case R.id.text_section_name:
-                showSectionPicker();
+                showSectorPicker();
                 break;
         }
 
@@ -389,22 +393,27 @@ public class CourierSectionMatchingActivity extends AppCompatActivity implements
 
     private void resetCourierText() {
         mTextCourierName.setText(getString(R.string.select_courier));
-        mTextSectionName.setText(getString(R.string.select_sector));
+        mTextSectorName.setText(getString(R.string.select_sector));
 
     }
 
-    private void showSectionPicker() {
-        final String[] items = mSectionItems;
+    private void showSectorPicker() {
+        String[] items = new String[mSectorList.size()];
+        int i=0;
+        for (String sec : mSectorList) {
+            items[i] = sec;
+            i++;
+        }
         mCourierPickerDialog = new AlertDialog.Builder(this);
         mCourierPickerDialog.setTitle(getString(R.string.sector_sel_dialog_title));
 
         final List selectedItems = new ArrayList<>();
         int defaultIdx;
 
-        if (mTextSectionName.getText().toString().equals(getString(R.string.select_sector))) {
+        if (mTextSectorName.getText().toString().equals(getString(R.string.select_sector))) {
             defaultIdx = 0;
         } else {
-            defaultIdx = Integer.valueOf(mTextSectionName.getText().toString());
+            defaultIdx = Integer.valueOf(mTextSectorName.getText().toString());
         }
         selectedItems.add(defaultIdx);
 
@@ -421,9 +430,9 @@ public class CourierSectionMatchingActivity extends AppCompatActivity implements
 
                 if (!selectedItems.isEmpty()) {
                     int index = (int) selectedItems.get(0);
-                    mTextSectionName.setText(items[index]);
+                    mTextSectorName.setText(String.valueOf(selectedItems.get(0)));
                 }
-                refreshList(mTextSectionName.getText().toString());
+                refreshList(mTextSectorName.getText().toString());
             }
         }).setNegativeButton(R.string.cancel, new DialogInterface.OnClickListener() {
             @Override

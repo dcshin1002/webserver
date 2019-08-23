@@ -18,6 +18,7 @@ import com.google.firebase.database.ValueEventListener;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 
 public class FirebaseDatabaseConnector {
@@ -34,6 +35,7 @@ public class FirebaseDatabaseConnector {
     private ArrayList<String> mArrayKeys;
     private ArrayList<TmsParcelItem> mArrayValues;
     private ArrayAdapter<TmsParcelItem> mListAdapter;
+    private ArrayList<String> mSectorList;
 
     public FirebaseDatabaseConnector(Context context) {
         this.mContext = context;
@@ -79,6 +81,14 @@ public class FirebaseDatabaseConnector {
     protected void setListAdapter(ArrayAdapter<TmsParcelItem> listAdapter) {
         if (listAdapter != null) {
             this.mListAdapter = listAdapter;
+        } else {
+            Log.e(LOG_TAG, "Given valueArray should be not null");
+            throw new NullPointerException();
+        }
+    }
+    protected void setSectorList(ArrayList<String> sectorList) {
+        if (sectorList != null) {
+            this.mSectorList = sectorList;
         } else {
             Log.e(LOG_TAG, "Given valueArray should be not null");
             throw new NullPointerException();
@@ -189,6 +199,7 @@ public class FirebaseDatabaseConnector {
         });
     }
 
+
     protected void getParcelListFromFirebaseDatabase(String pathString, String orderBy, String select, ValueEventListener listener) {
         Query firebaseQuery;
         if (TextUtils.isEmpty(select) || select.equals(mContext.getString(R.string.all_couriers)) || select == null) {
@@ -202,6 +213,33 @@ public class FirebaseDatabaseConnector {
         }
 
         firebaseQuery.addListenerForSingleValueEvent(listener);
+    }
+
+    protected void getSectorListFromFirebaseDatabase(String pathString) {
+        Query firebaseQuery;
+        firebaseQuery = mDatabaseRef.child(PARCEL_REF_NAME).child(pathString).orderByChild(TmsParcelItem.KEY_SECTOR_ID);
+        ValueEventListener ve = new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                mSectorList.clear();
+                Log.d(LOG_TAG, "getParcelListFromFirebaseDatabase : size " + dataSnapshot.getChildrenCount());
+                HashSet<String> sectionSet = new HashSet<String>();
+                for (DataSnapshot postSnapshot : dataSnapshot.getChildren()) {
+                    String key = postSnapshot.getKey();
+                    TmsParcelItem value = postSnapshot.getValue(TmsParcelItem.class);
+                    sectionSet.add(String.valueOf(value.sectorId));
+                }
+                for (String s : sectionSet) {
+                    mSectorList.add(s);
+                }
+                Log.d(LOG_TAG, "mSectorList size = " + mSectorList.size());
+            }
+            @Override
+            public void onCancelled(@NonNull DatabaseError databaseError) {
+
+            }
+        };
+        firebaseQuery.addListenerForSingleValueEvent(ve);
     }
 
     protected void getParcelListFromFirebaseDatabase(String pathString, String orderBy) {
