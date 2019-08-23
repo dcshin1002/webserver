@@ -41,16 +41,12 @@ def setClustersWork(year, month, day, data=None):
     print(dateForm)
     dcon.saveJobStateToFirebaseDB(dateForm, get_current_job().get_status())
     dcon.loadDataFromFirebaseDB(dateForm)
-    # if data is None:
-    #     dcon.loadDataFromCache()
-    # else:
-    #     dcon.loadData(data)
 
     distributer.clustering()
     dcon.saveTSPFile('data')
     finder = RouteFinder()
     for c, fname in enumerate(dcon.getTSPFilenames()):
-        finder.solve(fname)
+        finder.solve(dateForm, fname)
         dcon.saveDataToFirebaseDB(dateForm, c, finder.problem, finder.route)
         print('firebaseDB updated for cluster', c)
     dcon.saveJobStateToFirebaseDB(dateForm, "finished")

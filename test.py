@@ -1,4 +1,5 @@
 import sys
+import os
 import tmscore.DataController
 import tmscore.Distributer
 from tmscore.RouteFinder import RouteFinder
@@ -24,3 +25,5 @@ if __name__ == "__main__":
 print("Output from Python")
 for i,arg in enumerate(sys.argv):
     print(str(i)+"-th name: " + arg)
+print("script running path :", os.path.dirname(os.path.abspath(__file__)))
+print("working path :", os.getcwd())

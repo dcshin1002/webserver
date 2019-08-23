@@ -7,7 +7,7 @@ from operator import itemgetter, attrgetter
 from tmscore.som_tsp.io_helper import read_tsp, normalize
 from tmscore.som_tsp.neuron import generate_network, get_neighborhood, get_route
 from tmscore.som_tsp.distance import select_closest, euclidean_distance, route_distance
-#from som_tsp.plot import plot_network, plot_route
+from tmscore.som_tsp.plot import plot_network, plot_route
 
 
 class RouteFinder:
@@ -18,15 +18,15 @@ class RouteFinder:
     def __init__(self):
         pass
 
-    def solve(self, tspFile):
+    def solve(self, dateForm, tspFile):
         self.problem = read_tsp(tspFile)
-        self.route = self.som(self.problem, 100000)
-        self.problem = self.problem.reindex(self.route)
+        self.route = self.som(
+            dateForm+'-sector#'+tspFile.rstrip('.tsp').split('_')[1], self.problem, 100000)
         self.distance = route_distance(self.problem)
         print('Route found for problem in {}, length {}'.format(tspFile, self.distance))
         pass
 
-    def som(self, problem, iterations, learning_rate=0.8):
+    def som(self, diagram_path, problem, iterations, learning_rate=0.8):
         """Solve the TSP using a Self-Organizing Map."""
 
         # Obtain the normalized set of cities (w/ coord in [0,1])
@@ -72,8 +72,6 @@ class RouteFinder:
             pass
             #print('Completed {} iterations.'.format(iterations))
 
-        # plot_network(cities, network, name='diagrams/final.png')
-
         self.route = get_route(cities, network)
         # DBobj = db.getTMSDB('tmssample')
         # order = 1
@@ -82,5 +80,6 @@ class RouteFinder:
         #     update = {'$set': {'order': order}}
         #     DBobj.update_one(query, update)
         #     order += 1
-        # plot_route(cities, route, 'diagrams/route.png')
+        plot_route(cities, self.route, name='tmscore/som_tsp/diagrams/' +
+                     diagram_path+'.png')
         return self.route
