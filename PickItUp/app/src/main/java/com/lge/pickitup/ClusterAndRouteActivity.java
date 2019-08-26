@@ -63,7 +63,8 @@ public class ClusterAndRouteActivity extends AppCompatActivity implements View.O
         mBtnClusterAndRoute.setOnClickListener(this);
         mTextCourierDate.setOnClickListener(this);
         mBtnMatchingCourierSection.setOnClickListener(this);
-        mTextCourierNumber.setOnTouchListener(mTouchListner);
+        //mTextCourierNumber.setOnTouchListener(mTouchListner);
+        mTextCourierNumber.setEnabled(false);
 
         Bundle b = getIntent().getExtras();
         String dateStr;

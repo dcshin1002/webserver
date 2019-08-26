@@ -367,23 +367,27 @@ public class CourierSectionMatchingActivity extends AppCompatActivity implements
     }
 
     private void showSectorPicker() {
-        String[] items = new String[mSectorList.size()];
+        String[] tmp_items = new String[mSectorList.size()];
         int i=0;
         for (String sec : mSectorList) {
-            items[i] = sec;
+            tmp_items[i] = sec;
             i++;
         }
+        final String[] items = tmp_items;
 
         mCourierPickerDialog = new AlertDialog.Builder(this);
         mCourierPickerDialog.setTitle(getString(R.string.sector_sel_dialog_title));
 
         final List selectedItems = new ArrayList<>();
-        int defaultIdx;
+        int defaultIdx = 0;
 
-        if (mTextSectorName.getText().toString().equals(getString(R.string.select_sector))) {
-            defaultIdx = 0;
-        } else {
-            defaultIdx = Integer.valueOf(mTextSectorName.getText().toString());
+        if (!mTextSectorName.getText().toString().equals(getString(R.string.select_sector))) {
+            for (int j=0; j < items.length; j++){
+                if (items[j].equals(mTextSectorName.getText().toString())) {
+                    defaultIdx = j;
+                    break;
+                }
+            }
         }
         selectedItems.add(defaultIdx);
 
@@ -400,7 +404,7 @@ public class CourierSectionMatchingActivity extends AppCompatActivity implements
 
                 if (!selectedItems.isEmpty()) {
                     int index = (int) selectedItems.get(0);
-                    mTextSectorName.setText(String.valueOf(selectedItems.get(0)));
+                    mTextSectorName.setText(String.valueOf(items[index]));
                 }
                 refreshList(mTextSectorName.getText().toString());
             }

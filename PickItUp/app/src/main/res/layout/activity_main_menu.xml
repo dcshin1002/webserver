@@ -107,7 +107,9 @@
         android:layout_marginTop="40dp"
         android:paddingLeft="10dp"
         android:paddingRight="10dp"
-        android:layout_centerHorizontal="true">
+        android:layout_centerHorizontal="true"
+        android:visibility="gone"
+        >
 
         <ImageView
             android:id="@+id/courier_menu"
@@ -154,12 +156,15 @@
         android:layout_marginTop="40dp"
         android:paddingLeft="10dp"
         android:paddingRight="10dp"
-        android:layout_centerHorizontal="true">
+        android:layout_centerHorizontal="true"
+
+        >
 
         <ImageView
             android:id="@+id/send_msg_and_upload_img"
             android:layout_width="100dp"
             android:layout_height="100dp"
+            android:visibility="gone"
             app:srcCompat="@drawable/message_bubble_icon" />
 
         <ImageView
@@ -167,7 +172,7 @@
             android:layout_width="100dp"
             android:layout_height="100dp"
             android:layout_toRightOf="@id/send_msg_and_upload_img"
-            android:layout_marginLeft="30dp"
+            android:layout_marginLeft="0dp"
             app:srcCompat="@drawable/route_icon" />
 
         <TextView
@@ -179,7 +184,9 @@
             android:layout_marginTop="4dp"
             android:layout_alignStart="@id/send_msg_and_upload_img"
             android:layout_alignEnd="@id/send_msg_and_upload_img"
-            android:gravity="center"/>
+            android:gravity="center"
+            android:visibility="gone"
+            />
 
         <TextView
             android:id="@+id/cluster_and_route_title"
