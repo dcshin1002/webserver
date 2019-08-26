@@ -70,8 +70,10 @@ public class AddressFacade {
                 addRecordToParcelList(mParcelList, record);
 
                 // Add it if the courier is new one
-                if (!mCourierHash.containsKey(record[11])) {
-                    mCourierHash.put(record[11], "");
+                if (record.length > 11) {
+                    if (!mCourierHash.containsKey(record[11])) {
+                        mCourierHash.put(record[11], "");
+                    }
                 }
             }
 
@@ -99,8 +101,12 @@ public class AddressFacade {
         String remark = record[8];
         String deliveryNote = record[9];
         String regionalCode = record[10];
-        String courierName = record[11];
-        String courierContact = record[12];
+        String courierName = "";
+        String courierContact = "";
+        if (record.length > 11) {
+            courierName = record[11];
+            courierContact = record[12];
+        }
 
         TmsParcelItem item = new TmsParcelItem(TmsParcelItem.UNSET, trackingNum, packageType, date,
                 consignorName, consignorContact, consigneeName, consigneeAddr, consigneeContact,
@@ -149,7 +155,7 @@ public class AddressFacade {
 
             mFbConnector.postParcelListToFirebaseDatabase(mDateStr, (ArrayList<TmsParcelItem>) mParcelList);
             mFbConnector.postCourierListToFirbaseDatabase(mDateStr, (ArrayList<TmsCourierItem>) couriers);
-
+            mFbConnector.postJobStatusFromFirebaseDatabase(mDateStr);
             goToParcelList();
         }
 

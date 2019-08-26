@@ -67,6 +67,7 @@ public class CourierSectionMatchingActivity extends AppCompatActivity implements
     private SimpleDateFormat mSdf;
     private View.OnTouchListener mTouchListner;
     private String mOldDateStr;
+    private int mCurrentCourierItemId = 0;
 
 
     @Override
@@ -316,6 +317,7 @@ public class CourierSectionMatchingActivity extends AppCompatActivity implements
                     break;
                 }
 
+
                 // Update courier filed to selected one
                 for (TmsParcelItem item : mArrayValues) {
                     item.courierName = mTextCourierName.getText().toString();
@@ -323,6 +325,10 @@ public class CourierSectionMatchingActivity extends AppCompatActivity implements
                 }
                 // Let update those on FirebaseDdatabse
                 mFbConnector.postParcelListToFirebaseDatabase2(mTextCourierDate.getText().toString(), mArrayValues);
+
+                TmsCourierItem courierItem = new TmsCourierItem(String.valueOf(mCurrentCourierItemId++) , mTextCourierName.getText().toString());
+                mFbConnector.postCourierItemToFirebaseDatabase(mTextCourierDate.getText().toString(), courierItem);
+
                 AlertDialog.Builder builder = new AlertDialog.Builder(CourierSectionMatchingActivity.this);
                 builder.setTitle(getString(R.string.assign_is_completed));
                 builder.setMessage(String.format(getResources().getString(R.string.alert_message_after_assign), mTextSectorName.getText().toString(), mTextCourierName.getText().toString()));
