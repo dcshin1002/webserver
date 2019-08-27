@@ -246,7 +246,7 @@ public class FirebaseDatabaseConnector {
         getParcelListFromFirebaseDatabase(pathString, orderBy, null);
     }
 
-    protected void getParcelListFromFirebaseDatabase(String pathString, String orderBy, String select) {
+    protected void getParcelListFromFirebaseDatabase(final String pathString, String orderBy, String select) {
         Query firebaseQuery;
         if (TextUtils.isEmpty(select) || select.equals(mContext.getString(R.string.all_couriers)) || select == null) {
             firebaseQuery = mDatabaseRef.child(PARCEL_REF_NAME).child(pathString).orderByChild(orderBy);
@@ -278,14 +278,30 @@ public class FirebaseDatabaseConnector {
                 }
                 if (mArrayValues.size() > 0) {
                     Collections.sort(mArrayValues);
-                    int nearIdx = getNearIdx(mArrayValues);
-                    int newOrderInRoute = 1;
+                    getJobStatusFromFirebaseDatabase(pathString, new ValueEventListener() {
+                        @Override
+                        public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                            long numElements = dataSnapshot.getChildrenCount();
+                            if (numElements > 0 ) {
+                                TmsStatusItem jobStatus = dataSnapshot.getValue(TmsStatusItem.class);
+                                if (jobStatus.route_job.equals("finished")) {
+                                    int nearIdx = getNearIdx(mArrayValues);
+                                    int newOrderInRoute = 1;
+                                    for (int i=0; i < mArrayValues.size(); i++) {
+                                        int idx = (nearIdx + i) % mArrayValues.size();
+                                        mArrayValues.get(idx).orderInRoute = newOrderInRoute++;
+                                    }
+                                    Collections.sort(mArrayValues);
+                                }
+                            }
+                        }
 
-                    for (int i=0; i < mArrayValues.size(); i++) {
-                        int idx = (nearIdx + i) % mArrayValues.size();
-                        mArrayValues.get(idx).orderInRoute = newOrderInRoute++;
-                    }
-                    Collections.sort(mArrayValues);
+                        @Override
+                        public void onCancelled(@NonNull DatabaseError databaseError) {
+
+                        }
+                    });
+
                 }
 
                 if (mListAdapter != null) {
