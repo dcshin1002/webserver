@@ -60,8 +60,8 @@ public class MapViewActivity extends AppCompatActivity
 
     private static float mInitLatitude = 0;
     private static float mInitLongitude = 0;
-    private boolean flag_item_selected = false;
     private TmsParcelItem mCompleteTarget;
+    private MapPOIItem mCompleteMarker;
     private static final int SEND_COMPLETED_MESSAGE = 1;
     private static Bitmap bluepin;
     private static Bitmap redpin;
@@ -149,13 +149,13 @@ public class MapViewActivity extends AppCompatActivity
             marker.setSelectedMarkerType(MapPOIItem.MarkerType.CustomImage); // 마커를 클릭했을때, 기본으로 제공하는 RedPin 마커 모양.
             if (item.orderInRoute == -1) {
                 if (item.status.equals(TmsParcelItem.STATUS_DELIVERED)) {
-                    marker.setCustomImageResourceId(R.drawable.bluepin);
+                    marker.setCustomImageResourceId(R.drawable.marker_greenpin);
                 } else if (item.status.equals(TmsParcelItem.STATUS_GEOCODED)) {
-                    marker.setCustomImageResourceId(R.drawable.redpin);
+                    marker.setCustomImageResourceId(R.drawable.marker_redpin);
                 } else {
-                    marker.setCustomImageResourceId(R.drawable.greenpin);
+                    marker.setCustomImageResourceId(R.drawable.marker_bluepin);
                 }
-                marker.setCustomSelectedImageResourceId(R.drawable.greenpin);
+                marker.setCustomSelectedImageResourceId(R.drawable.marker_yellowpin);
             } else {
                 BitmapFactory.Options bmOptions = new BitmapFactory.Options();
                 bmOptions.inScaled = false;
@@ -279,9 +279,6 @@ public class MapViewActivity extends AppCompatActivity
     public void onMapViewMoveFinished(MapView mapView, MapPoint mapPoint) {
         MapPoint.GeoCoordinate mapPointGeo = mapPoint.getMapPointGeoCoord();
         Log.i(LOG_TAG, String.format("MapView onMapViewMoveFinished (%f,%f)", mapPointGeo.latitude, mapPointGeo.longitude));
-        //if (!flag_item_selected)
-            //mLayout_parcel_data.setVisibility(View.GONE);
-        flag_item_selected = false;
     }
 
     @Override
@@ -295,7 +292,6 @@ public class MapViewActivity extends AppCompatActivity
         if (mapPOIItem.getItemName().equals(getString(R.string.current_location))) {
             return;
         }
-        flag_item_selected = true;
 
         mLayout_parcel_data.setVisibility(View.VISIBLE);
 
@@ -364,7 +360,7 @@ public class MapViewActivity extends AppCompatActivity
                     @Override
                     public void onClick(DialogInterface dialogInterface, int i) {
                         mCompleteTarget = item;
-
+                        mCompleteMarker = mapPOIItem;
                         Intent intent = new Intent(MapViewActivity.this, UploadImageActivity.class);
                         intent.putExtra(Utils.SELECTED_ITEM, item);
                         intent.putExtra(Utils.SELECTED_DATE, mSelectedDate);
@@ -398,9 +394,11 @@ public class MapViewActivity extends AppCompatActivity
                     String sendResult = data.getStringExtra(UploadImageActivity.EXTRA_SEND_RESULT);
                     if (TextUtils.equals(sendResult, "success")) {
                         String filePath = data.getStringExtra(UploadImageActivity.EXTRA_UPLOADED_FILE_PATH);
-                        //makeComplete(filePath);
                         Utils.makeComplete(mFbConnector, mCompleteTarget,mSelectedDate,filePath);
-
+                        mMapView.removePOIItem(mCompleteMarker);
+                        mCompleteMarker.setCustomImageResourceId(R.drawable.marker_greenpin);
+                        mMapView.addPOIItem(mCompleteMarker);
+                        updateStatusToComplete();
                     } else {
 
                     }

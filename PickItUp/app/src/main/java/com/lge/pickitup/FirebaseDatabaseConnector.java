@@ -278,6 +278,7 @@ public class FirebaseDatabaseConnector {
                 }
                 if (mArrayValues.size() > 0) {
                     Collections.sort(mArrayValues);
+                    /*
                     getJobStatusFromFirebaseDatabase(pathString, new ValueEventListener() {
                         @Override
                         public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
@@ -295,12 +296,12 @@ public class FirebaseDatabaseConnector {
                                 }
                             }
                         }
-
                         @Override
                         public void onCancelled(@NonNull DatabaseError databaseError) {
 
                         }
                     });
+                    */
 
                 }
 

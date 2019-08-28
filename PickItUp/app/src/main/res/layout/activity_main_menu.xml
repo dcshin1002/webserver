@@ -173,7 +173,9 @@
             android:layout_height="100dp"
             android:layout_toRightOf="@id/send_msg_and_upload_img"
             android:layout_marginLeft="0dp"
-            app:srcCompat="@drawable/route_icon" />
+            app:srcCompat="@drawable/route_icon"
+            android:visibility="gone"
+            />
 
         <TextView
             android:id="@+id/send_msg_and_upload_img_title"
@@ -197,7 +199,9 @@
             android:layout_marginTop="4dp"
             android:layout_alignStart="@id/cluster_and_route"
             android:layout_alignEnd="@id/cluster_and_route"
-            android:gravity="center"/>
+            android:gravity="center"
+            android:visibility="gone"
+            />
     </RelativeLayout>
 
 
