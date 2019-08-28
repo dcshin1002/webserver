@@ -26,6 +26,8 @@ import com.google.firebase.auth.FirebaseAuthInvalidCredentialsException;
 import com.google.firebase.auth.FirebaseAuthInvalidUserException;
 import com.google.firebase.auth.FirebaseUser;
 
+import java.util.Arrays;
+
 public class LoginActivity extends AppCompatActivity {
 
     private static final String LOG_TAG = "LoginActivity";
@@ -76,7 +78,15 @@ public class LoginActivity extends AppCompatActivity {
                     mEditTextPassword.setText("");
 
                     // Go to MainMenuActivity
-                    startActivity(new Intent(LoginActivity.this, MainMenuActivity.class));
+                    if (Arrays.asList(Utils.ADMIN_UIDS).contains(user.getUid())) {
+                        startActivity(new Intent(LoginActivity.this, MainMenuActivity.class));
+                    } else {
+                        Intent intent = new Intent(LoginActivity.this, ParcelListActivity.class);
+                        intent.putExtra(Utils.KEY_COURIER_NAME, user.getDisplayName());
+                        intent.putExtra(Utils.KEY_DB_DATE, Utils.getTodayDateStr());
+                        startActivity(intent);
+                    }
+                    finish();
                 } else {
                     // User is signed out
                     Log.d(LOG_TAG, "onAuthStateChanged:signed_out");

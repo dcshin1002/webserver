@@ -39,6 +39,7 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Calendar;
 import java.util.HashMap;
 import java.util.List;
@@ -75,7 +76,6 @@ public class ParcelListActivity extends AppCompatActivity implements View.OnClic
     private View.OnTouchListener mTouchListner;
 
     private String mOldDateStr;
-    private static String mSort = "id";
 
     final int MY_PERMISSIONS = 998;
 
@@ -89,12 +89,9 @@ public class ParcelListActivity extends AppCompatActivity implements View.OnClic
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_parcel_list);
 
-        initResources();
-
         Bundle b = getIntent().getExtras();
         String dateStr;
         String courierStr;
-        mOldDateStr = mTextCourierDate.getText().toString();
 
         if (b != null) {
             dateStr = b.getString(Utils.KEY_DB_DATE);
@@ -103,31 +100,7 @@ public class ParcelListActivity extends AppCompatActivity implements View.OnClic
             dateStr = Utils.getTodayDateStr();
             courierStr = getString(R.string.all_couriers);
         }
-
-        mTextCourierDate.setText(dateStr);
-        mTextCourierName.setText(courierStr);
-
-        mFbConnector = new FirebaseDatabaseConnector(this);
-        mFbConnector.setParcelHash(this.mParcelDatabaseHash);
-        mFbConnector.setCourierHash(this.mCourierDatabaseHash);
-        mFbConnector.setParcelKeyArray(this.mArrayKeys);
-        mFbConnector.setParcelValueArray(this.mArrayValues);
-        mFbConnector.setListAdapter(this.mArrayAdapter);
-
-
-        // Here, thisActivity is the current activity
-        if (ContextCompat.checkSelfPermission(this,
-                Manifest.permission.ACCESS_FINE_LOCATION)
-                != PackageManager.PERMISSION_GRANTED) {
-
-
-            // No explanation needed, we can request the permission.
-            ActivityCompat.requestPermissions(this,
-                    new String[]{Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.READ_EXTERNAL_STORAGE},
-                    MY_PERMISSIONS);
-        } else {
-            Utils.initLocation(this);
-        }
+        mOldDateStr = dateStr;
 
         //Get FirebaseAuth instance
         mAuth = FirebaseAuth.getInstance();
@@ -157,8 +130,33 @@ public class ParcelListActivity extends AppCompatActivity implements View.OnClic
             }
         };
 
+        initResources();
 
-        getFirebaseList();
+        mTextCourierDate.setText(dateStr);
+        mTextCourierName.setText(courierStr);
+
+        mFbConnector = new FirebaseDatabaseConnector(this);
+        mFbConnector.setParcelHash(this.mParcelDatabaseHash);
+        mFbConnector.setCourierHash(this.mCourierDatabaseHash);
+        mFbConnector.setParcelKeyArray(this.mArrayKeys);
+        mFbConnector.setParcelValueArray(this.mArrayValues);
+        mFbConnector.setListAdapter(this.mArrayAdapter);
+
+        // Here, thisActivity is the current activity
+        if (ContextCompat.checkSelfPermission(this,
+                Manifest.permission.ACCESS_FINE_LOCATION)
+                != PackageManager.PERMISSION_GRANTED) {
+
+
+            // No explanation needed, we can request the permission.
+            ActivityCompat.requestPermissions(this,
+                    new String[]{Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.READ_EXTERNAL_STORAGE},
+                    MY_PERMISSIONS);
+        } else {
+            Utils.initLocation(this);
+        }
+
+        refreshList(courierStr);
     }
 
     @Override
@@ -233,11 +231,6 @@ public class ParcelListActivity extends AppCompatActivity implements View.OnClic
         mAuth.removeAuthStateListener(mAuthListener);
     }
 
-    private void getFirebaseList() {
-        mFbConnector.getParcelListFromFirebaseDatabase(mTextCourierDate.getText().toString(), mSort);
-        mFbConnector.getCourierListFromFirebaseDatabase(mTextCourierDate.getText().toString(), mSort);
-    }
-
     private void updateConnectUI() {
         if (mCurrentUser != null) {
             mIvConnStatus.setImageDrawable(getDrawable(R.mipmap.activity_connect_account_settings_connected));
@@ -307,7 +300,9 @@ public class ParcelListActivity extends AppCompatActivity implements View.OnClic
         mBtnChangeView.setOnTouchListener(mTouchListner);
 
         mTextCourierDate.setOnClickListener(this);
-        mTextCourierName.setOnClickListener(this);
+        if (Arrays.asList(Utils.ADMIN_UIDS).contains(mAuth.getUid())) {
+            mTextCourierName.setOnClickListener(this);
+        }
         mBtnUpdateList.setOnClickListener(this);
         mBtnChangeView.setOnClickListener(this);
 

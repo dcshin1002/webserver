@@ -36,6 +36,12 @@ public class Utils {
     static final String SELECTED_ITEM = "selected_item";
     static final String SELECTED_DATE = "selected_date";
 
+    static final String[] ADMIN_UIDS = {
+            "NCtx9UD1qSO4HAk1lhDma0eYhSq1",
+            "eXVbCp7Ne1ZeeqPpxCygUA63NPu2",
+    };
+
+
     public static String getKeyHash(final Context context) {
         PackageManager pm = context.getPackageManager();
         PackageInfo packageInfo = null;
