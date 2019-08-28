@@ -29,6 +29,8 @@ def setClusters(req, year, month, day):
     result = q.enqueue(setClustersWork, args=(
         year, month, day), job_timeout=600)
 
+    dateForm = '-'.join([str(year), str("%02d" % month), str("%02d" % day)])
+    dcon.saveJobStateToFirebaseDB(dateForm, Job.fetch(result.get_id()).get_status())
 
     return JsonResponse({
         'msg': '<pre>setClusters() Processing...</pre>',
@@ -39,7 +41,7 @@ def setClusters(req, year, month, day):
 def setClustersWork(year, month, day, data=None):
     dateForm = '-'.join([str(year), str("%02d" % month), str("%02d" % day)])
     print(dateForm)
-    # dcon.saveJobStateToFirebaseDB(dateForm, get_current_job().get_status())
+    dcon.saveJobStateToFirebaseDB(dateForm, get_current_job().get_status())
     dcon.loadDataFromFirebaseDB(dateForm)
 
     distributer.clustering()
