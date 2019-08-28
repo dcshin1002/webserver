@@ -155,6 +155,7 @@ public class MapViewActivity extends AppCompatActivity
                 } else {
                     marker.setCustomImageResourceId(R.drawable.greenpin);
                 }
+                marker.setCustomSelectedImageResourceId(R.drawable.greenpin);
             } else {
                 BitmapFactory.Options bmOptions = new BitmapFactory.Options();
                 bmOptions.inScaled = false;
@@ -191,9 +192,8 @@ public class MapViewActivity extends AppCompatActivity
 
                 marker.setCustomImageBitmap(pin);
                 marker.setCustomSelectedImageBitmap(seleted_pin);
-
+                marker.setCustomImageAutoscale(false);
             }
-
             mMapView.addPOIItem(marker);
         }
     }

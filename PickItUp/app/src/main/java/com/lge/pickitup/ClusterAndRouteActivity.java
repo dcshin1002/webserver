@@ -1,7 +1,9 @@
 package com.lge.pickitup;
 
+import android.app.AlertDialog;
 import android.app.DatePickerDialog;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
@@ -22,6 +24,7 @@ import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.ValueEventListener;
 
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Calendar;
 
 public class ClusterAndRouteActivity extends AppCompatActivity implements View.OnClickListener, ProcessingCallback {
@@ -109,6 +112,24 @@ public class ClusterAndRouteActivity extends AppCompatActivity implements View.O
                         } else {
                             mBtnClusterAndRoute.setEnabled(true);
                             TmsStatusItem jobStatus = dataSnapshot.getValue(TmsStatusItem.class);
+                            if (jobStatus.route_job.equals("started") || jobStatus.route_job.equals("queued")) {
+                                AlertDialog.Builder builder = new AlertDialog.Builder(ClusterAndRouteActivity.this);
+                                builder.setTitle(getString(R.string.cluster_route_str));
+                                builder.setMessage(String.format(getResources().getString(R.string.alert_message_running_clustering), mTextCourierDate.getText().toString()));
+                                builder.setCancelable(true);
+                                builder.setPositiveButton("확인", new DialogInterface.OnClickListener() {
+                                    @Override
+                                    public void onClick(DialogInterface dialogInterface, int i) {
+
+                                    }
+                                });
+                                builder.show();
+                            }
+                            if (jobStatus.route_job.equals("init") || jobStatus.route_job.equals("finished")) {
+                                mBtnClusterAndRoute.setEnabled(true);
+                            } else {
+                                mBtnClusterAndRoute.setEnabled(false);
+                            }
                             if (jobStatus.route_job.equals("finished")) {
                                 mBtnMatchingCourierSection.setEnabled(true);
                             } else {
@@ -130,20 +151,36 @@ public class ClusterAndRouteActivity extends AppCompatActivity implements View.O
         mFbConnector = new FirebaseDatabaseConnector(this);
 
         // parcel list gathering
-        mFbConnector.getParcelListFromFirebaseDatabase(mTextCourierDate.getText().toString(), "id", null, new ValueEventListener() {
+        mFbConnector.getJobStatusFromFirebaseDatabase(mTextCourierDate.getText().toString(), new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
                 long numElements = dataSnapshot.getChildrenCount();
                 if (numElements > 0) {
-                    mBtnClusterAndRoute.setEnabled(true);
-
                     TmsStatusItem jobStatus = dataSnapshot.getValue(TmsStatusItem.class);
+
+                    if (jobStatus.route_job.equals("started") || jobStatus.route_job.equals("queued")) {
+                        AlertDialog.Builder builder = new AlertDialog.Builder(ClusterAndRouteActivity.this);
+                        builder.setTitle(getString(R.string.cluster_route_str));
+                        builder.setMessage(String.format(getResources().getString(R.string.alert_message_running_clustering), mTextCourierDate.getText().toString()));
+                        builder.setCancelable(true);
+                        builder.setPositiveButton("확인", new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialogInterface, int i) {
+
+                            }
+                        });
+                        builder.show();
+                    }
+                    if (jobStatus.route_job.equals("init") || jobStatus.route_job.equals("finished")) {
+                        mBtnClusterAndRoute.setEnabled(true);
+                    } else {
+                        mBtnClusterAndRoute.setEnabled(false);
+                    }
                     if (jobStatus.route_job.equals("finished")) {
                         mBtnMatchingCourierSection.setEnabled(true);
                     } else {
                         mBtnMatchingCourierSection.setEnabled(false);
                     }
-
                 }
             }
 
@@ -172,6 +209,18 @@ public class ClusterAndRouteActivity extends AppCompatActivity implements View.O
                     mBtnClusterAndRoute.setEnabled(false);
                     processing = true;
                     networkFragment.startProcess(mTextCourierDate.getText().toString(), mCourierNumber);
+
+                    AlertDialog.Builder builder = new AlertDialog.Builder(ClusterAndRouteActivity.this);
+                    builder.setTitle(getString(R.string.cluster_route_str));
+                    builder.setMessage(String.format(getResources().getString(R.string.alert_message_start_distribution), mTextCourierDate.getText().toString()));
+                    builder.setCancelable(true);
+                    builder.setPositiveButton("확인", new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialogInterface, int i) {
+
+                        }
+                    });
+                    builder.show();
                     Log.i(LOG_TAG, "Process Clustering & Routing");
                 }
                 break;

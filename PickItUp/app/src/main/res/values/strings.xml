@@ -63,7 +63,7 @@
     <string name="select_sector">권역 선택</string>
     <string name="select_courier">기사 선택</string>
     <string name="please_select_sector">권역을 선택해 주세요</string>
-    <string name="please_select_courier">기사를 선택해 주세요</string>
+    <string name="please_select_courier">배송 기사를 선택해 주세요</string>
     <string name="default_courier_number">기본값(60개/명)</string>
     <string name="courier_name_title">배송 기사명 : </string>
     <string name="section_name_title">Section 명 : </string>
@@ -109,5 +109,7 @@
     <string name="default_notification_channel_id">fcm_default_channel</string>
     <string name="default_notification_channel_name">Assign</string>
     <string name="alert_message_after_assign">%1$s 권역이 %2$s 기사에게 할당되었습니다.</string>
+    <string name="alert_message_start_distribution">%1$s 물류 분배 및 최적경로 탐색이 시작되었습니다.</string>
+    <string name="alert_message_running_clustering">%1$s 물류 분배 및 최적경로 탐색이 진행 중입니다. 잠시후에 다시 시도해 주세요</string>
     <string name="assign_is_completed">권역 할당 완료</string>
 </resources>

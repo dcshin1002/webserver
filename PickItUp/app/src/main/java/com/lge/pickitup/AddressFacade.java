@@ -241,6 +241,7 @@ public class AddressFacade {
     }
 
     private void goToParcelList() {
+
         mContext.startActivity(new Intent(mContext, ParcelListActivity.class)
                 .putExtra(Utils.KEY_DB_DATE, mDateStr)
                 .putExtra(Utils.KEY_COURIER_NAME, mContext.getString(R.string.all_couriers)));

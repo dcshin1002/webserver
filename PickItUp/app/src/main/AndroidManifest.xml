@@ -43,7 +43,9 @@
         <activity
             android:name=".FileListActivity"
             android:configChanges="orientation"
-            android:screenOrientation="portrait" />
+            android:screenOrientation="portrait"
+            android:noHistory="true"
+            />
         <activity
             android:name=".ParcelListActivity"
             android:configChanges="orientation"
