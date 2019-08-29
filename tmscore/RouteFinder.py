@@ -21,12 +21,12 @@ class RouteFinder:
     def solve(self, dateForm, tspFile):
         self.problem = read_tsp(tspFile)
         self.route = self.som(
-            dateForm+'-sector#'+tspFile.rstrip('.tsp').split('_')[1], self.problem, 100000)
+            dateForm+'-sector#'+tspFile.rstrip('.tsp').split('_')[1], self.problem)
         self.distance = route_distance(self.problem)
         print('Route found for problem in {}, length {}'.format(tspFile, self.distance))
         pass
 
-    def som(self, diagram_path, problem, iterations, learning_rate=0.8):
+    def som(self, diagram_path, problem, learning_rate=0.8):
         """Solve the TSP using a Self-Organizing Map."""
 
         # Obtain the normalized set of cities (w/ coord in [0,1])
@@ -37,13 +37,16 @@ class RouteFinder:
         # The population size is 8 times the number of cities
         n = cities.shape[0] * 8
 
+        # iteration number is 200 times the number of cities
+        iteration = cities.shape[0] * 200
+
         # Generate an adequate network of neurons:
         network = generate_network(n)
-        #print('Network of {} neurons created. Starting the iterations:'.format(n))
+        print('Network of {} neurons created. Starting the iterations:'.format(n))
 
         for i in range(iterations):
             if not i % 100:
-                #print('\t> Iteration {}/{}'.format(i, iterations), end="\r")
+                print('\t> Iteration {}/{}'.format(i, iterations), end="\r")
                 pass
             # ChooRoutese a random city
             city = cities.sample(1)[['x', 'y']].values

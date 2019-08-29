@@ -7,12 +7,12 @@ import datetime
 
 def clusteringPredefined():
     for i in range(db.num_cluster):
-        db.dict_Cluster[i+1] = []
+        db.dict_Cluster[i] = []
 
     for idx, row in db.df.iterrows():
         parcel = db.dict_Parcel[idx]
         if parcel.cluster and parcel.cluster > 0:
-            db.dict_Cluster[parcel.cluster].append(parcel)
+            db.dict_Cluster[parcel.cluster-1].append(parcel)
 
 
 def clustering():
