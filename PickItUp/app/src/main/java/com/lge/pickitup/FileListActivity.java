@@ -5,6 +5,7 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
+import android.os.Environment;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -168,17 +169,21 @@ public class FileListActivity extends AppCompatActivity implements View.OnClickL
     }
 
     private void readFileList() {
-        File addrDir = new File("/sdcard/address/") ;
-        if (addrDir.exists() && addrDir.isDirectory()) {
-            File[] files = addrDir.listFiles();
-            Log.i(LOG_TAG, files.length + " will be listed");
-            for (File file : files) {
-                Log.i(LOG_TAG, "file name is " + file.getName());
-                mFileList.add(file.getName());
+        String sdcardPath = null;
+        String sdcardStat = Environment.getExternalStorageState();
+        if(sdcardStat.equals(Environment.MEDIA_MOUNTED)) {
+            sdcardPath = Environment.getExternalStorageDirectory().getAbsolutePath();
+            File addrDir = new File(sdcardPath + "/address/") ;
+            if (addrDir.exists() && addrDir.isDirectory()) {
+                File[] files = addrDir.listFiles();
+                Log.i(LOG_TAG, files.length + " will be listed");
+                for (File file : files) {
+                    Log.i(LOG_TAG, "file name is " + file.getName());
+                    mFileList.add(file.getName());
+                }
             }
+            mFlAdapter.notifyDataSetChanged();
         }
-//        mFileListAdapter.notifyDataSetChanged();
-        mFlAdapter.notifyDataSetChanged();
     }
 
     private class FileItemAdapter extends ArrayAdapter<String> {
