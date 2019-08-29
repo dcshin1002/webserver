@@ -325,6 +325,7 @@ public class FirebaseDatabaseConnector {
         firebaseQuery = mDatabaseRef.child(JOB_STATUS_NAME).child(pathString);
         firebaseQuery.addListenerForSingleValueEvent(listener);
     }
+
     protected void postJobStatusFromFirebaseDatabase(String pathString) {
         Map<String, Object> initStatus = new HashMap<>();
         initStatus.put("route_job", "init");

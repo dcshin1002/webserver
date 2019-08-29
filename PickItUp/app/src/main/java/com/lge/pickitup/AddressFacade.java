@@ -36,7 +36,8 @@ public class AddressFacade {
     Context mContext;
 
     List<TmsParcelItem> mParcelList = new ArrayList<>();
-    HashMap<String, String> mCourierHash = new HashMap<>();
+    HashMap<String, Integer> mCourierHash = new HashMap<>();
+    private int mCourierNum = 0;
 
     public AddressFacade(Context mContext) {
         this.mContext = mContext;
@@ -58,6 +59,7 @@ public class AddressFacade {
     void initFile(String filename) {
         mParcelList.clear();
         mCourierHash.clear();
+        mCourierNum = 0;
 
         File file = new File("/sdcard/address/" + filename);
         try {
@@ -67,14 +69,13 @@ public class AddressFacade {
             CSVReader reader = new CSVReader(is);
             String[] record = null;
             while ((record = reader.readNext()) != null) {
-                addRecordToParcelList(mParcelList, record);
-
                 // Add it if the courier is new one
                 if (record.length > 11) {
                     if (!mCourierHash.containsKey(record[11])) {
-                        mCourierHash.put(record[11], "");
+                        mCourierHash.put(record[11], mCourierNum++);
                     }
                 }
+                addRecordToParcelList(mParcelList, record);
             }
 
             // Get longitude and latitude from address through Daum Kakao API
@@ -114,6 +115,7 @@ public class AddressFacade {
         item.regionalCode = regionalCode;
         item.courierName = courierName;
         item.courierContact = courierContact;
+        item.sectorId = mCourierHash.get(courierName);
 
         list.add(item);
     }

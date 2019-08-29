@@ -176,10 +176,12 @@ public class FileListActivity extends AppCompatActivity implements View.OnClickL
             File addrDir = new File(sdcardPath + "/address/") ;
             if (addrDir.exists() && addrDir.isDirectory()) {
                 File[] files = addrDir.listFiles();
-                Log.i(LOG_TAG, files.length + " will be listed");
-                for (File file : files) {
-                    Log.i(LOG_TAG, "file name is " + file.getName());
-                    mFileList.add(file.getName());
+                if (files != null) {
+                    Log.i(LOG_TAG, files.length + " will be listed");
+                    for (File file : files) {
+                        Log.i(LOG_TAG, "file name is " + file.getName());
+                        mFileList.add(file.getName());
+                    }
                 }
             }
             mFlAdapter.notifyDataSetChanged();
