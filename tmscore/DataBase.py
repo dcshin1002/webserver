@@ -28,24 +28,31 @@ dict_Cluster = {}
 df = pd.DataFrame(columns=('lon', 'lat'))
 tspFiles = []
 
+
 def dropDB(name):
     mongodb.drop_collection(name)
+
 
 def getTMSDB(name):
     return mongodb[name]
 
+
 class ParcelEncoder(JSONEncoder):
     def default(self, o):
         return o.__dict__
+
 
 class ParcelRaw:
     def __init__(self, id, addr):
         self.id = id
         self.addr = addr
 
+
 class Parcel:
-    def __init__(self, id, addr, lat, lon):
+    def __init__(self, id, addr, lat, lon, cluster=None, order=None):
         self.id = id
         self.addr = addr
         self.lat = lat
         self.lon = lon
+        self.cluster = cluster
+        self.order = order

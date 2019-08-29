@@ -73,9 +73,13 @@ public class TmsWASFragment extends Fragment {
      * Start non-blocking execution.
      */
     public void startProcess(String date, int clusterNum) {
+        startProcess(date, clusterNum, false);
+    }
+
+    public void startProcess(String date, int clusterNum, boolean clustered) {
         cancelProcess();
 
-        String setUrl = urlString + "/set";
+        String setUrl = urlString + (clustered ? "/route" : "/set");
         String getUrl = urlString + "/job";
         String[] strArr = date.split("-");
         for (String s : strArr) {
@@ -113,7 +117,6 @@ public class TmsWASFragment extends Fragment {
         void setCallback(ProcessingCallback<String> callback) {
             this.callback = callback;
         }
-
 
         private String getStringFromInputStream(InputStream is) {
             BufferedReader br = null;
@@ -209,7 +212,7 @@ public class TmsWASFragment extends Fragment {
          */
         @Override
         protected void onPreExecute() {
-            Log.i(TAG, "onPreExecute(), callback=" + Boolean.toString(callback!=null));
+            Log.i(TAG, "onPreExecute(), callback=" + Boolean.toString(callback != null));
             if (callback != null) {
                 NetworkInfo networkInfo = callback.getActiveNetworkInfo();
                 if (networkInfo == null || !networkInfo.isConnected() ||
@@ -240,7 +243,7 @@ public class TmsWASFragment extends Fragment {
                     }
                     publishProgress(ProcessingCallback.Progress.PROCESS_IN_PROGRESS, 50);
 
-                    URL queryUrl = new URL(urls[1]+"/"+jobId);
+                    URL queryUrl = new URL(urls[1] + "/" + jobId);
                     while (true) {
                         Thread.sleep(5000);
                         String status = processUrl(queryUrl, "status");

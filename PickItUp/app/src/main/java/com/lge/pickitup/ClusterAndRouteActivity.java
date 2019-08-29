@@ -24,7 +24,6 @@ import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.ValueEventListener;
 
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
 import java.util.Calendar;
 
 public class ClusterAndRouteActivity extends AppCompatActivity implements View.OnClickListener, ProcessingCallback {

@@ -30,7 +30,8 @@ def setClusters(req, year, month, day):
         year, month, day), job_timeout=600)
 
     dateForm = '-'.join([str(year), str("%02d" % month), str("%02d" % day)])
-    dcon.saveJobStateToFirebaseDB(dateForm, Job.fetch(result.get_id()).get_status())
+    dcon.saveJobStateToFirebaseDB(
+        dateForm, Job.fetch(result.get_id()).get_status())
 
     return JsonResponse({
         'msg': '<pre>setClusters() Processing...</pre>',
@@ -42,17 +43,56 @@ def setClustersWork(year, month, day, data=None):
     dateForm = '-'.join([str(year), str("%02d" % month), str("%02d" % day)])
     print(dateForm)
     dcon.saveJobStateToFirebaseDB(dateForm, get_current_job().get_status())
-    dcon.loadDataFromFirebaseDB(dateForm)
+    dcon.loadParcelDataFromFirebaseDB(dateForm)
 
     distributer.clustering()
     dcon.saveTSPFile('data')
     finder = RouteFinder()
     for c, fname in enumerate(dcon.getTSPFilenames()):
         finder.solve(dateForm, fname)
-        dcon.saveDataToFirebaseDB(dateForm, c+1, finder.problem, finder.route)
+        dcon.saveParcelDataToFirebaseDB(
+            dateForm, c+1, finder.problem, finder.route)
         print('firebaseDB updated for cluster', c+1)
     dcon.saveJobStateToFirebaseDB(dateForm, "finished")
     print('setClusters Done')
+
+
+def setRoute(req, year, month, day):
+    if year == None or month == None or day == None:
+        return JsonResponse({
+            'msg': '<pre>Invalid URL</pre>',
+            'jobid': None
+        })
+
+    result = q.enqueue(setRouteWork, args=(
+        year, month, day), job_timeout=600)
+
+    dateForm = '-'.join([str(year), str("%02d" % month), str("%02d" % day)])
+    dcon.saveJobStateToFirebaseDB(
+        dateForm, Job.fetch(result.get_id()).get_status())
+
+    return JsonResponse({
+        'msg': '<pre>setClusters() Processing...</pre>',
+        'jobid': result.get_id(),
+    })
+
+
+def setRouteWork(year, month, day, cluster=None):
+    dateForm = '-'.join([str(year), str("%02d" % month), str("%02d" % day)])
+    print(dateForm)
+    # dcon.saveJobStateToFirebaseDB(dateForm, get_current_job().get_status())
+    dcon.loadParcelDataFromFirebaseDB(dateForm)
+
+    distributer.clusteringPredefined()
+    dcon.saveTSPFile('data')
+    finder = RouteFinder()
+    for c, fname in enumerate(dcon.getTSPFilenames()):
+        finder.solve(dateForm, fname)
+        dcon.saveParcelDataToFirebaseDB(
+            dateForm, c+1, finder.problem, finder.route)
+        print('firebaseDB updated for cluster', c+1)
+    dcon.saveJobStateToFirebaseDB(dateForm, "finished")
+    print('setRouter Done')
 
 
 def getWorkProgress(req, jobid):

@@ -4,6 +4,17 @@ import json
 from pymongo import MongoClient
 import datetime
 
+
+def clusteringPredefined():
+    for i in range(db.num_cluster):
+        db.dict_Cluster[i+1] = []
+
+    for idx, row in db.df.iterrows():
+        parcel = db.dict_Parcel[idx]
+        if parcel.cluster and parcel.cluster > 0:
+            db.dict_Cluster[parcel.cluster].append(parcel)
+
+
 def clustering():
     kmeans = KMeans(n_clusters=db.num_cluster)
     kmeans.fit_predict(db.df)
@@ -15,7 +26,7 @@ def clustering():
         cluster_idx = kmeans.labels_[i]
         id = idx
         db.dict_Cluster[cluster_idx].append(db.dict_Parcel[id])
-        i +=1
+        i += 1
 
     # DBObj = db.getTMSDB('tmssample')
     # db.dropDB('tmssample')

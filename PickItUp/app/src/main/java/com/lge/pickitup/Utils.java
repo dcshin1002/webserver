@@ -27,20 +27,70 @@ public class Utils {
     static final String LOG_TAG = "Utils";
 
     static final String KEY_DB_DATE = "date";
-    static final String KEY_COURIER_NAME ="courier_name";
-    static final String KEY_COURIER_NUMBER ="courier_number";
-
-    static Location mCurrent;
-    static LocationManager mLocationMgr;
-    static Context mContext;
+    static final String KEY_COURIER_NAME = "courier_name";
+    static final String KEY_COURIER_NUMBER = "courier_number";
     static final String SELECTED_ITEM = "selected_item";
     static final String SELECTED_DATE = "selected_date";
-
+    static final String SERVER_URL = "https://tmsproto-py.herokuapp.com";
     static final String[] ADMIN_UIDS = {
             "NCtx9UD1qSO4HAk1lhDma0eYhSq1",
             "eXVbCp7Ne1ZeeqPpxCygUA63NPu2",
     };
+    static Location mCurrent;
+    static LocationManager mLocationMgr;
+    static Context mContext;
+    private static final LocationListener mNetworkLocationListener = new LocationListener() {
+        @Override
+        public void onLocationChanged(final Location location) {
+            mLocationMgr.removeUpdates(mGPSLocationListener);
+            mLocationMgr.removeUpdates(mNetworkLocationListener);
 
+            mCurrent = location;
+            Log.i(LOG_TAG, "current(mNetworkLocationListener) : " + mCurrent.getLatitude() + "/" + mCurrent.getLongitude());
+            Toast.makeText(mContext, "current(mNetworkLocationListener)", Toast.LENGTH_SHORT).show();
+        }
+
+        @Override
+        public void onStatusChanged(String provider, int status, Bundle extras) {
+
+        }
+
+        @Override
+        public void onProviderEnabled(String provider) {
+
+        }
+
+        @Override
+        public void onProviderDisabled(String provider) {
+
+        }
+    };
+    private static final LocationListener mGPSLocationListener = new LocationListener() {
+        @Override
+        public void onLocationChanged(final Location location) {
+            mLocationMgr.removeUpdates(mGPSLocationListener);
+            mLocationMgr.removeUpdates(mNetworkLocationListener);
+
+            mCurrent = location;
+            Log.i(LOG_TAG, "current(mGPSLocationListener) : " + mCurrent.getLatitude() + "/" + mCurrent.getLongitude());
+            Toast.makeText(mContext, "current(mGPSLocationListener)", Toast.LENGTH_SHORT).show();
+        }
+
+        @Override
+        public void onStatusChanged(String provider, int status, Bundle extras) {
+            // Do nothing
+        }
+
+        @Override
+        public void onProviderEnabled(String provider) {
+            // Do nothing
+        }
+
+        @Override
+        public void onProviderDisabled(String provider) {
+            // Do nothing
+        }
+    };
 
     public static String getKeyHash(final Context context) {
         PackageManager pm = context.getPackageManager();
@@ -79,9 +129,9 @@ public class Utils {
         dist = rad2deg(dist);
         dist = dist * 60 * 1.1515;
 
-        if (unit.equals("km") ) {
+        if (unit.equals("km")) {
             dist = dist * 1.609344;
-        } else if(unit.equals("m")){
+        } else if (unit.equals("m")) {
             dist = dist * 1609.344;
         }
         return (dist);
@@ -98,7 +148,7 @@ public class Utils {
     }
 
     public static void startKakaoMapActivity(Context ctx, double targetLat, double targetLon) {
-        String url = "daummaps://route?sp="+ mCurrent.getLatitude() + "," + mCurrent.getLongitude() + "&ep="+targetLat+","+targetLon+"&by=CAR";
+        String url = "daummaps://route?sp=" + mCurrent.getLatitude() + "," + mCurrent.getLongitude() + "&ep=" + targetLat + "," + targetLon + "&by=CAR";
         Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(url));
         try {
             ctx.startActivity(intent);
@@ -107,7 +157,8 @@ public class Utils {
         }
 
     }
-    public static void makeComplete(FirebaseDatabaseConnector mFbConnector,  TmsParcelItem item, String date, String path) {
+
+    public static void makeComplete(FirebaseDatabaseConnector mFbConnector, TmsParcelItem item, String date, String path) {
         Log.d(LOG_TAG, "uploaded path = " + path);
         item.completeImage = path;
         item.status = TmsParcelItem.STATUS_DELIVERED;
@@ -150,58 +201,4 @@ public class Utils {
             }
         }
     }
-
-    private static final LocationListener mGPSLocationListener = new LocationListener() {
-        @Override
-        public void onLocationChanged(final Location location) {
-            mLocationMgr.removeUpdates(mGPSLocationListener);
-            mLocationMgr.removeUpdates(mNetworkLocationListener);
-
-            mCurrent = location;
-            Log.i(LOG_TAG, "current(mGPSLocationListener) : " + mCurrent.getLatitude() + "/" + mCurrent.getLongitude());
-            Toast.makeText(mContext, "current(mGPSLocationListener)", Toast.LENGTH_SHORT).show();
-        }
-
-        @Override
-        public void onStatusChanged(String provider, int status, Bundle extras) {
-            // Do nothing
-        }
-
-        @Override
-        public void onProviderEnabled(String provider) {
-            // Do nothing
-        }
-
-        @Override
-        public void onProviderDisabled(String provider) {
-            // Do nothing
-        }
-    };
-
-    private static final LocationListener mNetworkLocationListener = new LocationListener() {
-        @Override
-        public void onLocationChanged(final Location location) {
-            mLocationMgr.removeUpdates(mGPSLocationListener);
-            mLocationMgr.removeUpdates(mNetworkLocationListener);
-
-            mCurrent = location;
-            Log.i(LOG_TAG, "current(mNetworkLocationListener) : " + mCurrent.getLatitude() + "/" + mCurrent.getLongitude());
-            Toast.makeText(mContext, "current(mNetworkLocationListener)", Toast.LENGTH_SHORT).show();
-        }
-
-        @Override
-        public void onStatusChanged(String provider, int status, Bundle extras) {
-
-        }
-
-        @Override
-        public void onProviderEnabled(String provider) {
-
-        }
-
-        @Override
-        public void onProviderDisabled(String provider) {
-
-        }
-    };
 }

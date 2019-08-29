@@ -1,12 +1,18 @@
 package com.lge.pickitup;
 
-import android.annotation.SuppressLint;
 import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.Intent;
 import android.os.AsyncTask;
 import android.util.Log;
 
+import com.opencsv.CSVReader;
+
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import java.io.BufferedInputStream;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
@@ -15,35 +21,32 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
-import com.opencsv.CSVReader;
+import javax.net.ssl.HttpsURLConnection;
 
-import org.json.JSONArray;
-import org.json.JSONObject;
+import static androidx.constraintlayout.widget.Constraints.TAG;
 
 public class AddressFacade {
     private static final String LOG_TAG = "AddressFacade";
-
-    private FirebaseDatabaseConnector mFbConnector;
-
     String mFileName;
     String mDateStr;
     Context mContext;
-
     List<TmsParcelItem> mParcelList = new ArrayList<>();
     HashMap<String, Integer> mCourierHash = new HashMap<>();
+    private FirebaseDatabaseConnector mFbConnector;
     private int mCourierNum = 0;
 
     public AddressFacade(Context mContext) {
         this.mContext = mContext;
     }
 
-    protected void init (String fileName) {
+    protected void init(String fileName) {
         mFileName = fileName;
         mFbConnector = new FirebaseDatabaseConnector(mContext);
         mDateStr = getDateFromFileName(mFileName);
@@ -82,6 +85,17 @@ public class AddressFacade {
             AddressTranslate addressTranslate = new AddressTranslate();
             addressTranslate.execute();
 
+
+            String[] date_piece = mDateStr.split("-");
+            String setUrl = Utils.SERVER_URL + "/route";
+            String getUrl = Utils.SERVER_URL + "/job";
+            for (String piece : date_piece) {
+                setUrl += "/" + piece;
+                getUrl += "/" + piece;
+            }
+            Log.d(LOG_TAG, "processing url = " + setUrl + ", " + getUrl);
+            ProcessingBackTask processingBackTask = new ProcessingBackTask();
+            processingBackTask.execute(setUrl, getUrl);
         } catch (FileNotFoundException e) {
             Log.e(LOG_TAG, "FileNotFoundException has been raised");
             e.printStackTrace();
@@ -120,6 +134,29 @@ public class AddressFacade {
         list.add(item);
     }
 
+    private void initParcelId() {
+        for (int i = 0; i < mParcelList.size(); i++) {
+            TmsParcelItem item = mParcelList.get(i);
+            item.id = String.valueOf(i + 1);
+        }
+    }
+
+    private List<TmsCourierItem> buildTmsCouriers(List<String> list) {
+        List<TmsCourierItem> result = new ArrayList<>();
+        for (int i = 0; i < list.size(); i++) {
+            TmsCourierItem item = new TmsCourierItem(String.valueOf(i + 1), list.get(i));
+            result.add(item);
+        }
+        return result;
+    }
+
+    private void goToParcelList() {
+
+        mContext.startActivity(new Intent(mContext, ParcelListActivity.class)
+                .putExtra(Utils.KEY_DB_DATE, mDateStr)
+                .putExtra(Utils.KEY_COURIER_NAME, mContext.getString(R.string.all_couriers)));
+    }
+
     class AddressTranslate extends AsyncTask<String, Void, String> {
         ProgressDialog asyncDialog = new ProgressDialog(mContext);
 
@@ -136,9 +173,9 @@ public class AddressFacade {
             asyncDialog.setMax(mParcelList.size());
             asyncDialog.setProgress(0);
 
-            for(int i = 0; i < mParcelList.size(); i++) {
+            for (int i = 0; i < mParcelList.size(); i++) {
                 makeAddressWithKakao(mParcelList.get(i));
-                asyncDialog.setProgress(i+1);
+                asyncDialog.setProgress(i + 1);
             }
 
             return null;
@@ -226,26 +263,165 @@ public class AddressFacade {
         }
     }
 
-    private void initParcelId() {
-        for (int i = 0; i < mParcelList.size(); i++) {
-            TmsParcelItem  item = mParcelList.get(i);
-            item.id = String.valueOf(i+1);
+    class ProcessingBackTask extends AsyncTask<String, Void, String> {
+//        ProgressDialog processingDialog = new ProgressDialog(mContext);
+
+        /**
+         * Cancel background network operation if we do not have network connectivity.
+         */
+        @Override
+        protected void onPreExecute() {
+//            processingDialog.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
+//            processingDialog.setMessage(mContext.getString(R.string.route_parcels));
+//            processingDialog.show();
+            super.onPreExecute();
         }
-    }
 
-    private List<TmsCourierItem> buildTmsCouriers(List<String> list) {
-        List<TmsCourierItem> result = new ArrayList<>();
-        for (int i =0; i < list.size(); i++) {
-            TmsCourierItem item = new TmsCourierItem(String.valueOf(i+1), list.get(i));
-            result.add(item);
+        /**
+         * Defines work to perform on the background thread.
+         */
+        @Override
+        protected String doInBackground(String... urls) {
+            // TODO - represent progress bar to be more user friendly UX?
+//            processingDialog.setMax(mCourierNum);
+//            processingDialog.setProgress(0);
+
+            String result = null;
+            if (!isCancelled() && urls != null && urls.length > 0) {
+                try {
+                    URL setUrl = new URL(urls[0]);
+                    String jobId = processUrl(setUrl, "jobid");
+                    Log.i(TAG, "Returned jobid : " + jobId);
+                    if (jobId != null) {
+                        result = jobId;
+                    } else {
+                        throw new IOException("No response received.");
+                    }
+
+                    URL queryUrl = new URL(urls[1] + "/" + jobId);
+                    while (true) {
+                        Thread.sleep(5000);
+                        String status = processUrl(queryUrl, "status");
+                        if (status.equals("finished")) {
+                            break;
+                        }
+                    }
+//                    processingDialog.setProgress(mCourierNum);
+                } catch (Exception e) {
+                    result = e.getMessage();
+                }
+            }
+            String msg = "doInBackground([" + urls[0] + ", " + urls[1] + "]) -> ";
+            if (result != null) msg += result;
+            Log.i(TAG, msg);
+            return result;
         }
-        return result;
-    }
 
-    private void goToParcelList() {
+        /**
+         * Updates the DownloadCallback with the result.
+         */
+        @Override
+        protected void onPostExecute(String result) {
+            super.onPostExecute(result);
+//            processingDialog.dismiss();
 
-        mContext.startActivity(new Intent(mContext, ParcelListActivity.class)
-                .putExtra(Utils.KEY_DB_DATE, mDateStr)
-                .putExtra(Utils.KEY_COURIER_NAME, mContext.getString(R.string.all_couriers)));
+            String msg = "onPostExecute(";
+            if (result != null) msg += result;
+            msg += ")";
+            Log.i(TAG, msg);
+        }
+
+        /**
+         * Override to add special behavior for cancelled AsyncTask.
+         */
+        @Override
+        protected void onCancelled(String result) {
+            String msg = "onCancelled(";
+            if (result != null) msg += result;
+            msg += ")";
+            Log.i(TAG, msg);
+        }
+
+        private String getStringFromInputStream(InputStream is) {
+            BufferedReader br = null;
+            StringBuilder sb = new StringBuilder();
+
+            String line;
+            try {
+                br = new BufferedReader(new InputStreamReader(is));
+                while ((line = br.readLine()) != null) {
+                    sb.append(line);
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+            } finally {
+                if (br != null) {
+                    try {
+                        br.close();
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
+
+            return sb.toString();
+        }
+
+        private String parseJSON(JSONObject json, String field) throws JSONException {
+            return json.getString(field);
+        }
+
+        private String processUrl(URL url, String jsonField) throws Exception {
+            Log.i(TAG, "processUrl(" + url.toString() + ")");
+            InputStream stream = null;
+            HttpsURLConnection connection = null;
+            JSONObject json = null;
+            String result = null;
+            try {
+                // call API by using HTTPURLConnection
+                connection = (HttpsURLConnection) url.openConnection();
+                // Timeout for reading InputStream arbitrarily set to 3000ms.
+                connection.setReadTimeout(3000);
+                // Timeout for connection.connect() arbitrarily set to 3000ms.
+                connection.setConnectTimeout(3000);
+                // For this use case, set HTTP method to GET.
+                connection.setRequestMethod("GET");
+                // Already true by default but setting just in case; needs to be true since this request
+                // is carrying an input (response) body.
+                connection.setDoInput(true);
+                // Open communications link (network traffic occurs here).
+                connection.connect();
+//                int responseCode = connection.getResponseCode();
+//                if (responseCode != HttpsURLConnection.HTTP_OK) {
+//                    throw new IOException("HTTP error code: " + responseCode);
+//                }
+
+                // Retrieve the response body as an InputStream.
+                stream = new BufferedInputStream(connection.getInputStream());
+
+                // parse JSON
+                json = new JSONObject(getStringFromInputStream(stream));
+                result = parseJSON(json, jsonField);
+                Log.i(TAG, result);
+            } catch (MalformedURLException e) {
+                System.err.println("Malformed URL");
+                e.printStackTrace();
+//            } catch (JSONException e) {
+//                System.err.println("JSON parsing error");
+//                e.printStackTrace();
+            } catch (IOException e) {
+                System.err.println("URL Connection failed");
+                e.printStackTrace();
+            } finally {
+                // Close Stream and disconnect HTTPS connection.
+                if (stream != null) {
+                    stream.close();
+                }
+                if (connection != null) {
+                    connection.disconnect();
+                }
+            }
+            return result;
+        }
     }
 }

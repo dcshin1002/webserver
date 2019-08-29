@@ -22,6 +22,7 @@ urlpatterns = [
     path('', adap.index, name='firebase_test'),
     path('get/<int:year>/<int:month>/<int:day>/', adap.getClusters, name='getClusters'),
     path('set/<int:year>/<int:month>/<int:day>/', adap.setClusters, name='setClusters'),
+    path('route/<int:year>/<int:month>/<int:day>/', adap.setRoute, name='setRoute'),
     path('job/<str:jobid>', adap.getWorkProgress, name='jobProgress'),
     path('admin/', admin.site.urls),
 ]

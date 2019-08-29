@@ -12,12 +12,11 @@ API_KEY = "a9a4f76e68df45d99954e267b0337b44"
 headers = {'Authorization': 'KakaoAK {}'.format(API_KEY)}
 
 
-def loadDataFromFirebaseDB(dateForm):
+def loadParcelDataFromFirebaseDB(dateForm):
     parcels = db.firebaseDB.child("parcel_list").child(dateForm).get()
     parcelsArr = parcels.val()
 
-    # 60 parcels per a person
-    db.num_cluster = math.ceil(len(parcelsArr) / 60)
+    db.num_cluster = -1
     for parcel in parcelsArr:
         if parcel is None:
             continue
@@ -25,12 +24,19 @@ def loadDataFromFirebaseDB(dateForm):
         addr = parcel['consigneeAddr']
         lon = parcel['consigneeLongitude']
         lat = parcel['consigneeLatitude']
+        cluster = parcel['sectorId']
+
         item = db.ParcelRaw(id, addr)
         print(id, addr, lon, lat)
         db.list_ParcelRaw.append(item)
         params = getParamsFromParcelRaw(item)
-        db.dict_Parcel[id] = db.Parcel(id, addr, lat, lon)
+        db.dict_Parcel[id] = db.Parcel(id, addr, lat, lon, cluster)
         db.df.loc[id] = [lat, lon]
+        db.num_cluster = max(db.num_cluster, cluster)
+
+    if db.num_cluster < 1:
+        # 60 parcels per a person
+        db.num_cluster = math.ceil(len(parcelsArr) / 60)
 
 
 def loadDataFromCache():
@@ -72,7 +78,7 @@ def loadData(fname):
             db.df.loc[item.id] = [lat, lon]
 
 
-def saveDataToFirebaseDB(dateForm, cluster, problem, route):
+def saveParcelDataToFirebaseDB(dateForm, cluster, problem, route):
     for i, v in enumerate(route):
         city = problem.iloc[v][0]
         db.firebaseDB.child("parcel_list").child(dateForm).child(
@@ -81,7 +87,8 @@ def saveDataToFirebaseDB(dateForm, cluster, problem, route):
 
 def saveJobStateToFirebaseDB(dateForm, status):
     print(status)
-    db.firebaseDB.child("backend_status").child(dateForm).update({"route_job": status})
+    db.firebaseDB.child("backend_status").child(
+        dateForm).update({"route_job": status})
 
 
 def saveTSPFile(fbase):
