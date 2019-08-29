@@ -10,12 +10,16 @@ import java.util.Map;
 public class TmsCourierItem {
     public static final String KEY_ID = "id";
     public static final String KEY_NAME = "name";
+    public static final String KEY_LATITUDE = "latitude";
+    public static final String KEY_LONGITUDE = "longitude";
 
     public String id;
     public String name;
+    public String latitude = "";
+    public String longitude = "";
 
     public TmsCourierItem() {
-        // Default constructor required for calls to DataSnapshot.getValue(TmsParcelItem.class)
+
     }
 
     public TmsCourierItem(String id, String name) {
@@ -28,6 +32,8 @@ public class TmsCourierItem {
         HashMap<String, Object> result = new HashMap<>();
         result.put(KEY_ID, id);
         result.put(KEY_NAME, name);
+        result.put(KEY_LATITUDE, latitude);
+        result.put(KEY_LONGITUDE, longitude);
         return result;
     }
 }

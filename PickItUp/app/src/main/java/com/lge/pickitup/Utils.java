@@ -168,7 +168,12 @@ public class Utils {
     }
 
     @SuppressLint("MissingPermission")
-    protected static void initLocation(Context context) {
+    public static void setCurrentLocation() {
+        initLocation(mContext);
+    }
+
+    @SuppressLint("MissingPermission")
+    public static void initLocation(Context context) {
         mContext = context;
 
         Log.i(LOG_TAG, "Start search location");

@@ -59,6 +59,7 @@ public class LoginActivity extends AppCompatActivity {
 
         // Initialize required resources
         initResources();
+        Utils.initLocation(this);
 
         //Get FirebaseAuth instance
         mAuth = FirebaseAuth.getInstance();
@@ -86,6 +87,11 @@ public class LoginActivity extends AppCompatActivity {
                         intent.putExtra(Utils.KEY_DB_DATE, Utils.getTodayDateStr());
                         startActivity(intent);
                     }
+
+                    Intent intent_service = new Intent(LoginActivity.this, CourierLocationUploadService.class);
+                    intent_service.putExtra(Utils.KEY_COURIER_NAME, user.getDisplayName());
+                    intent_service.putExtra(Utils.KEY_DB_DATE, Utils.getTodayDateStr());
+                    startService(intent_service);
                     finish();
                 } else {
                     // User is signed out
@@ -204,7 +210,7 @@ public class LoginActivity extends AppCompatActivity {
                         // If sign in fails, display a message to the user. If sign in succeeds
                         // the auth state listener will be notified and logic to handle the
                         // signed in user can be handled in the listener.
-                         if (!task.isSuccessful()) {
+                        if (!task.isSuccessful()) {
 //                            Log.w(LOG_TAG, "signInWithEmail:failed", task.getException());
 //                            Toast.makeText(LoginActivity.this, "Authentication failed",
 //                            Toast.LENGTH_SHORT).show();
@@ -224,13 +230,13 @@ public class LoginActivity extends AppCompatActivity {
                             } catch (Exception e) {
                                 e.printStackTrace();
                             }
-                         } else {
-                             FirebaseUser user = mAuth.getCurrentUser();
-                             if (user != null) {
-                                 Log.d(LOG_TAG, "onComplete, user\'s UID = " + user.getUid() + ", display name= " + user.getDisplayName());
-                             }
+                        } else {
+                            FirebaseUser user = mAuth.getCurrentUser();
+                            if (user != null) {
+                                Log.d(LOG_TAG, "onComplete, user\'s UID = " + user.getUid() + ", display name= " + user.getDisplayName());
+                            }
 
-                         }
+                        }
                     }
                 });
     }
@@ -251,66 +257,66 @@ public class LoginActivity extends AppCompatActivity {
                     .setMessage(getString(R.string.invalid_email_alert_message))
                     .setPositiveButton(R.string.dialog_title_confirm,
                             new DialogInterface.OnClickListener() {
-                        @Override
-                        public void onClick(DialogInterface dialogInterface, int i) {
-                            dialogInterface.dismiss();
-                        }
-                    })
+                                @Override
+                                public void onClick(DialogInterface dialogInterface, int i) {
+                                    dialogInterface.dismiss();
+                                }
+                            })
                     .show();
         } else if (err.equals(ERROR_STR_USER_NOT_FOUND)) {
             mAuthErrDialog.setTitle(getString(R.string.user_not_found_alert_title))
                     .setMessage(getString(R.string.user_not_found_alert_message))
                     .setPositiveButton(R.string.dialog_title_confirm,
                             new DialogInterface.OnClickListener() {
-                        @Override
-                        public void onClick(DialogInterface dialogInterface, int i) {
-                            dialogInterface.dismiss();
-                        }
-                    })
+                                @Override
+                                public void onClick(DialogInterface dialogInterface, int i) {
+                                    dialogInterface.dismiss();
+                                }
+                            })
                     .show();
         } else if (err.equals(ERROR_STR_USER_DISABLED)) {
             mAuthErrDialog.setTitle(getString(R.string.user_disabled_alert_title))
                     .setMessage(getString(R.string.user_disabled_alert_message))
                     .setPositiveButton(R.string.dialog_title_confirm,
                             new DialogInterface.OnClickListener() {
-                        @Override
-                        public void onClick(DialogInterface dialogInterface, int i) {
-                            dialogInterface.dismiss();
-                        }
-                    })
+                                @Override
+                                public void onClick(DialogInterface dialogInterface, int i) {
+                                    dialogInterface.dismiss();
+                                }
+                            })
                     .show();
         } else if (err.equals(ERROR_STR_WRONG_PASSWORD)) {
             mAuthErrDialog.setTitle(getString(R.string.wrong_password_alert_title))
                     .setMessage(getString(R.string.wrong_password_alert_message))
                     .setPositiveButton(R.string.dialog_title_confirm,
                             new DialogInterface.OnClickListener() {
-                        @Override
-                        public void onClick(DialogInterface dialogInterface, int i) {
-                            dialogInterface.dismiss();
-                        }
-                    })
+                                @Override
+                                public void onClick(DialogInterface dialogInterface, int i) {
+                                    dialogInterface.dismiss();
+                                }
+                            })
                     .show();
-        } else if(err.equals(ERROR_STR_EMPTY_INPUTS)) {
+        } else if (err.equals(ERROR_STR_EMPTY_INPUTS)) {
             mAuthErrDialog.setTitle(getString(R.string.empty_input_field_alert_title))
                     .setMessage(R.string.empty_input_field_alert_message)
                     .setPositiveButton(R.string.dialog_title_confirm,
                             new DialogInterface.OnClickListener() {
-                        @Override
-                        public void onClick(DialogInterface dialogInterface, int i) {
-                            dialogInterface.dismiss();
-                        }
-                    })
+                                @Override
+                                public void onClick(DialogInterface dialogInterface, int i) {
+                                    dialogInterface.dismiss();
+                                }
+                            })
                     .show();
         } else if (err.equals(ERROR_STR_NETWORK_FAIL)) {
             mAuthErrDialog.setTitle(getText(R.string.network_failure_title))
                     .setMessage(getText(R.string.network_failure_message))
                     .setPositiveButton(R.string.dialog_title_confirm,
                             new DialogInterface.OnClickListener() {
-                        @Override
-                        public void onClick(DialogInterface dialogInterface, int i) {
-                            dialogInterface.dismiss();
-                        }
-                    })
+                                @Override
+                                public void onClick(DialogInterface dialogInterface, int i) {
+                                    dialogInterface.dismiss();
+                                }
+                            })
                     .show();
         }
     }

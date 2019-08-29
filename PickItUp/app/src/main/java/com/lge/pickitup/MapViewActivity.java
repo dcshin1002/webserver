@@ -39,7 +39,7 @@ import java.util.HashMap;
 
 
 public class MapViewActivity extends AppCompatActivity
-    implements MapView.OpenAPIKeyAuthenticationResultListener, MapView.MapViewEventListener, MapView.POIItemEventListener {
+        implements MapView.OpenAPIKeyAuthenticationResultListener, MapView.MapViewEventListener, MapView.POIItemEventListener {
 
     private FirebaseDatabaseConnector mFbConnector;
     private static final String LOG_TAG = "MapViewActivity";
@@ -67,6 +67,28 @@ public class MapViewActivity extends AppCompatActivity
     private static Bitmap redpin;
     private static Bitmap greenpin;
     private static Resources GlobalRes;
+    private static ArrayList mSectorMarkerList = new ArrayList(Arrays.asList(
+            R.drawable.marker_bluepin,
+            R.drawable.marker_orangepin,
+            R.drawable.marker_greenpin,
+            R.drawable.marker_purplepin,
+            R.drawable.marker_redpin,
+            R.drawable.marker_bluepin,
+            R.drawable.marker_orangepin,
+            R.drawable.marker_greenpin,
+            R.drawable.marker_purplepin,
+            R.drawable.marker_redpin,
+            R.drawable.marker_bluepin,
+            R.drawable.marker_orangepin,
+            R.drawable.marker_greenpin,
+            R.drawable.marker_purplepin,
+            R.drawable.marker_redpin,
+            R.drawable.marker_bluepin,
+            R.drawable.marker_orangepin,
+            R.drawable.marker_greenpin,
+            R.drawable.marker_purplepin,
+            R.drawable.marker_redpin
+    ));
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -100,8 +122,8 @@ public class MapViewActivity extends AppCompatActivity
 
     private void addCurrentLocationMarker() {
         Log.i(LOG_TAG, "addCurrentLocationMarker");
-        Log.i(LOG_TAG, "mCurrent.getLatitude()=" + Utils.mCurrent.getLatitude() );
-        Log.i(LOG_TAG, "mCurrent.getLongitude()=" + Utils.mCurrent.getLongitude() );
+        Log.i(LOG_TAG, "mCurrent.getLatitude()=" + Utils.mCurrent.getLatitude());
+        Log.i(LOG_TAG, "mCurrent.getLongitude()=" + Utils.mCurrent.getLongitude());
         MapPOIItem marker = new MapPOIItem();
 
         marker.setItemName(getString(R.string.current_location));
@@ -114,12 +136,23 @@ public class MapViewActivity extends AppCompatActivity
     }
 
     protected void initResources() {
-        mLayout_parcel_data =  (RelativeLayout) findViewById(R.id.parcel_data);
+        mLayout_parcel_data = (RelativeLayout) findViewById(R.id.parcel_data);
         GlobalRes = getResources();
     }
 
+    protected static void drawDeliveredStatus(Bitmap bitmap) {
+        Paint paint = new Paint();
+        paint.setStyle(Paint.Style.FILL);
+        paint.setColor(Color.parseColor("#5D5D5D")); // Text Color
+        paint.setTypeface(Typeface.create(Typeface.DEFAULT, Typeface.BOLD));
+        paint.setTextSize(65);
+
+        Canvas canvas = new Canvas(bitmap);
+        canvas.drawText("V", 25, 70, paint); // 63
+    }
+
     protected static void addMarker() {
-        Log.i(LOG_TAG,	"mArrayValues.size = " + mArrayValues.size());
+        Log.i(LOG_TAG, "mArrayValues.size = " + mArrayValues.size());
 
         for (TmsParcelItem item : mArrayValues) {
             String strLatitude = item.consigneeLatitude;
@@ -128,13 +161,13 @@ public class MapViewActivity extends AppCompatActivity
                 mInitLatitude = Float.valueOf(item.consigneeLatitude);
                 mInitLongitude = Float.valueOf(item.consigneeLongitude);
             }
-            Log.i(LOG_TAG,	"addr = " + item.consigneeAddr);
-            Log.i(LOG_TAG,	"lat = " + item.consigneeLatitude);
-            Log.i(LOG_TAG,	"lon = " + item.consigneeLongitude);
-            Log.i(LOG_TAG,	"status = " + item.status);
-            Log.i(LOG_TAG,	"orderInRoute = " + item.orderInRoute);
+            Log.i(LOG_TAG, "addr = " + item.consigneeAddr);
+            Log.i(LOG_TAG, "lat = " + item.consigneeLatitude);
+            Log.i(LOG_TAG, "lon = " + item.consigneeLongitude);
+            Log.i(LOG_TAG, "status = " + item.status);
+            Log.i(LOG_TAG, "orderInRoute = " + item.orderInRoute);
 
-            if (   strLatitude  == null  || strLatitude.length()  == 0
+            if (strLatitude == null || strLatitude.length() == 0
                     || strLongitude == null || strLongitude.length() == 0) {
                 continue;
             }
@@ -147,36 +180,27 @@ public class MapViewActivity extends AppCompatActivity
 
             marker.setMarkerType(MapPOIItem.MarkerType.CustomImage);
             marker.setSelectedMarkerType(MapPOIItem.MarkerType.CustomImage); // 마커를 클릭했을때, 기본으로 제공하는 RedPin 마커 모양.
-            if (item.orderInRoute == -1) {
-                if (item.status.equals(TmsParcelItem.STATUS_DELIVERED)) {
-                    marker.setCustomImageResourceId(R.drawable.marker_greenpin);
-                } else if (item.status.equals(TmsParcelItem.STATUS_GEOCODED)) {
-                    marker.setCustomImageResourceId(R.drawable.marker_redpin);
-                } else {
-                    marker.setCustomImageResourceId(R.drawable.marker_bluepin);
-                }
-                marker.setCustomSelectedImageResourceId(R.drawable.marker_yellowpin);
-            } else {
-                BitmapFactory.Options bmOptions = new BitmapFactory.Options();
-                bmOptions.inScaled = false;
-                bluepin = BitmapFactory.decodeResource(GlobalRes, R.drawable.bluepin,bmOptions).copy(Bitmap.Config.ARGB_8888,true);
-                redpin = BitmapFactory.decodeResource(GlobalRes, R.drawable.redpin,bmOptions).copy(Bitmap.Config.ARGB_8888,true);
-                greenpin = BitmapFactory.decodeResource(GlobalRes, R.drawable.greenpin,bmOptions).copy(Bitmap.Config.ARGB_8888,true);
-                Bitmap pin=greenpin;
-                Bitmap seleted_pin=greenpin;
-                if (item.status.equals(TmsParcelItem.STATUS_DELIVERED)) {
-                    pin = bluepin;
-                } else if (item.status.equals(TmsParcelItem.STATUS_GEOCODED)) {
-                    pin = redpin;
-                }
-                int textVal = item.orderInRoute;
+            BitmapFactory.Options bmOptions = new BitmapFactory.Options();
+            bmOptions.inScaled = false;
 
+            int pinResourceId = (int) mSectorMarkerList.get(Integer.valueOf(item.sectorId) - 1);
+            Bitmap pin = BitmapFactory.decodeResource(GlobalRes, pinResourceId, bmOptions).copy(Bitmap.Config.ARGB_8888, true);
+
+            int pinSeletedResourceId = R.drawable.marker_yellowpin;
+            Bitmap seleted_pin = BitmapFactory.decodeResource(GlobalRes, pinSeletedResourceId, bmOptions).copy(Bitmap.Config.ARGB_8888, true);
+            if (item.status.equals(TmsParcelItem.STATUS_DELIVERED)) {
+                drawDeliveredStatus(pin);
+                drawDeliveredStatus(seleted_pin);
+            }
+
+            if (item.orderInRoute != -1) {
+                int textVal = item.orderInRoute;
                 Paint paint = new Paint();
                 paint.setStyle(Paint.Style.FILL);
-                paint.setColor(Color.WHITE); // Text Color
+                paint.setColor(Color.BLACK); // Text Color
                 paint.setTypeface(Typeface.create(Typeface.DEFAULT, Typeface.BOLD));
 
-                int posX= 37; // 1 digit
+                int posX = 37; // 1 digit
                 if (textVal >= 10) posX = 21; // 2 digit
                 if (textVal >= 100) { // 3 digit
                     posX = 18;
@@ -185,15 +209,16 @@ public class MapViewActivity extends AppCompatActivity
                     paint.setTextSize(50);
                 }
                 Canvas canvas = new Canvas(pin);
-                canvas.drawText(String.valueOf(textVal), posX , 57 , paint); // 63
+                canvas.drawText(String.valueOf(textVal), posX, 57, paint); // 63
 
                 Canvas canvas2 = new Canvas(seleted_pin);
-                canvas2.drawText(String.valueOf(textVal), posX , 57 , paint); // 63
+                canvas2.drawText(String.valueOf(textVal), posX, 57, paint); // 63
 
-                marker.setCustomImageBitmap(pin);
-                marker.setCustomSelectedImageBitmap(seleted_pin);
-                marker.setCustomImageAutoscale(false);
             }
+            marker.setCustomImageBitmap(pin);
+            marker.setCustomSelectedImageBitmap(seleted_pin);
+            marker.setCustomImageAutoscale(false);
+
             mMapView.addPOIItem(marker);
         }
     }
@@ -210,7 +235,7 @@ public class MapViewActivity extends AppCompatActivity
 
     @Override
     public void onDaumMapOpenAPIKeyAuthenticationResult(MapView mapView, int resultCode, String resultMessage) {
-        Log.i(LOG_TAG,	String.format("Open API Key Authentication Result : code=%d, message=%s", resultCode, resultMessage));
+        Log.i(LOG_TAG, String.format("Open API Key Authentication Result : code=%d, message=%s", resultCode, resultMessage));
     }
 
     /////////////////////////////////////////////////////////////////////////////////////////////////
@@ -222,7 +247,7 @@ public class MapViewActivity extends AppCompatActivity
         //mMapView.setCurrentLocationTrackingMode(MapView.CurrentLocationTrackingMode.TrackingModeOnWithoutHeading);
         //mapView.setMapCenterPointAndZoomLevel(MapPoint.mapPointWithGeoCoord(37.537229,127.005515), 7, true);
         //mapView.setMapCenterPointAndZoomLevel(MapPoint.mapPointWithGeoCoord(mInitLatitude,mInitLongitude), 6, true);
-        mapView.setMapCenterPointAndZoomLevel(MapPoint.mapPointWithGeoCoord(Utils.mCurrent.getLatitude(),Utils.mCurrent.getLongitude()), 7, true);
+        mapView.setMapCenterPointAndZoomLevel(MapPoint.mapPointWithGeoCoord(Utils.mCurrent.getLatitude(), Utils.mCurrent.getLongitude()), 7, true);
     }
 
     @Override
@@ -295,7 +320,7 @@ public class MapViewActivity extends AppCompatActivity
 
         mLayout_parcel_data.setVisibility(View.VISIBLE);
 
-        final TmsParcelItem item = (TmsParcelItem)mapPOIItem.getUserObject();
+        final TmsParcelItem item = (TmsParcelItem) mapPOIItem.getUserObject();
         if (item != null) {
             boolean isDeliverd = item.status.equals(TmsParcelItem.STATUS_DELIVERED);
             TextView addrText = findViewById(R.id.listAddr);
@@ -314,7 +339,7 @@ public class MapViewActivity extends AppCompatActivity
 
             if (addrText != null) {
                 String addrTextValue = "";
-                if ( item.orderInRoute != -1)  {
+                if (item.orderInRoute != -1) {
                     addrTextValue += item.orderInRoute + " : ";
                 }
                 addrText.setText(addrTextValue + item.consigneeAddr);
@@ -326,10 +351,10 @@ public class MapViewActivity extends AppCompatActivity
                     btn_complete.setVisibility(View.VISIBLE);
                 }
             }
-            if(customerText != null) {
+            if (customerText != null) {
                 customerText.setText(getString(R.string.customer) + " : " + item.consigneeName + " (" + item.consigneeContact + ")");
             }
-            if(deliveryNote != null) {
+            if (deliveryNote != null) {
                 deliveryNote.setText(getString(R.string.delivery_note) + " : " + item.deliveryNote);
             }
             if (remark != null) {
@@ -388,13 +413,13 @@ public class MapViewActivity extends AppCompatActivity
         }
 
         switch (requestCode) {
-            case SEND_COMPLETED_MESSAGE :
+            case SEND_COMPLETED_MESSAGE:
                 Log.d(LOG_TAG, "onActivityResult, SEND_COMPLETED_MESSAGE");
                 if (data != null) {
                     String sendResult = data.getStringExtra(UploadImageActivity.EXTRA_SEND_RESULT);
                     if (TextUtils.equals(sendResult, "success")) {
                         String filePath = data.getStringExtra(UploadImageActivity.EXTRA_UPLOADED_FILE_PATH);
-                        Utils.makeComplete(mFbConnector, mCompleteTarget,mSelectedDate,filePath);
+                        Utils.makeComplete(mFbConnector, mCompleteTarget, mSelectedDate, filePath);
                         mMapView.removePOIItem(mCompleteMarker);
                         mCompleteMarker.setCustomImageResourceId(R.drawable.marker_greenpin);
                         mMapView.addPOIItem(mCompleteMarker);
