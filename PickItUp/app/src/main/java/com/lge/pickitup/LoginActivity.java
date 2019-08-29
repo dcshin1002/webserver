@@ -73,12 +73,13 @@ public class LoginActivity extends AppCompatActivity {
                 if (user != null) {
                     // User is signed in
                     Log.d(LOG_TAG, "onAuthStateChanged:signed_in:" + user.getUid());
-
+                    Utils.mCurrentUserId = user.getUid();
                     // Before leave here, clear fields for next use.
                     mEditTextEmail.setText("");
                     mEditTextPassword.setText("");
 
                     // Go to MainMenuActivity
+
                     if (Arrays.asList(Utils.ADMIN_UIDS).contains(user.getUid())) {
                         startActivity(new Intent(LoginActivity.this, MainMenuActivity.class));
                     } else {

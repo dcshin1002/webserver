@@ -43,7 +43,7 @@ public class CourierLocationUploadService extends Service {
 
         mCourierName = intent.getStringExtra(Utils.KEY_COURIER_NAME).toString();
         mTodayDateStr = intent.getStringExtra(Utils.KEY_DB_DATE).toString();
-        mFbConnector.getCourierListFromFirebaseDatabase(mTodayDateStr, TmsCourierItem.KEY_NAME, mCourierName, mValueEventListener);
+        mFbConnector.getCourierItemFromFirebaseDatabase(mTodayDateStr, TmsCourierItem.KEY_NAME, mCourierName, mValueEventListener);
         return START_REDELIVER_INTENT;
     }
 
@@ -95,7 +95,7 @@ public class CourierLocationUploadService extends Service {
 
                         }
                     };
-                    timer.schedule(TT, 0, 10000);
+                    timer.schedule(TT, 0, 300000);
                 }
             });
         }

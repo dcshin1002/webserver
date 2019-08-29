@@ -55,6 +55,7 @@ public class CourierSectionMatchingActivity extends AppCompatActivity implements
     private HashMap<String, TmsCourierItem> mCourierDatabaseHash = new HashMap<>();
     private ArrayList<String> mArrayKeys = new ArrayList<String>();
     private ArrayList<TmsParcelItem> mArrayValues = new ArrayList<TmsParcelItem>();
+    private ArrayList<TmsCourierItem> mCourierArrayValues = new ArrayList<TmsCourierItem>();
     private ArrayList<String> mSectorList = new ArrayList<String>();
     private TextView mTextSectorName;
     private TextView mTextCourierName;
@@ -99,6 +100,7 @@ public class CourierSectionMatchingActivity extends AppCompatActivity implements
         mFbConnector.setParcelValueArray(this.mArrayValues);
         mFbConnector.setListAdapter(this.mArrayAdapter);
         mFbConnector.setSectorList(this.mSectorList);
+        mFbConnector.setCourierValueArray(this.mCourierArrayValues);
         mFbConnector.getSectorListFromFirebaseDatabase(dateStr);
 
 

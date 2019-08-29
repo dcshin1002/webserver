@@ -38,6 +38,7 @@ public class FirebaseDatabaseConnector {
     private ArrayList<TmsParcelItem> mArrayValues;
     private ArrayAdapter<TmsParcelItem> mListAdapter;
     private ArrayList<String> mSectorList;
+    private ArrayList<TmsCourierItem> mCourierArrayValues;
 
     public FirebaseDatabaseConnector(Context context) {
         this.mContext = context;
@@ -74,6 +75,15 @@ public class FirebaseDatabaseConnector {
     protected void setParcelValueArray(ArrayList<TmsParcelItem> valueArray) {
         if (valueArray != null) {
             this.mArrayValues = valueArray;
+        } else {
+            Log.e(LOG_TAG, "Given valueArray should be not null");
+            throw new NullPointerException();
+        }
+    }
+
+    protected void setCourierValueArray(ArrayList<TmsCourierItem> valueArray) {
+        if (valueArray != null) {
+            this.mCourierArrayValues = valueArray;
         } else {
             Log.e(LOG_TAG, "Given valueArray should be not null");
             throw new NullPointerException();
@@ -166,6 +176,7 @@ public class FirebaseDatabaseConnector {
                     TmsCourierItem value = postSnapshot.getValue(TmsCourierItem.class);
 
                     mCourierHash.put(key, value);
+                    mCourierArrayValues.add(value);
                 }
             }
 
@@ -176,11 +187,20 @@ public class FirebaseDatabaseConnector {
         });
     }
 
-    protected void getCourierListFromFirebaseDatabase(String pathString, String orderBy, String name, ValueEventListener eventlistener) {
+    protected void getCourierItemFromFirebaseDatabase(String pathString, String orderBy, String name, ValueEventListener eventlistener) {
         Query firebaseQuery;
         firebaseQuery = mDatabaseRef.child(COURIER_REF_NAME).child(pathString).orderByChild(orderBy).equalTo(name);
         firebaseQuery.addListenerForSingleValueEvent(eventlistener);
     }
+
+    protected void getCourierListFromFirebaseDatabaseWithListener(String pathString, String orderBy, ValueEventListener eventlistener) {
+        Query firebaseQuery;
+        firebaseQuery = mDatabaseRef.child(COURIER_REF_NAME).child(pathString).orderByChild(orderBy);
+        firebaseQuery.addListenerForSingleValueEvent(eventlistener);
+    }
+
+
+
 
     protected void getRegisteredCourierListFromFirebaseDatabase(String orderBy) {
         Query firebaseQuery;
@@ -199,6 +219,10 @@ public class FirebaseDatabaseConnector {
 
                     mCourierHash.put(key, value);
                 }
+                if (mContext instanceof MapViewActivity) {
+                    MapViewActivity.addMarker();
+                }
+
             }
 
             @Override

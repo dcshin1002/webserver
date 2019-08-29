@@ -16,9 +16,12 @@ import android.util.Base64;
 import android.util.Log;
 import android.widget.Toast;
 
+import com.google.firebase.auth.FirebaseUser;
+
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.text.SimpleDateFormat;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 
@@ -39,6 +42,7 @@ public class Utils {
     static Location mCurrent;
     static LocationManager mLocationMgr;
     static Context mContext;
+    static String mCurrentUserId;
     private static final LocationListener mNetworkLocationListener = new LocationListener() {
         @Override
         public void onLocationChanged(final Location location) {
@@ -165,6 +169,10 @@ public class Utils {
         mFbConnector.postParcelItemToFirebaseDatabase(date.toString(), item);
         //mArrayAdapter.notifyDataSetChanged();
         item = null;
+    }
+
+    public static boolean isAdminAuth() {
+        return (Arrays.asList(Utils.ADMIN_UIDS).contains(mCurrentUserId));
     }
 
     @SuppressLint("MissingPermission")

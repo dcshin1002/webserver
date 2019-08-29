@@ -26,6 +26,7 @@ import java.net.URL;
 import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 
 import javax.net.ssl.HttpsURLConnection;
@@ -143,8 +144,9 @@ public class AddressFacade {
 
     private List<TmsCourierItem> buildTmsCouriers(List<String> list) {
         List<TmsCourierItem> result = new ArrayList<>();
-        for (int i = 0; i < list.size(); i++) {
-            TmsCourierItem item = new TmsCourierItem(String.valueOf(i + 1), list.get(i));
+
+        for( String key : mCourierHash.keySet() ){
+            TmsCourierItem item = new TmsCourierItem(String.valueOf(mCourierHash.get(key)), key);
             result.add(item);
         }
         return result;

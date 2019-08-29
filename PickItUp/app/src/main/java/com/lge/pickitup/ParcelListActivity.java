@@ -63,6 +63,7 @@ public class ParcelListActivity extends AppCompatActivity implements View.OnClic
     private HashMap<String, TmsCourierItem> mCourierDatabaseHash = new HashMap<>();
     private ArrayList<String> mArrayKeys = new ArrayList<String>();
     private ArrayList<TmsParcelItem> mArrayValues = new ArrayList<TmsParcelItem>();
+    private ArrayList<TmsCourierItem> mCourierArrayValues = new ArrayList<TmsCourierItem>();
 
     private TextView mTextCourierName;
     private TextView mTextCourierDate;
@@ -141,6 +142,7 @@ public class ParcelListActivity extends AppCompatActivity implements View.OnClic
         mFbConnector.setParcelKeyArray(this.mArrayKeys);
         mFbConnector.setParcelValueArray(this.mArrayValues);
         mFbConnector.setListAdapter(this.mArrayAdapter);
+        mFbConnector.setCourierValueArray(this.mCourierArrayValues);
 
         // Here, thisActivity is the current activity
         if (ContextCompat.checkSelfPermission(this,

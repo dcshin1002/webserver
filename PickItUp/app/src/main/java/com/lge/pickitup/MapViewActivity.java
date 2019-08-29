@@ -30,8 +30,13 @@ import net.daum.mf.map.api.MapPoint;
 import net.daum.mf.map.api.MapView;
 
 import androidx.annotation.ColorRes;
+import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
+
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.ValueEventListener;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -54,6 +59,7 @@ public class MapViewActivity extends AppCompatActivity
     private HashMap<String, TmsCourierItem> mCourierDatabaseHash = new HashMap<>();
     private ArrayList<String> mArrayKeys = new ArrayList<String>();
     private static ArrayList<TmsParcelItem> mArrayValues = new ArrayList<TmsParcelItem>();
+    private static ArrayList<TmsCourierItem> mCourierArrayValues = new ArrayList<TmsCourierItem>();
 
     private static String mSort = "id";
     private RelativeLayout mLayout_parcel_data;
@@ -70,26 +76,46 @@ public class MapViewActivity extends AppCompatActivity
     private static ArrayList mSectorMarkerList = new ArrayList(Arrays.asList(
             R.drawable.marker_bluepin,
             R.drawable.marker_orangepin,
-            R.drawable.marker_greenpin,
+            R.drawable.marker_yeondoopin,
             R.drawable.marker_purplepin,
             R.drawable.marker_redpin,
+            R.drawable.marker_greenpin,
+            R.drawable.marker_greypin,
+            R.drawable.marker_pinkpin,
+            R.drawable.marker_peachpin,
+            R.drawable.marker_skybluepin,
             R.drawable.marker_bluepin,
             R.drawable.marker_orangepin,
-            R.drawable.marker_greenpin,
+            R.drawable.marker_yeondoopin,
             R.drawable.marker_purplepin,
             R.drawable.marker_redpin,
-            R.drawable.marker_bluepin,
-            R.drawable.marker_orangepin,
             R.drawable.marker_greenpin,
-            R.drawable.marker_purplepin,
-            R.drawable.marker_redpin,
-            R.drawable.marker_bluepin,
-            R.drawable.marker_orangepin,
-            R.drawable.marker_greenpin,
-            R.drawable.marker_purplepin,
-            R.drawable.marker_redpin
-    ));
+            R.drawable.marker_greypin,
+            R.drawable.marker_pinkpin,
+            R.drawable.marker_peachpin,
+            R.drawable.marker_skybluepin));
 
+    private static ArrayList mCourierLocationMarkerList = new ArrayList(Arrays.asList(
+            R.drawable.truck_blue,
+            R.drawable.truck_orange,
+            R.drawable.truck_yeondoo,
+            R.drawable.truck_purple,
+            R.drawable.truck_red,
+            R.drawable.truck_green,
+            R.drawable.truck_grey,
+            R.drawable.truck_pink,
+            R.drawable.truck_peach,
+            R.drawable.truck_skyblue,
+            R.drawable.truck_blue,
+            R.drawable.truck_orange,
+            R.drawable.truck_yeondoo,
+            R.drawable.truck_purple,
+            R.drawable.truck_red,
+            R.drawable.truck_green,
+            R.drawable.truck_grey,
+            R.drawable.truck_pink,
+            R.drawable.truck_peach,
+            R.drawable.truck_skyblue));
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -116,6 +142,7 @@ public class MapViewActivity extends AppCompatActivity
         mFbConnector.setCourierHash(this.mCourierDatabaseHash);
         mFbConnector.setParcelKeyArray(this.mArrayKeys);
         mFbConnector.setParcelValueArray(this.mArrayValues);
+        mFbConnector.setCourierValueArray(this.mCourierArrayValues);
         getFirebaseList();
 
     }
@@ -131,7 +158,7 @@ public class MapViewActivity extends AppCompatActivity
         marker.setMarkerType(MapPOIItem.MarkerType.CustomImage);
         marker.setCustomImageResourceId(R.drawable.truck);
         marker.setSelectedMarkerType(MapPOIItem.MarkerType.CustomImage);
-        marker.setCustomSelectedImageResourceId(R.drawable.truck_selected);
+        marker.setCustomSelectedImageResourceId(R.drawable.truck_yellow);
         mMapView.addPOIItem(marker);
     }
 
@@ -149,6 +176,37 @@ public class MapViewActivity extends AppCompatActivity
 
         Canvas canvas = new Canvas(bitmap);
         canvas.drawText("V", 25, 70, paint); // 63
+    }
+
+    protected static void addCourierLocationMarker() {
+
+    }
+
+    private static Bitmap getBitmapPinByParcelItem(TmsParcelItem item) {
+        BitmapFactory.Options bmOptions = new BitmapFactory.Options();
+        bmOptions.inScaled = false;
+        int pinResourceId;
+        if (item.sectorId == -1) {
+            pinResourceId = (int) mSectorMarkerList.get(0);
+        } else {
+            pinResourceId = (int) mSectorMarkerList.get(Integer.valueOf(item.sectorId) - 1);
+        }
+        Bitmap bmp = BitmapFactory.decodeResource(GlobalRes, pinResourceId, bmOptions).copy(Bitmap.Config.ARGB_8888, true);
+        if (item.status.equals(TmsParcelItem.STATUS_DELIVERED)) {
+            drawDeliveredStatus(bmp);
+        }
+        return bmp;
+    }
+
+    private static Bitmap getBitmapSeletedPinByParcelItem(TmsParcelItem item) {
+        BitmapFactory.Options bmOptions = new BitmapFactory.Options();
+        bmOptions.inScaled = false;
+        int pinSeletedResourceId = R.drawable.marker_yellowpin;
+        Bitmap bmp = BitmapFactory.decodeResource(GlobalRes, pinSeletedResourceId, bmOptions).copy(Bitmap.Config.ARGB_8888, true);
+        if (item.status.equals(TmsParcelItem.STATUS_DELIVERED)) {
+            drawDeliveredStatus(bmp);
+        }
+        return bmp;
     }
 
     protected static void addMarker() {
@@ -180,18 +238,11 @@ public class MapViewActivity extends AppCompatActivity
 
             marker.setMarkerType(MapPOIItem.MarkerType.CustomImage);
             marker.setSelectedMarkerType(MapPOIItem.MarkerType.CustomImage); // 마커를 클릭했을때, 기본으로 제공하는 RedPin 마커 모양.
-            BitmapFactory.Options bmOptions = new BitmapFactory.Options();
-            bmOptions.inScaled = false;
 
-            int pinResourceId = (int) mSectorMarkerList.get(Integer.valueOf(item.sectorId) - 1);
-            Bitmap pin = BitmapFactory.decodeResource(GlobalRes, pinResourceId, bmOptions).copy(Bitmap.Config.ARGB_8888, true);
+            Bitmap pin = getBitmapPinByParcelItem(item);
+            Bitmap seleted_pin = getBitmapSeletedPinByParcelItem(item);
 
-            int pinSeletedResourceId = R.drawable.marker_yellowpin;
-            Bitmap seleted_pin = BitmapFactory.decodeResource(GlobalRes, pinSeletedResourceId, bmOptions).copy(Bitmap.Config.ARGB_8888, true);
-            if (item.status.equals(TmsParcelItem.STATUS_DELIVERED)) {
-                drawDeliveredStatus(pin);
-                drawDeliveredStatus(seleted_pin);
-            }
+
 
             if (item.orderInRoute != -1) {
                 int textVal = item.orderInRoute;
@@ -230,7 +281,42 @@ public class MapViewActivity extends AppCompatActivity
             mFbConnector.getParcelListFromFirebaseDatabase(mSelectedDate, TmsParcelItem.KEY_SECTOR_ID, mSelectedSectionID);
         }
         mFbConnector.getCourierListFromFirebaseDatabase(mSelectedDate, TmsParcelItem.KEY_ID);
+        if (Utils.isAdminAuth()) {
+            mFbConnector.getCourierListFromFirebaseDatabaseWithListener(mSelectedDate, TmsCourierItem.KEY_ID, mValueEventListener);
+        }
+    }
 
+    private ValueEventListener mValueEventListener = new ValueEventListener() {
+        @Override
+        public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+            Log.d(LOG_TAG, "mapview CourierList size : " + dataSnapshot.getChildrenCount());
+            for (DataSnapshot postSnapshot : dataSnapshot.getChildren()) {
+                TmsCourierItem item = postSnapshot.getValue(TmsCourierItem.class);
+                Log.i(LOG_TAG, item.id + "," + item.name +"," + item.latitude + "," + item.longitude);
+                addCourierMarker(item);
+            }
+        }
+
+        @Override
+        public void onCancelled(@NonNull DatabaseError databaseError) {
+
+        }
+    };
+
+    private void addCourierMarker(TmsCourierItem courierItem) {
+        if (!courierItem.latitude.isEmpty() && !courierItem.longitude.isEmpty()) {
+            MapPOIItem marker = new MapPOIItem();
+            marker.setItemName(courierItem.name);
+            marker.setUserObject(courierItem);
+            marker.setMapPoint(MapPoint.mapPointWithGeoCoord(Double.parseDouble(courierItem.latitude), Double.parseDouble(courierItem.longitude)));
+            marker.setMarkerType(MapPOIItem.MarkerType.CustomImage);
+            marker.setSelectedMarkerType(MapPOIItem.MarkerType.CustomImage); // 마커를 클릭했을때, 기본으로 제공하는 RedPin 마커 모양.
+            int resId =(int) mCourierLocationMarkerList.get((Integer.parseInt(courierItem.id)-1)%20);
+            marker.setCustomImageResourceId(resId);
+            marker.setCustomSelectedImageResourceId(R.drawable.truck_yellow);
+            marker.setCustomImageAutoscale(true);
+            mMapView.addPOIItem(marker);
+        }
     }
 
     @Override
@@ -318,50 +404,52 @@ public class MapViewActivity extends AppCompatActivity
             return;
         }
 
-        mLayout_parcel_data.setVisibility(View.VISIBLE);
+        if (mapPOIItem.getUserObject() instanceof  TmsParcelItem) {
+            mLayout_parcel_data.setVisibility(View.VISIBLE);
+            final TmsParcelItem item = (TmsParcelItem) mapPOIItem.getUserObject();
+            if (item != null) {
+                boolean isDeliverd = item.status.equals(TmsParcelItem.STATUS_DELIVERED);
+                TextView addrText = findViewById(R.id.listAddr);
+                TextView customerText = findViewById(R.id.listItemTextCustomer);
+                TextView deliveryNote = findViewById(R.id.listItemTextDeliveryMemo);
+                TextView remark = findViewById(R.id.listItemTextRemark);
+                Button btn_complete = findViewById(R.id.btn_complete);
+                ImageView statusIcon = findViewById(R.id.status_icon);
 
-        final TmsParcelItem item = (TmsParcelItem) mapPOIItem.getUserObject();
-        if (item != null) {
-            boolean isDeliverd = item.status.equals(TmsParcelItem.STATUS_DELIVERED);
-            TextView addrText = findViewById(R.id.listAddr);
-            TextView customerText = findViewById(R.id.listItemTextCustomer);
-            TextView deliveryNote = findViewById(R.id.listItemTextDeliveryMemo);
-            TextView remark = findViewById(R.id.listItemTextRemark);
-            Button btn_complete = findViewById(R.id.btn_complete);
-            ImageView statusIcon = findViewById(R.id.status_icon);
+                btn_complete.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View view) {
+                        processLitBtnClick(item, mapPOIItem);
+                    }
+                });
 
-            btn_complete.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View view) {
-                    processLitBtnClick(item, mapPOIItem);
+                if (addrText != null) {
+                    String addrTextValue = "";
+                    if (item.orderInRoute != -1) {
+                        addrTextValue += item.orderInRoute + " : ";
+                    }
+                    addrText.setText(addrTextValue + item.consigneeAddr);
+                    if (isDeliverd) {
+                        updateStatusToComplete();
+                    } else {
+                        addrText.setTextColor(0xFF4F4F4F);
+                        statusIcon.setImageDrawable(getDrawable(R.mipmap.tag_in_transit_v2));
+                        btn_complete.setVisibility(View.VISIBLE);
+                    }
                 }
-            });
-
-            if (addrText != null) {
-                String addrTextValue = "";
-                if (item.orderInRoute != -1) {
-                    addrTextValue += item.orderInRoute + " : ";
+                if (customerText != null) {
+                    customerText.setText(getString(R.string.customer) + " : " + item.consigneeName + " (" + item.consigneeContact + ")");
                 }
-                addrText.setText(addrTextValue + item.consigneeAddr);
-                if (isDeliverd) {
-                    updateStatusToComplete();
-                } else {
-                    addrText.setTextColor(0xFF4F4F4F);
-                    statusIcon.setImageDrawable(getDrawable(R.mipmap.tag_in_transit_v2));
-                    btn_complete.setVisibility(View.VISIBLE);
+                if (deliveryNote != null) {
+                    deliveryNote.setText(getString(R.string.delivery_note) + " : " + item.deliveryNote);
                 }
-            }
-            if (customerText != null) {
-                customerText.setText(getString(R.string.customer) + " : " + item.consigneeName + " (" + item.consigneeContact + ")");
-            }
-            if (deliveryNote != null) {
-                deliveryNote.setText(getString(R.string.delivery_note) + " : " + item.deliveryNote);
-            }
-            if (remark != null) {
-                remark.setText(getString(R.string.remark) + " : " + item.remark);
-            }
+                if (remark != null) {
+                    remark.setText(getString(R.string.remark) + " : " + item.remark);
+                }
 
+            }
         }
+
     }
 
     private void updateStatusToComplete() {
@@ -420,8 +508,15 @@ public class MapViewActivity extends AppCompatActivity
                     if (TextUtils.equals(sendResult, "success")) {
                         String filePath = data.getStringExtra(UploadImageActivity.EXTRA_UPLOADED_FILE_PATH);
                         Utils.makeComplete(mFbConnector, mCompleteTarget, mSelectedDate, filePath);
+
                         mMapView.removePOIItem(mCompleteMarker);
-                        mCompleteMarker.setCustomImageResourceId(R.drawable.marker_greenpin);
+
+                        Bitmap bm = getBitmapPinByParcelItem(mCompleteTarget);
+                        Bitmap seleted_bm = getBitmapSeletedPinByParcelItem(mCompleteTarget);
+                        drawDeliveredStatus(bm);
+                        drawDeliveredStatus(seleted_bm);
+                        mCompleteMarker.setCustomImageBitmap(bm);
+                        mCompleteMarker.setCustomSelectedImageBitmap(seleted_bm);
                         mMapView.addPOIItem(mCompleteMarker);
                         updateStatusToComplete();
                     } else {
