@@ -59,7 +59,7 @@ public class AddressFacade {
     void initFile(String filename) {
         mParcelList.clear();
         mCourierHash.clear();
-        mCourierNum = 0;
+        mCourierNum = 1;
 
         File file = new File("/sdcard/address/" + filename);
         try {
