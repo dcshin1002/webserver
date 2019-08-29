@@ -80,7 +80,7 @@ def setRoute(req, year, month, day):
 def setRouteWork(year, month, day, cluster=None):
     dateForm = '-'.join([str(year), str("%02d" % month), str("%02d" % day)])
     print(dateForm)
-    # dcon.saveJobStateToFirebaseDB(dateForm, get_current_job().get_status())
+    dcon.saveJobStateToFirebaseDB(dateForm, get_current_job().get_status())
     dcon.loadParcelDataFromFirebaseDB(dateForm)
 
     distributer.clusteringPredefined()
