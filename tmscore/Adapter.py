@@ -28,10 +28,10 @@ def setClusters(req, year, month, day):
 
     result = q.enqueue(setClustersWork, args=(
         year, month, day), job_timeout=600)
+    job = Job.fetch(result.get_id())
 
     dateForm = '-'.join([str(year), str("%02d" % month), str("%02d" % day)])
-    dcon.saveJobStateToFirebaseDB(
-        dateForm, Job.fetch(result.get_id()).get_status())
+    dcon.saveJobStateToFirebaseDB(dateForm, job.get_status())
 
     return JsonResponse({
         'msg': '<pre>setClusters() Processing...</pre>',
@@ -66,13 +66,13 @@ def setRoute(req, year, month, day):
 
     result = q.enqueue(setRouteWork, args=(
         year, month, day), job_timeout=600)
+    job = Job.fetch(result.get_id())
 
     dateForm = '-'.join([str(year), str("%02d" % month), str("%02d" % day)])
-    dcon.saveJobStateToFirebaseDB(
-        dateForm, Job.fetch(result.get_id()).get_status())
+    dcon.saveJobStateToFirebaseDB(dateForm, job.get_status())
 
     return JsonResponse({
-        'msg': '<pre>setClusters() Processing...</pre>',
+        'msg': '<pre>setRoute() Processing...</pre>',
         'jobid': result.get_id(),
     })
 

@@ -298,14 +298,14 @@ public class AddressFacade {
                         throw new IOException("No response received.");
                     }
 
-                    URL queryUrl = new URL(urls[1] + "/" + jobId);
-                    while (true) {
-                        Thread.sleep(5000);
-                        String status = processUrl(queryUrl, "status");
-                        if (status.equals("finished")) {
-                            break;
-                        }
-                    }
+//                    URL queryUrl = new URL(urls[1] + "/" + jobId);
+//                    while (true) {
+//                        Thread.sleep(5000);
+//                        String status = processUrl(queryUrl, "status");
+//                        if (status.equals("finished")) {
+//                            break;
+//                        }
+//                    }
 //                    processingDialog.setProgress(mCourierNum);
                 } catch (Exception e) {
                     result = e.getMessage();
