@@ -71,6 +71,8 @@ public class LoginActivity extends AppCompatActivity {
                             Manifest.permission.READ_EXTERNAL_STORAGE,
                             Manifest.permission.CAMERA},
                     MY_PERMISSIONS);
+        } else {
+            Utils.initLocation(this);
         }
 
         //Get FirebaseAuth instance
