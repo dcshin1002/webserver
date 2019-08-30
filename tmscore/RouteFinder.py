@@ -38,7 +38,7 @@ class RouteFinder:
         n = cities.shape[0] * 8
 
         # iteration number is 200 times the number of cities
-        iteration = cities.shape[0] * 200
+        iterations = cities.shape[0] * 200
 
         # Generate an adequate network of neurons:
         network = generate_network(n)
