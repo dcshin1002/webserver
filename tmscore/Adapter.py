@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 import json
+import os
 
 from django.shortcuts import render
-from django.http import HttpResponse, JsonResponse
+from django.http import HttpResponse, JsonResponse, Http404
 from rq import Queue
 from rq.job import Job, get_current_job
 from worker import conn
@@ -16,7 +17,20 @@ q = Queue(connection=conn)
 
 
 def index(req):
-    return HttpResponse("<pre>Welcome to Beyond TMS system !</pre>")
+    f = open("index.html", 'r', encoding='utf-8')
+    body = f.read()
+    f.close()
+    return HttpResponse(body)
+
+
+def downloadPage(req):
+    file_path = "PickItUp/app/build/outputs/apk/debug/app-debug.apk"
+    if os.path.exists(file_path):
+        with open(file_path, 'rb') as fh:
+            response = HttpResponse(fh.read(), content_type="application/vnd.android.package-archive")
+            response['Content-Disposition'] = 'inline; filename=' + os.path.basename(file_path)
+            return response
+    raise Http404
 
 
 def setClusters(req, year, month, day):
