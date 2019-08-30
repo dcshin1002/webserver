@@ -47,38 +47,31 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 
 public class UploadImageActivity extends AppCompatActivity {
+    static final String EXTRA_SEND_RESULT = "send_result";
+    static final String EXTRA_UPLOADED_FILE_PATH = "uploaded_file_path";
     private static final String LOG_TAG = "UploadImageActivity";
     private static final boolean enableLog = true;
-
     // Which option to upload a file to Firebase Stroage
     private static final String UPLOAD_BY_BYTES = "uploadByBytes";
     private static final String UPLOAD_BY_FILE = "uploadByFile";
     private static final String UPLOAD_BY_STREAM = "uploadByStream";
     // Select option
     private static final String mUploadMethod = UPLOAD_BY_BYTES;
-
-    private Button mBtnCapture;
-    private Button mBtnPickImgFromGallery;
-    private Button mBtnSendMsg;
-    private ImageView mIvPreviewImage;
-    private EditText mEtMessageContent;
-
     private static final int CAPTURE_CAMERA_REQUEST_CODE = 1;
     private static final int PICK_IMAGE_REQUEST_CODE = 2;
     private static final int MMS_REQUEST_IMG_SEND = 3;
     private static final int KAKAOTALK_REQUEST_IMG_SEND = 4;
     private static final int FROM_CAMERA = 1;
     private static final int FROM_ALBUM = 2;
-
-    static final String EXTRA_SEND_RESULT = "send_result";
-    static final String EXTRA_UPLOADED_FILE_PATH = "uploaded_file_path";
-
+    private final static int MY_PERMISSIONS_REQUEST_CAMERA = 997;
+    private Button mBtnCapture;
+    private Button mBtnPickImgFromGallery;
+    private Button mBtnSendMsg;
+    private ImageView mIvPreviewImage;
+    private EditText mEtMessageContent;
     private FirebaseStorage mStorage;
     private FirebaseAuth mAuth;
     private ProgressDialog mProgressDialog;
-
-
-    private final static int MY_PERMISSIONS_REQUEST_CAMERA = 997;
     private int mFlag;
     private String mCurrentPhotoPath;
     private Uri mPhotoUri;
@@ -174,7 +167,7 @@ public class UploadImageActivity extends AppCompatActivity {
 //        }
 
         switch (requestCode) {
-            case CAPTURE_CAMERA_REQUEST_CODE :
+            case CAPTURE_CAMERA_REQUEST_CODE:
                 if (resultCode == RESULT_OK) {
                     // Return after take picture
                     if (enableLog) {
@@ -185,7 +178,7 @@ public class UploadImageActivity extends AppCompatActivity {
                 }
                 break;
 
-            case PICK_IMAGE_REQUEST_CODE :
+            case PICK_IMAGE_REQUEST_CODE:
                 if (resultCode == RESULT_OK) {
                     // Picking an image from gallery album
                     if (data.getData() != null) {
@@ -195,7 +188,7 @@ public class UploadImageActivity extends AppCompatActivity {
                 }
                 break;
 
-            case MMS_REQUEST_IMG_SEND :
+            case MMS_REQUEST_IMG_SEND:
                 if (enableLog) {
                     Log.d(LOG_TAG, "onActivityResult, MMS_REQUEST_IMG_SEND");
                 }
@@ -239,26 +232,26 @@ public class UploadImageActivity extends AppCompatActivity {
             @Override
             public void onClick(View view) {
                 AlertDialog.Builder diag_bulder = new AlertDialog.Builder(UploadImageActivity.this)
-                    .setTitle(R.string.send_complete_message_title)
-                    .setMessage(R.string.send_complete_message_body)
-                    .setPositiveButton(R.string.send_mms_message, new DialogInterface.OnClickListener() {
-                        @Override
-                        public void onClick(DialogInterface dialogInterface, int i) {
-                            sendMmsMessage();
-                        }
-                    })
-                    .setNegativeButton(R.string.cancel, new DialogInterface.OnClickListener() {
-                        @Override
-                        public void onClick(DialogInterface dialogInterface, int i) {
-                            dialogInterface.cancel();
-                        }
-                    });
+                        .setTitle(R.string.send_complete_message_title)
+                        .setMessage(R.string.send_complete_message_body)
+                        .setPositiveButton(R.string.send_mms_message, new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialogInterface, int i) {
+                                sendMmsMessage();
+                            }
+                        })
+                        .setNegativeButton(R.string.cancel, new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialogInterface, int i) {
+                                dialogInterface.cancel();
+                            }
+                        });
                 diag_bulder.show();
             }
         });
 
     }
-    
+
     private void makeDialog() {
         AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(UploadImageActivity.this);
         alertDialogBuilder.setTitle("사진선택")
@@ -273,20 +266,20 @@ public class UploadImageActivity extends AppCompatActivity {
                         dispatchTakePicureIntent();
                     }
                 }).setNeutralButton("앨범에서 선택", new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialogInterface, int i) {
-                        if (enableLog) {
-                            Log.d(LOG_TAG, "\"Pick image from gallery\" is selected");
-                        }
-                        mFlag = FROM_ALBUM;
-                        selectImgFromAlabum();
-                    }
-                }).setNegativeButton("취소", new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialogInterface, int i) {
-                        dialogInterface.cancel();
-                    }
-                }).show();
+            @Override
+            public void onClick(DialogInterface dialogInterface, int i) {
+                if (enableLog) {
+                    Log.d(LOG_TAG, "\"Pick image from gallery\" is selected");
+                }
+                mFlag = FROM_ALBUM;
+                selectImgFromAlabum();
+            }
+        }).setNegativeButton("취소", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialogInterface, int i) {
+                dialogInterface.cancel();
+            }
+        }).show();
     }
 
     private void selectImgFromAlabum() {
@@ -298,7 +291,7 @@ public class UploadImageActivity extends AppCompatActivity {
         startActivityForResult(intent, PICK_IMAGE_REQUEST_CODE);
     }
 
-    public void dispatchTakePicureIntent(){
+    public void dispatchTakePicureIntent() {
         Intent takePictureIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
         // Ensure that there's a camera activity to handle the intent
         if (takePictureIntent.resolveActivity(getPackageManager()) != null) {
@@ -366,7 +359,7 @@ public class UploadImageActivity extends AppCompatActivity {
         int photoH = bmOptions.outHeight;
 
         // Determine how much to scale down the image
-        int scaleFactor = Math.min(photoW/targetW, photoH/targetH);
+        int scaleFactor = Math.min(photoW / targetW, photoH / targetH);
 
         // Decode the image file into a Bitmap sized to fill the View
         bmOptions.inJustDecodeBounds = false;
@@ -408,7 +401,7 @@ public class UploadImageActivity extends AppCompatActivity {
         }
 
         // Determine how much to scale down the image
-        int scaleFactor = Math.min(photoW/targetW, photoH/targetH);
+        int scaleFactor = Math.min(photoW / targetW, photoH / targetH);
 
         // Decode the image file into a Bitmap sized to fill the View
         bmOptions.inJustDecodeBounds = false;
@@ -434,7 +427,7 @@ public class UploadImageActivity extends AppCompatActivity {
                 .child(Utils.getTodayDateStr() + "/")
                 .child("Images/" + filename);
 
-        final String firebaseStoragePath = Utils.getTodayDateStr() + "/Images/" + filename +".jpg";
+        final String firebaseStoragePath = Utils.getTodayDateStr() + "/Images/" + filename + ".jpg";
 
         UploadTask uploadTask = null;
         Uri uri = null;
@@ -463,7 +456,7 @@ public class UploadImageActivity extends AppCompatActivity {
             bm.compress(Bitmap.CompressFormat.JPEG, 80, baos);
             byte[] outputData = baos.toByteArray();
             uploadTask = storageRef.putBytes(outputData);
-        } else if (mUploadMethod.equals(UPLOAD_BY_STREAM)){
+        } else if (mUploadMethod.equals(UPLOAD_BY_STREAM)) {
             InputStream is = null;
             if (mFlag == FROM_CAMERA) {
                 try {
@@ -486,7 +479,8 @@ public class UploadImageActivity extends AppCompatActivity {
         uploadTask.addOnSuccessListener(new OnSuccessListener<UploadTask.TaskSnapshot>() {
             @Override
             public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
-                Toast.makeText(UploadImageActivity.this, getString(R.string.success_to_upload), Toast.LENGTH_LONG).show();;
+                Toast.makeText(UploadImageActivity.this, getString(R.string.success_to_upload), Toast.LENGTH_LONG).show();
+                ;
                 mProgressDialog.dismiss();
 
                 // Make result intent
@@ -499,7 +493,8 @@ public class UploadImageActivity extends AppCompatActivity {
         }).addOnFailureListener(new OnFailureListener() {
             @Override
             public void onFailure(@NonNull Exception e) {
-                Toast.makeText(UploadImageActivity.this, getString(R.string.fail_to_upload), Toast.LENGTH_LONG).show();;
+                Toast.makeText(UploadImageActivity.this, getString(R.string.fail_to_upload), Toast.LENGTH_LONG).show();
+                ;
                 mProgressDialog.dismiss();
 
                 // Make result intent
@@ -513,7 +508,7 @@ public class UploadImageActivity extends AppCompatActivity {
             @Override
             public void onProgress(UploadTask.TaskSnapshot taskSnapshot) {
                 int progress = (int) ((100.0 * taskSnapshot.getBytesTransferred()) / taskSnapshot.getTotalByteCount());
-                Log.d(LOG_TAG, "Uploading progress : " +progress +"%");
+                Log.d(LOG_TAG, "Uploading progress : " + progress + "%");
                 mProgressDialog.setMax((int) (taskSnapshot.getTotalByteCount() / 1024));
                 mProgressDialog.setProgress((int) (taskSnapshot.getBytesTransferred() / 1024));
             }

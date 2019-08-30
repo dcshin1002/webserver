@@ -7,10 +7,7 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
-import android.graphics.Bitmap;
-import android.net.Uri;
 import android.os.Bundle;
-import android.provider.MediaStore;
 import android.text.TextUtils;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -35,8 +32,6 @@ import androidx.core.content.ContextCompat;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 
-import java.io.FileNotFoundException;
-import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -47,24 +42,23 @@ import java.util.List;
 public class ParcelListActivity extends AppCompatActivity implements View.OnClickListener {
 
     private static final String LOG_TAG = "ParcelListActivity";
+    private static final int SEND_COMPLETED_MESSAGE = 1;
+    final int MY_PERMISSIONS = 998;
+    final Calendar myCalendar = Calendar.getInstance();
     private FirebaseAuth mAuth;
     private FirebaseAuth.AuthStateListener mAuthListener;
     private FirebaseUser mCurrentUser;
     private FirebaseDatabaseConnector mFbConnector;
-
     private TmsItemAdapter mArrayAdapter;
     private TmsParcelItem mCompleteTarget;
-
     private TextView mTvAccountName;
     private TextView mTvSignOutText;
     private ImageView mIvConnStatus;
-
     private HashMap<String, TmsParcelItem> mParcelDatabaseHash = new HashMap<>();
     private HashMap<String, TmsCourierItem> mCourierDatabaseHash = new HashMap<>();
     private ArrayList<String> mArrayKeys = new ArrayList<String>();
     private ArrayList<TmsParcelItem> mArrayValues = new ArrayList<TmsParcelItem>();
     private ArrayList<TmsCourierItem> mCourierArrayValues = new ArrayList<TmsCourierItem>();
-
     private TextView mTextCourierName;
     private TextView mTextCourierDate;
     private TextView mTextCount;
@@ -75,15 +69,7 @@ public class ParcelListActivity extends AppCompatActivity implements View.OnClic
     private AlertDialog.Builder mDeliveryCompleteDialog;
     private SimpleDateFormat mSdf;
     private View.OnTouchListener mTouchListner;
-
     private String mOldDateStr;
-
-    final int MY_PERMISSIONS = 998;
-
-    final Calendar myCalendar = Calendar.getInstance();
-
-
-    private static final int SEND_COMPLETED_MESSAGE = 1;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -177,14 +163,14 @@ public class ParcelListActivity extends AppCompatActivity implements View.OnClic
         }
 
         switch (requestCode) {
-            case SEND_COMPLETED_MESSAGE :
+            case SEND_COMPLETED_MESSAGE:
                 Log.d(LOG_TAG, "onActivityResult, SEND_COMPLETED_MESSAGE");
                 if (data != null) {
                     String sendResult = data.getStringExtra(UploadImageActivity.EXTRA_SEND_RESULT);
 
                     if (TextUtils.equals(sendResult, "success")) {
                         String filePath = data.getStringExtra(UploadImageActivity.EXTRA_UPLOADED_FILE_PATH);
-                        Utils.makeComplete(mFbConnector, mCompleteTarget,mTextCourierDate.getText().toString(),filePath);
+                        Utils.makeComplete(mFbConnector, mCompleteTarget, mTextCourierDate.getText().toString(), filePath);
                     } else {
 
                     }
@@ -236,7 +222,7 @@ public class ParcelListActivity extends AppCompatActivity implements View.OnClic
     private void updateConnectUI() {
         if (mCurrentUser != null) {
             mIvConnStatus.setImageDrawable(getDrawable(R.mipmap.activity_connect_account_settings_connected));
-            mTvAccountName.setText(mCurrentUser.getDisplayName() + " (" +mCurrentUser.getEmail() +")");
+            mTvAccountName.setText(mCurrentUser.getDisplayName() + " (" + mCurrentUser.getEmail() + ")");
             mTvAccountName.setBackground(getDrawable(R.drawable.connected_account_border));
             mTvSignOutText.setBackground(getDrawable(R.drawable.active_border2));
             mTvSignOutText.setClickable(true);
@@ -248,7 +234,6 @@ public class ParcelListActivity extends AppCompatActivity implements View.OnClic
             mTvSignOutText.setClickable(false);
         }
     }
-
 
 
     private void initResources() {
@@ -289,9 +274,9 @@ public class ParcelListActivity extends AppCompatActivity implements View.OnClic
         mTouchListner = new View.OnTouchListener() {
             @Override
             public boolean onTouch(View view, MotionEvent motionEvent) {
-                if(motionEvent.getAction() == MotionEvent.ACTION_DOWN) {
+                if (motionEvent.getAction() == MotionEvent.ACTION_DOWN) {
                     view.setBackgroundColor(0xFFE91E63);
-                } else if(motionEvent.getAction() == MotionEvent.ACTION_UP) {
+                } else if (motionEvent.getAction() == MotionEvent.ACTION_UP) {
                     view.setBackgroundColor(0xFF42A5F5);
                 }
                 return false;
@@ -350,7 +335,8 @@ public class ParcelListActivity extends AppCompatActivity implements View.OnClic
             }
         }, myCalendar.get(Calendar.YEAR), myCalendar.get(Calendar.MONTH), myCalendar.get(Calendar.DAY_OF_MONTH));
     }
-    private boolean isCourierNameHasDefaultText(){
+
+    private boolean isCourierNameHasDefaultText() {
         return mTextCourierName.getText().equals(getString(R.string.all_couriers));
     }
 
@@ -425,7 +411,7 @@ public class ParcelListActivity extends AppCompatActivity implements View.OnClic
         Log.d(LOG_TAG, "prepareCourierArray, size = " + mCourierDatabaseHash.size());
         courierArrayList.addAll(mCourierDatabaseHash.values());
         strArrayList.add(getString(R.string.default_courier_name));
-        for(TmsCourierItem item : courierArrayList) {
+        for (TmsCourierItem item : courierArrayList) {
             strArrayList.add(item.name);
         }
         String[] result = strArrayList.toArray(new String[strArrayList.size()]);
@@ -443,9 +429,51 @@ public class ParcelListActivity extends AppCompatActivity implements View.OnClic
         }
 
         Log.d(LOG_TAG, "ParcelList size = " + mParcelDatabaseHash.size());
-        Log.d(LOG_TAG, "CourierList size = "  + mCourierDatabaseHash.size());
+        Log.d(LOG_TAG, "CourierList size = " + mCourierDatabaseHash.size());
         Log.d(LOG_TAG, "KeyArray size = " + mArrayKeys.size());
         Log.d(LOG_TAG, "ValueArray size = " + mArrayValues.size());
+    }
+
+    private String getItemString(ArrayList<TmsParcelItem> items) {
+        int numTotal = items.size();
+        int numComplted = 0;
+
+        for (TmsParcelItem item : items) {
+            if (item.status.equals(TmsParcelItem.STATUS_DELIVERED))
+                numComplted++;
+        }
+
+        String result = String.valueOf(numComplted) + "/" + String.valueOf(numTotal) + "개 배송 완료됨";
+        return result;
+    }
+
+    private void processListBtnClick(final TmsParcelItem item) {
+
+        Log.d(LOG_TAG, "Selected item\'s status will be chaanged to \"deliverd\"");
+
+        mDeliveryCompleteDialog = new AlertDialog.Builder(this)
+                .setTitle(getText(R.string.query_delivery_complete_title))
+                .setMessage(getText(R.string.query_delivery_complete_message))
+                .setPositiveButton(R.string.complete_with_msg, new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialogInterface, int i) {
+                        mCompleteTarget = item;
+
+                        Intent intent = new Intent(ParcelListActivity.this, UploadImageActivity.class);
+                        intent.putExtra(Utils.SELECTED_ITEM, item);
+                        intent.putExtra(Utils.SELECTED_DATE, mTextCourierDate.getText().toString());
+                        startActivityForResult(intent, SEND_COMPLETED_MESSAGE);
+                    }
+                })
+                .setNegativeButton(R.string.cancel, new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialogInterface, int i) {
+                        dialogInterface.cancel();
+                    }
+                });
+
+
+        mDeliveryCompleteDialog.show();
     }
 
     protected class TmsItemAdapter extends ArrayAdapter<TmsParcelItem> {
@@ -503,10 +531,10 @@ public class ParcelListActivity extends AppCompatActivity implements View.OnClic
                         btn_complete.setVisibility(View.VISIBLE);
                     }
                 }
-                if(customerText != null) {
+                if (customerText != null) {
                     customerText.setText(getString(R.string.customer) + " : " + item.consigneeName + " (" + item.consigneeContact + ")");
                 }
-                if(deliveryNote != null) {
+                if (deliveryNote != null) {
                     deliveryNote.setText(getString(R.string.delivery_note) + " : " + item.deliveryNote);
                 }
                 if (remark != null) {
@@ -515,48 +543,6 @@ public class ParcelListActivity extends AppCompatActivity implements View.OnClic
             }
             return v;
         }
-    }
-
-    private String getItemString(ArrayList<TmsParcelItem> items) {
-        int numTotal = items.size();
-        int numComplted = 0;
-
-        for (TmsParcelItem item : items) {
-            if (item.status.equals(TmsParcelItem.STATUS_DELIVERED))
-                numComplted++;
-        }
-
-        String result = String.valueOf(numComplted) + "/" + String.valueOf(numTotal) + "개 배송 완료됨";
-        return result;
-    }
-
-    private void processListBtnClick(final TmsParcelItem item) {
-
-        Log.d(LOG_TAG, "Selected item\'s status will be chaanged to \"deliverd\"");
-
-        mDeliveryCompleteDialog = new AlertDialog.Builder(this)
-                .setTitle(getText(R.string.query_delivery_complete_title))
-                .setMessage(getText(R.string.query_delivery_complete_message))
-                .setPositiveButton(R.string.complete_with_msg, new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialogInterface, int i) {
-                        mCompleteTarget = item;
-
-                        Intent intent = new Intent(ParcelListActivity.this, UploadImageActivity.class);
-                        intent.putExtra(Utils.SELECTED_ITEM, item);
-                        intent.putExtra(Utils.SELECTED_DATE, mTextCourierDate.getText().toString());
-                        startActivityForResult(intent, SEND_COMPLETED_MESSAGE);
-                    }
-                })
-                .setNegativeButton(R.string.cancel, new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialogInterface, int i) {
-                        dialogInterface.cancel();
-                    }
-                });
-
-
-        mDeliveryCompleteDialog.show();
     }
 }
 

@@ -16,8 +16,6 @@ import android.util.Base64;
 import android.util.Log;
 import android.widget.Toast;
 
-import com.google.firebase.auth.FirebaseUser;
-
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.text.SimpleDateFormat;
@@ -42,33 +40,6 @@ public class Utils {
     static Location mCurrent;
     static LocationManager mLocationMgr;
     static Context mContext;
-    static String mCurrentUserId;
-    private static final LocationListener mNetworkLocationListener = new LocationListener() {
-        @Override
-        public void onLocationChanged(final Location location) {
-            mLocationMgr.removeUpdates(mGPSLocationListener);
-            mLocationMgr.removeUpdates(mNetworkLocationListener);
-
-            mCurrent = location;
-            Log.i(LOG_TAG, "current(mNetworkLocationListener) : " + mCurrent.getLatitude() + "/" + mCurrent.getLongitude());
-            Toast.makeText(mContext, "current(mNetworkLocationListener)", Toast.LENGTH_SHORT).show();
-        }
-
-        @Override
-        public void onStatusChanged(String provider, int status, Bundle extras) {
-
-        }
-
-        @Override
-        public void onProviderEnabled(String provider) {
-
-        }
-
-        @Override
-        public void onProviderDisabled(String provider) {
-
-        }
-    };
     private static final LocationListener mGPSLocationListener = new LocationListener() {
         @Override
         public void onLocationChanged(final Location location) {
@@ -95,6 +66,33 @@ public class Utils {
             // Do nothing
         }
     };
+    private static final LocationListener mNetworkLocationListener = new LocationListener() {
+        @Override
+        public void onLocationChanged(final Location location) {
+            mLocationMgr.removeUpdates(mGPSLocationListener);
+            mLocationMgr.removeUpdates(mNetworkLocationListener);
+
+            mCurrent = location;
+            Log.i(LOG_TAG, "current(mNetworkLocationListener) : " + mCurrent.getLatitude() + "/" + mCurrent.getLongitude());
+            Toast.makeText(mContext, "current(mNetworkLocationListener)", Toast.LENGTH_SHORT).show();
+        }
+
+        @Override
+        public void onStatusChanged(String provider, int status, Bundle extras) {
+
+        }
+
+        @Override
+        public void onProviderEnabled(String provider) {
+
+        }
+
+        @Override
+        public void onProviderDisabled(String provider) {
+
+        }
+    };
+    static String mCurrentUserId;
 
     public static String getKeyHash(final Context context) {
         PackageManager pm = context.getPackageManager();

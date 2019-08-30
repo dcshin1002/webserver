@@ -134,31 +134,31 @@ public class CreateAccountActivity extends AppCompatActivity {
 
     private void startCreateUserAccount(String email, String password,
                                         String confirmPassword, String displayName, String phoneNum) {
-        if(!isValidEmail(email)){
+        if (!isValidEmail(email)) {
             Log.e(LOG_TAG, "startCreateUserAccount: email account input is invalid ");
             mAlertErrDialogBuilder.setTitle(getString(R.string.invalid_email_alert_title));
             mAlertErrDialogBuilder.setMessage(getString(R.string.invalid_email_alert_message));
             mAlertErrDialogBuilder.setPositiveButton(R.string.dialog_title_confirm,
                     new DialogInterface.OnClickListener() {
-                @Override
-                public void onClick(DialogInterface dialogInterface, int i) {
-                    dialogInterface.dismiss();
-                }
-            }).show();
+                        @Override
+                        public void onClick(DialogInterface dialogInterface, int i) {
+                            dialogInterface.dismiss();
+                        }
+                    }).show();
             return;
         }
 
-        if (!isValidPassword(password)){
+        if (!isValidPassword(password)) {
             Log.e(LOG_TAG, "startCreateUserAccount: password input is invalid");
             mAlertErrDialogBuilder.setTitle(getString(R.string.invalid_password_alert_title));
             mAlertErrDialogBuilder.setMessage(getString(R.string.invalid_password_alert_message));
             mAlertErrDialogBuilder.setPositiveButton(R.string.dialog_title_confirm,
                     new DialogInterface.OnClickListener() {
-                @Override
-                public void onClick(DialogInterface dialogInterface, int i) {
-                    dialogInterface.dismiss();
-                }
-            }).show();
+                        @Override
+                        public void onClick(DialogInterface dialogInterface, int i) {
+                            dialogInterface.dismiss();
+                        }
+                    }).show();
             return;
         }
 
@@ -196,11 +196,11 @@ public class CreateAccountActivity extends AppCompatActivity {
             mAlertErrDialogBuilder.setMessage(getText(R.string.invalid_phone_num_alert_message));
             mAlertErrDialogBuilder.setPositiveButton(R.string.dialog_title_confirm,
                     new DialogInterface.OnClickListener() {
-                @Override
-                public void onClick(DialogInterface dialogInterface, int i) {
-                    dialogInterface.dismiss();
-                }
-            }).show();
+                        @Override
+                        public void onClick(DialogInterface dialogInterface, int i) {
+                            dialogInterface.dismiss();
+                        }
+                    }).show();
             return;
         }
 
@@ -241,7 +241,7 @@ public class CreateAccountActivity extends AppCompatActivity {
                                 String code = e.getErrorCode();
                                 Log.d(LOG_TAG, "FirebaseAuthUserCollisionException, Error code : " + code);
                                 showAuthErrorDialog(code);
-                            } catch(Exception e) {
+                            } catch (Exception e) {
                                 e.printStackTrace();
                             }
                         }
@@ -254,9 +254,9 @@ public class CreateAccountActivity extends AppCompatActivity {
         Pattern p = Pattern.compile("(^.*(?=.{6,100})(?=.*[0-9])(?=.*[a-zA-Z]).*$)");
 
         Matcher m = p.matcher(target);
-        if (m.find() && !target.matches(".*[ㄱ-ㅎㅏ-ㅣ가-힣]+.*")){
+        if (m.find() && !target.matches(".*[ㄱ-ㅎㅏ-ㅣ가-힣]+.*")) {
             return true;
-        }else{
+        } else {
             return false;
         }
     }

@@ -2,8 +2,8 @@ package com.lge.pickitup;
 
 import android.app.Service;
 import android.content.Intent;
-import android.os.IBinder;
 import android.os.Handler;
+import android.os.IBinder;
 import android.util.Log;
 
 import androidx.annotation.NonNull;
@@ -23,6 +23,19 @@ public class CourierLocationUploadService extends Service {
 
     private TmsCourierItem mTmsCourierItem;
     private FirebaseDatabaseConnector mFbConnector;
+    private ValueEventListener mValueEventListener = new ValueEventListener() {
+        @Override
+        public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+            for (DataSnapshot postSnapshot : dataSnapshot.getChildren()) {
+                mTmsCourierItem = postSnapshot.getValue(TmsCourierItem.class);
+            }
+        }
+
+        @Override
+        public void onCancelled(@NonNull DatabaseError databaseError) {
+
+        }
+    };
 
     public CourierLocationUploadService() {
     }
@@ -46,20 +59,6 @@ public class CourierLocationUploadService extends Service {
         mFbConnector.getCourierItemFromFirebaseDatabase(mTodayDateStr, TmsCourierItem.KEY_NAME, mCourierName, mValueEventListener);
         return START_REDELIVER_INTENT;
     }
-
-    private ValueEventListener mValueEventListener = new ValueEventListener() {
-        @Override
-        public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-            for (DataSnapshot postSnapshot : dataSnapshot.getChildren()) {
-                mTmsCourierItem = postSnapshot.getValue(TmsCourierItem.class);
-            }
-        }
-
-        @Override
-        public void onCancelled(@NonNull DatabaseError databaseError) {
-
-        }
-    };
 
     @Override
     public IBinder onBind(Intent intent) {

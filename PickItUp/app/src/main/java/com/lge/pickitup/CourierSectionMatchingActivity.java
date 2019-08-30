@@ -328,7 +328,7 @@ public class CourierSectionMatchingActivity extends AppCompatActivity implements
                 // Let update those on FirebaseDdatabse
                 mFbConnector.postParcelListToFirebaseDatabase2(mTextCourierDate.getText().toString(), mArrayValues);
 
-                TmsCourierItem courierItem = new TmsCourierItem(String.valueOf(mCurrentCourierItemId++) , mTextCourierName.getText().toString());
+                TmsCourierItem courierItem = new TmsCourierItem(String.valueOf(mCurrentCourierItemId++), mTextCourierName.getText().toString());
                 mFbConnector.postCourierItemToFirebaseDatabase(mTextCourierDate.getText().toString(), courierItem);
 
                 AlertDialog.Builder builder = new AlertDialog.Builder(CourierSectionMatchingActivity.this);
@@ -376,7 +376,7 @@ public class CourierSectionMatchingActivity extends AppCompatActivity implements
 
     private void showSectorPicker() {
         String[] tmp_items = new String[mSectorList.size()];
-        int i=0;
+        int i = 0;
         for (String sec : mSectorList) {
             tmp_items[i] = sec;
             i++;
@@ -390,7 +390,7 @@ public class CourierSectionMatchingActivity extends AppCompatActivity implements
         int defaultIdx = 0;
 
         if (!mTextSectorName.getText().toString().equals(getString(R.string.select_sector))) {
-            for (int j=0; j < items.length; j++){
+            for (int j = 0; j < items.length; j++) {
                 if (items[j].equals(mTextSectorName.getText().toString())) {
                     defaultIdx = j;
                     break;

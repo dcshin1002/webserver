@@ -3,13 +3,6 @@ package com.lge.pickitup;
 import android.net.NetworkInfo;
 
 public interface ProcessingCallback<T> {
-    interface Progress {
-        int ERROR = -1;
-        int CONNECT_SUCCESS = 0;
-        int PROCESS_IN_PROGRESS = 1;
-        int PROCESS_SUCCESS = 2;
-    }
-
     /**
      * Indicates that the callback handler needs to update its appearance or information based on
      * the result of the task. Expected to be called from the main thread.
@@ -23,7 +16,8 @@ public interface ProcessingCallback<T> {
 
     /**
      * Indicate to callback handler any progress update.
-     * @param progressCode must be one of the constants defined in DownloadCallback.Progress.
+     *
+     * @param progressCode    must be one of the constants defined in DownloadCallback.Progress.
      * @param percentComplete must be 0-100.
      */
     void onProgressUpdate(int progressCode, int percentComplete);
@@ -33,4 +27,11 @@ public interface ProcessingCallback<T> {
      * download hasn't completed successfully.
      */
     void finishProcessing(boolean sucess);
+
+    interface Progress {
+        int ERROR = -1;
+        int CONNECT_SUCCESS = 0;
+        int PROCESS_IN_PROGRESS = 1;
+        int PROCESS_SUCCESS = 2;
+    }
 }
