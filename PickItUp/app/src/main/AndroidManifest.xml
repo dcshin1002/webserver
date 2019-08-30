@@ -36,6 +36,8 @@
         <activity
             android:name=".MapViewActivity"
             android:label="@string/title_activity_map_view"
+            android:configChanges="orientation"
+            android:screenOrientation="portrait"
             android:theme="@style/AppTheme.NoActionBar" />
         <activity
             android:name=".ClusterAndRouteActivity"
