@@ -88,7 +88,7 @@
         android:paddingBottom="8dp"
         android:background="@drawable/active_border"
         android:textColor="#FFFFFF"
-        android:clickable="true"
+        android:clickable="false"
         />
 
     <ImageView
@@ -130,7 +130,7 @@
         android:textSize="16dp"
         android:background="@drawable/active_border"
         android:textColor="#FFFFFF"
-        android:clickable="true" />
+        android:clickable="false" />
 
     <RelativeLayout
         android:id="@+id/btn_relative_layout"
@@ -171,6 +171,7 @@
             android:background="#42A5F5"
             android:text="@string/change_parcel_view"
             android:textColor="#FFFFFF"
+            android:enabled="false"
             android:textSize="16dp" />
 
     </RelativeLayout>

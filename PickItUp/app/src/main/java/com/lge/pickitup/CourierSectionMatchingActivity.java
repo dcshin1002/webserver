@@ -291,7 +291,7 @@ public class CourierSectionMatchingActivity extends AppCompatActivity implements
                     Toast.makeText(CourierSectionMatchingActivity.this, R.string.need_manual_input, Toast.LENGTH_SHORT).show();
                     return;
                 }
-                Utils.startKakaoMapActivity(getApplication(), Double.valueOf(LatitudeStr), Double.valueOf(LongitudeStr));
+                Utils.startKakaoMapActivity(CourierSectionMatchingActivity.this, Double.valueOf(LatitudeStr), Double.valueOf(LongitudeStr));
             }
         });
     }

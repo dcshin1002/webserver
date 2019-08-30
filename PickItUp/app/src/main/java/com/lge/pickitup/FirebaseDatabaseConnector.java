@@ -190,9 +190,9 @@ public class FirebaseDatabaseConnector {
         firebaseQuery.addListenerForSingleValueEvent(eventlistener);
     }
 
-    protected void getCourierListFromFirebaseDatabaseWithListener(String pathString, String orderBy, ValueEventListener eventlistener) {
+    protected void getCourierListFromFirebaseDatabaseWithListener(String pathString, ValueEventListener eventlistener) {
         Query firebaseQuery;
-        firebaseQuery = mDatabaseRef.child(COURIER_REF_NAME).child(pathString).orderByChild(orderBy);
+        firebaseQuery = mDatabaseRef.child(COURIER_REF_NAME).child(pathString);
         firebaseQuery.addListenerForSingleValueEvent(eventlistener);
     }
 
@@ -228,18 +228,9 @@ public class FirebaseDatabaseConnector {
     }
 
 
-    protected void getParcelListFromFirebaseDatabase(String pathString, String orderBy, String select, ValueEventListener listener) {
+    protected void getParcelListFromFirebaseDatabase(String pathString, ValueEventListener listener) {
         Query firebaseQuery;
-        if (TextUtils.isEmpty(select) || select.equals(mContext.getString(R.string.all_couriers)) || select == null) {
-            firebaseQuery = mDatabaseRef.child(PARCEL_REF_NAME).child(pathString).orderByChild(orderBy);
-        } else {
-            if (orderBy.equals(TmsParcelItem.KEY_SECTOR_ID)) {
-                firebaseQuery = mDatabaseRef.child(PARCEL_REF_NAME).child(pathString).orderByChild(orderBy).equalTo(Integer.valueOf(select));
-            } else {
-                firebaseQuery = mDatabaseRef.child(PARCEL_REF_NAME).child(pathString).orderByChild(orderBy).equalTo(select);
-            }
-        }
-
+        firebaseQuery = mDatabaseRef.child(PARCEL_REF_NAME).child(pathString);
         firebaseQuery.addListenerForSingleValueEvent(listener);
     }
 

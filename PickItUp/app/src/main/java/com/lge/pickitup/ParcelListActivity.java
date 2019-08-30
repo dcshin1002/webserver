@@ -316,7 +316,7 @@ public class ParcelListActivity extends AppCompatActivity implements View.OnClic
                     Toast.makeText(ParcelListActivity.this, R.string.need_manual_input, Toast.LENGTH_SHORT).show();
                     return;
                 }
-                Utils.startKakaoMapActivity(getApplication(), Double.valueOf(LatitudeStr), Double.valueOf(LongitudeStr));
+                Utils.startKakaoMapActivity(ParcelListActivity.this, Double.valueOf(LatitudeStr), Double.valueOf(LongitudeStr));
             }
         });
 
@@ -419,7 +419,6 @@ public class ParcelListActivity extends AppCompatActivity implements View.OnClic
     }
 
     private void refreshList(String select) {
-        Log.d(LOG_TAG, "Stack", new Throwable("stack dump"));
         if (select.equals(getString(R.string.all_couriers))) {
             mFbConnector.getParcelListFromFirebaseDatabase(mTextCourierDate.getText().toString(), TmsParcelItem.KEY_ID);
             mFbConnector.getCourierListFromFirebaseDatabase(mTextCourierDate.getText().toString(), TmsParcelItem.KEY_ID);
@@ -433,6 +432,8 @@ public class ParcelListActivity extends AppCompatActivity implements View.OnClic
         Log.d(LOG_TAG, "KeyArray size = " + mArrayKeys.size());
         Log.d(LOG_TAG, "ValueArray size = " + mArrayValues.size());
     }
+
+
 
     private String getItemString(ArrayList<TmsParcelItem> items) {
         int numTotal = items.size();
@@ -485,6 +486,9 @@ public class ParcelListActivity extends AppCompatActivity implements View.OnClic
         @Override
         public void notifyDataSetChanged() {
             super.notifyDataSetChanged();
+            mTextCourierName.setClickable(true);
+            mTextCourierDate.setClickable(true);
+            mBtnChangeView.setEnabled(true);
             mTextCount.setText(getItemString(mArrayValues));
         }
 

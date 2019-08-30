@@ -6,6 +6,11 @@ import android.content.Intent;
 import android.os.AsyncTask;
 import android.util.Log;
 
+import androidx.annotation.NonNull;
+
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.ValueEventListener;
 import com.opencsv.CSVReader;
 
 import org.json.JSONArray;
@@ -38,7 +43,8 @@ public class AddressFacade {
     String mDateStr;
     Context mContext;
     List<TmsParcelItem> mParcelList = new ArrayList<>();
-    HashMap<String, Integer> mCourierHash = new HashMap<>();
+    HashMap<String, Integer> mCourierNameIdHash = new HashMap<>();
+    private HashMap<String, TmsCourierItem> mCourierHash = new HashMap<>();
     private FirebaseDatabaseConnector mFbConnector;
     private int mCourierNum = 0;
 
@@ -50,41 +56,41 @@ public class AddressFacade {
         mFileName = fileName;
         mFbConnector = new FirebaseDatabaseConnector(mContext);
         mDateStr = getDateFromFileName(mFileName);
-        initFile(fileName);
+        mFbConnector.getCourierListFromFirebaseDatabaseWithListener(mDateStr, mCourierValueEventListener);
     }
+
+    ValueEventListener mCourierValueEventListener = new ValueEventListener() {
+        @Override
+        public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+            mCourierHash.clear();
+            mCourierNameIdHash.clear();
+            Log.d(LOG_TAG, "getCourierListFromFirebaseDatabase : size " + dataSnapshot.getChildrenCount());
+            for (DataSnapshot postSnapshot : dataSnapshot.getChildren()) {
+                String key = postSnapshot.getKey();
+                TmsCourierItem value = postSnapshot.getValue(TmsCourierItem.class);
+                mCourierHash.put(value.name, value);
+                mCourierNameIdHash.put(value.name, Integer.valueOf(key));
+            }
+            initFile(mFileName);
+        }
+        @Override
+        public void onCancelled(@NonNull DatabaseError databaseError) {
+        }
+    };
 
     String getDateFromFileName(String fileName) {
         String[] dateStr = fileName.split("[_]|[.]");
         String result = dateStr[1].substring(0, 4) + "-" + dateStr[1].substring(4, 6) + "-" + dateStr[1].substring(6);
         return result;
     }
-
-    void initFile(String filename) {
-        mParcelList.clear();
-        mCourierHash.clear();
-        mCourierNum = 1;
-
-        File file = new File("/sdcard/address/" + filename);
-        try {
-            FileInputStream fis = new FileInputStream(file);
-
-            InputStreamReader is = new InputStreamReader(fis, "EUC-KR");
-            CSVReader reader = new CSVReader(is);
-            String[] record = null;
-            while ((record = reader.readNext()) != null) {
-                // Add it if the courier is new one
-                if (record.length > 11) {
-                    if (!mCourierHash.containsKey(record[11])) {
-                        mCourierHash.put(record[11], mCourierNum++);
-                    }
-                }
-                addRecordToParcelList(mParcelList, record);
-            }
-
+    ValueEventListener mValueEventListener = new ValueEventListener() {
+        @Override
+        public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+            long parcelCountOnDB = dataSnapshot.getChildrenCount();
+            Log.i(LOG_TAG, "parcelCountOnDB is " + parcelCountOnDB);
             // Get longitude and latitude from address through Daum Kakao API
             AddressTranslate addressTranslate = new AddressTranslate();
-            addressTranslate.execute();
-
+            addressTranslate.execute(String.valueOf(parcelCountOnDB));
 
             String[] date_piece = mDateStr.split("-");
             String setUrl = Utils.SERVER_URL + "/route";
@@ -96,6 +102,39 @@ public class AddressFacade {
             Log.d(LOG_TAG, "processing url = " + setUrl + ", " + getUrl);
             ProcessingBackTask processingBackTask = new ProcessingBackTask();
             processingBackTask.execute(setUrl, getUrl);
+        }
+
+        @Override
+        public void onCancelled(@NonNull DatabaseError databaseError) {
+
+        }
+    };
+
+    void initFile(String filename) {
+        mParcelList.clear();
+        mCourierNum = mCourierNameIdHash.size() + 1;
+
+        File file = new File("/sdcard/address/" + filename);
+        try {
+            FileInputStream fis = new FileInputStream(file);
+
+            InputStreamReader is = new InputStreamReader(fis, "EUC-KR");
+            CSVReader reader = new CSVReader(is);
+            String[] record = null;
+            while ((record = reader.readNext()) != null) {
+                // Add it if the courier is new one
+                if (record.length > 11) {
+                    if (!mCourierNameIdHash.containsKey(record[11])) {
+                        mCourierNameIdHash.put(record[11], mCourierNum++);
+                    }
+                }
+                addRecordToParcelList(mParcelList, record);
+            }
+
+            // make valueeventlistner
+            mFbConnector.getParcelListFromFirebaseDatabase(mDateStr, mValueEventListener);
+
+
         } catch (FileNotFoundException e) {
             Log.e(LOG_TAG, "FileNotFoundException has been raised");
             e.printStackTrace();
@@ -129,23 +168,23 @@ public class AddressFacade {
         item.regionalCode = regionalCode;
         item.courierName = courierName;
         item.courierContact = courierContact;
-        item.sectorId = mCourierHash.get(courierName);
+        item.sectorId = mCourierNameIdHash.get(courierName);
 
         list.add(item);
     }
 
-    private void initParcelId() {
+    private void initParcelId(long startIdx) {
         for (int i = 0; i < mParcelList.size(); i++) {
             TmsParcelItem item = mParcelList.get(i);
-            item.id = String.valueOf(i + 1);
+            item.id = String.valueOf(startIdx + i + 1);
         }
     }
 
     private List<TmsCourierItem> buildTmsCouriers(List<String> list) {
         List<TmsCourierItem> result = new ArrayList<>();
 
-        for (String key : mCourierHash.keySet()) {
-            TmsCourierItem item = new TmsCourierItem(String.valueOf(mCourierHash.get(key)), key);
+        for (String key : mCourierNameIdHash.keySet()) {
+            TmsCourierItem item = new TmsCourierItem(String.valueOf(mCourierNameIdHash.get(key)), key);
             result.add(item);
         }
         return result;
@@ -160,7 +199,7 @@ public class AddressFacade {
 
     class AddressTranslate extends AsyncTask<String, Void, String> {
         ProgressDialog asyncDialog = new ProgressDialog(mContext);
-
+        long startIdx;
         @Override
         protected void onPreExecute() {
             asyncDialog.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
@@ -171,6 +210,7 @@ public class AddressFacade {
 
         @Override
         protected String doInBackground(String... s) {
+            startIdx = Long.valueOf(s[0]);
             asyncDialog.setMax(mParcelList.size());
             asyncDialog.setProgress(0);
 
@@ -186,8 +226,8 @@ public class AddressFacade {
         protected void onPostExecute(String o) {
             super.onPostExecute(o);
             asyncDialog.dismiss();
-            initParcelId();
-            List<TmsCourierItem> couriers = buildTmsCouriers(new ArrayList<String>(mCourierHash.keySet()));
+            initParcelId(startIdx);
+            List<TmsCourierItem> couriers = buildTmsCouriers(new ArrayList<String>(mCourierNameIdHash.keySet()));
 
             for (TmsCourierItem item : couriers) {
                 Log.d(LOG_TAG, "id-" + item.id + ", name-" + item.name);

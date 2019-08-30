@@ -150,12 +150,16 @@ public class Utils {
     }
 
     public static void startKakaoMapActivity(Context ctx, double targetLat, double targetLon) {
-        String url = "daummaps://route?sp=" + mCurrent.getLatitude() + "," + mCurrent.getLongitude() + "&ep=" + targetLat + "," + targetLon + "&by=CAR";
-        Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(url));
-        try {
-            ctx.startActivity(intent);
-        } catch (ActivityNotFoundException e) {
-            ctx.startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse("market://details?id=net.daum.android.map")));
+        if (mCurrent != null) {
+            String url = "daummaps://route?sp=" + mCurrent.getLatitude() + "," + mCurrent.getLongitude() + "&ep=" + targetLat + "," + targetLon + "&by=CAR";
+            Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(url));
+            try {
+                ctx.startActivity(intent);
+            } catch (ActivityNotFoundException e) {
+                ctx.startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse("market://details?id=net.daum.android.map")));
+            }
+        } else {
+            Toast.makeText(ctx,R.string.cannot_know_mylocation, Toast.LENGTH_SHORT).show();
         }
 
     }
@@ -187,7 +191,7 @@ public class Utils {
         mCurrent = mLocationMgr.getLastKnownLocation(LocationManager.GPS_PROVIDER);
         if (mCurrent != null) {
             Log.i(LOG_TAG, "current (last) : " + mCurrent.getLatitude() + "/" + mCurrent.getLongitude());
-            Toast.makeText(context, "current (last)", Toast.LENGTH_SHORT).show();
+            //Toast.makeText(context, "current (last)", Toast.LENGTH_SHORT).show();
         } else {
             List<String> providers = mLocationMgr.getProviders(true);
             Location bestLocation = null;
@@ -203,7 +207,7 @@ public class Utils {
 
             if (null == bestLocation) {
                 Log.i(LOG_TAG, "bestLocation is null");
-                Toast.makeText(context, "bestLocation is null", Toast.LENGTH_SHORT).show();
+//                Toast.makeText(context, "bestLocation is null", Toast.LENGTH_SHORT).show();
                 mLocationMgr.requestLocationUpdates(LocationManager.GPS_PROVIDER, 1, 1f, mGPSLocationListener);
                 mLocationMgr.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, 1, 1f, mNetworkLocationListener);
             } else {

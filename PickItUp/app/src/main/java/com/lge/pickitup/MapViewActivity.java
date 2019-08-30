@@ -44,7 +44,7 @@ import java.util.HashMap;
 
 
 public class MapViewActivity extends AppCompatActivity
-        implements MapView.OpenAPIKeyAuthenticationResultListener, MapView.MapViewEventListener, MapView.POIItemEventListener, View.OnClickListener {
+        implements MapView.OpenAPIKeyAuthenticationResultListener, MapView.MapViewEventListener, MapView.POIItemEventListener, View.OnClickListener, MapView.CurrentLocationEventListener {
 
     private FirebaseDatabaseConnector mFbConnector;
     private static final String LOG_TAG = "MapViewActivity";
@@ -52,7 +52,7 @@ public class MapViewActivity extends AppCompatActivity
     public static final String DAUM_MAPS_ANDROID_APP_API_KEY = "8be996dd99057764a9876591b3270e31";
     private AlertDialog.Builder mDeliveryCompleteDialog;
     private String mSelectedDate;
-    private String mSelectedCourierName;
+    private static String mSelectedCourierName;
     private String mSelectedSectionID;
 
     private HashMap<String, TmsParcelItem> mParcelDatabaseHash = new HashMap<>();
@@ -123,10 +123,13 @@ public class MapViewActivity extends AppCompatActivity
         mMapView.setMapType(MapView.MapType.Standard);
         ViewGroup mapViewContainer = (ViewGroup) findViewById(R.id.map_view);
         mapViewContainer.addView(mapLayout);
-        addCurrentLocationMarker();
-        //mMapView.setDefaultCurrentLocationMarker();
-        //mMapView.setCurrentLocationTrackingMode(MapView.CurrentLocationTrackingMode.TrackingModeOnWithoutHeading);
-        //mMapView.setShowCurrentLocationMarker(true);
+        //addCurrentLocationMarker();
+        mMapView.setCurrentLocationEventListener(this);
+        mMapView.setCurrentLocationTrackingMode(MapView.CurrentLocationTrackingMode.TrackingModeOnWithoutHeading);
+        mMapView.setCurrentLocationRadius(10);
+        mMapView.setCustomCurrentLocationMarkerTrackingImage(R.drawable.location_map_pin_pink, new MapPOIItem.ImageOffset(28, 28));
+        mMapView.setShowCurrentLocationMarker(true);
+
         Bundle b = getIntent().getExtras();
         if (b != null) {
             mSelectedDate = b.getString(TmsParcelItem.KEY_DATE);
@@ -144,6 +147,9 @@ public class MapViewActivity extends AppCompatActivity
     }
 
     private void addCurrentLocationMarker() {
+        if (Utils.mCurrent == null) {
+            return;
+        }
         Log.i(LOG_TAG, "addCurrentLocationMarker");
         Log.i(LOG_TAG, "mCurrent.getLatitude()=" + Utils.mCurrent.getLatitude());
         Log.i(LOG_TAG, "mCurrent.getLongitude()=" + Utils.mCurrent.getLongitude());
@@ -168,7 +174,7 @@ public class MapViewActivity extends AppCompatActivity
         switch (view.getId()) {
             case R.id.parcel_data:
                 MapPOIItem mapPOIItem = (MapPOIItem)view.getTag(R.id.parcel_data);
-                Utils.startKakaoMapActivity(getApplication(), mapPOIItem.getMapPoint().getMapPointGeoCoord().latitude, mapPOIItem.getMapPoint().getMapPointGeoCoord().longitude);
+                Utils.startKakaoMapActivity(MapViewActivity.this, mapPOIItem.getMapPoint().getMapPointGeoCoord().latitude, mapPOIItem.getMapPoint().getMapPointGeoCoord().longitude);
                 break;
         }
     }
@@ -251,10 +257,8 @@ public class MapViewActivity extends AppCompatActivity
 
             Bitmap pin = getBitmapPinByParcelItem(item);
             Bitmap seleted_pin = getBitmapSeletedPinByParcelItem(item);
-
-
-
-            if (item.orderInRoute != -1) {
+            boolean isDeliverd = item.status.equals(TmsParcelItem.STATUS_DELIVERED);
+            if (!isDeliverd &&  item.orderInRoute != -1 && !mSelectedCourierName.equals(GlobalRes.getString(R.string.all_couriers))) {
                 int textVal = item.orderInRoute;
                 Paint paint = new Paint();
                 paint.setStyle(Paint.Style.FILL);
@@ -292,7 +296,7 @@ public class MapViewActivity extends AppCompatActivity
         }
         mFbConnector.getCourierListFromFirebaseDatabase(mSelectedDate, TmsParcelItem.KEY_ID);
         if (Utils.isAdminAuth()) {
-            mFbConnector.getCourierListFromFirebaseDatabaseWithListener(mSelectedDate, TmsCourierItem.KEY_ID, mValueEventListener);
+            mFbConnector.getCourierListFromFirebaseDatabaseWithListener(mSelectedDate, mValueEventListener);
         }
     }
 
@@ -346,7 +350,12 @@ public class MapViewActivity extends AppCompatActivity
         //mMapView.setCurrentLocationTrackingMode(MapView.CurrentLocationTrackingMode.TrackingModeOnWithoutHeading);
         //mapView.setMapCenterPointAndZoomLevel(MapPoint.mapPointWithGeoCoord(37.537229,127.005515), 7, true);
         //mapView.setMapCenterPointAndZoomLevel(MapPoint.mapPointWithGeoCoord(mInitLatitude,mInitLongitude), 6, true);
-        mapView.setMapCenterPointAndZoomLevel(MapPoint.mapPointWithGeoCoord(Utils.mCurrent.getLatitude(), Utils.mCurrent.getLongitude()), 7, true);
+        if (Utils.mCurrent != null) {
+            mapView.setMapCenterPointAndZoomLevel(MapPoint.mapPointWithGeoCoord(Utils.mCurrent.getLatitude(), Utils.mCurrent.getLongitude()), 7, true);
+        } else {
+            mapView.setMapCenterPointAndZoomLevel(MapPoint.mapPointWithGeoCoord(mInitLatitude,mInitLongitude), 7, true);
+        }
+
     }
 
     @Override
@@ -546,7 +555,7 @@ public class MapViewActivity extends AppCompatActivity
         if (mapPOIItem.getItemName().equals(getString(R.string.current_location))) {
             return;
         }
-        Utils.startKakaoMapActivity(getApplication(), mapPOIItem.getMapPoint().getMapPointGeoCoord().latitude, mapPOIItem.getMapPoint().getMapPointGeoCoord().longitude);
+        Utils.startKakaoMapActivity(MapViewActivity.this, mapPOIItem.getMapPoint().getMapPointGeoCoord().latitude, mapPOIItem.getMapPoint().getMapPointGeoCoord().longitude);
     }
 
     @Override
@@ -560,4 +569,23 @@ public class MapViewActivity extends AppCompatActivity
     }
 
 
+    @Override
+    public void onCurrentLocationUpdate(MapView mapView, MapPoint mapPoint, float v) {
+
+    }
+
+    @Override
+    public void onCurrentLocationDeviceHeadingUpdate(MapView mapView, float v) {
+
+    }
+
+    @Override
+    public void onCurrentLocationUpdateFailed(MapView mapView) {
+
+    }
+
+    @Override
+    public void onCurrentLocationUpdateCancelled(MapView mapView) {
+
+    }
 }
