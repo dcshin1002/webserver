@@ -174,6 +174,11 @@ public class Utils {
     }
 
     @SuppressLint("MissingPermission")
+    public static void setCurrentLocation() {
+        initLocation(mContext);
+    }
+
+    @SuppressLint("MissingPermission")
     public static void initLocation(Context context) {
         mContext = context;
 

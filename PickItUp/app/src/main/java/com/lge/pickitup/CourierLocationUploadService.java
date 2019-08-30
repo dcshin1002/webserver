@@ -84,7 +84,7 @@ public class CourierLocationUploadService extends Service {
                     TimerTask TT = new TimerTask() {
                         @Override
                         public void run() {
-                            Utils.initLocation(getApplicationContext());
+                            Utils.setCurrentLocation();
                             if (mTmsCourierItem != null) {
                                 mTmsCourierItem.latitude = String.valueOf(Utils.mCurrent.getLatitude());
                                 mTmsCourierItem.longitude = String.valueOf(Utils.mCurrent.getLongitude());
