@@ -41,31 +41,58 @@ public class TmsParcelItem implements Comparable<TmsParcelItem>, Parcelable {
     public static final String KEY_ORDER_ID = "orderInRoute";
     public static final String KEY_STATUS = "status";
     public static final String KEY_COMPLTE_MSG_IMG = "completeImage";
+    public static final Parcelable.Creator<TmsParcelItem> CREATOR = new Creator<TmsParcelItem>() {
+        @Override
+        public TmsParcelItem createFromParcel(Parcel parcel) {
+            TmsParcelItem item = new TmsParcelItem();
+            item.id = parcel.readString();
+            item.trackingNum = parcel.readString();
+            item.packageType = parcel.readString();
+            item.date = parcel.readString();
+            item.consignorName = parcel.readString();
+            item.consignorContact = parcel.readString();
+            item.consigneeName = parcel.readString();
+            item.consigneeAddr = parcel.readString();
+            item.consigneeContact = parcel.readString();
+            item.consigneeLongitude = parcel.readString();
+            item.consigneeLatitude = parcel.readString();
+            item.courierName = parcel.readString();
+            item.courierContact = parcel.readString();
+            item.remark = parcel.readString();
+            item.deliveryNote = parcel.readString();
+            item.regionalCode = parcel.readString();
+            item.sectorId = parcel.readInt();
+            item.orderInRoute = parcel.readInt();
+            item.status = parcel.readString();
+            item.completeImage = parcel.readString();
 
+            return item;
+        }
+
+        @Override
+        public TmsParcelItem[] newArray(int i) {
+            return null;
+        }
+    };
     public String id;
     public String trackingNum = UNSET;
     public String packageType = UNSET;
     public String date = UNSET;
-
     // Information about Consignor (Sender)
     public String consignorName = UNSET;
     public String consignorContact = UNSET;
-
     // Information about Consignee (Receiver)
     public String consigneeName = UNSET;
     public String consigneeAddr = UNSET;
     public String consigneeContact = UNSET;
     public String consigneeLongitude = UNSET;
     public String consigneeLatitude = UNSET;
-
     // Information about courier (driver or individual to transfer)
     public String courierName = UNSET;
     public String courierContact = UNSET;
-
     // Delivery note (memo)
     public String remark = UNSET;
     public String deliveryNote = UNSET;
-
     // Information to process parcel
     public String regionalCode = UNSET;
     public int sectorId = -1;
@@ -109,16 +136,16 @@ public class TmsParcelItem implements Comparable<TmsParcelItem>, Parcelable {
         }
     }
 
-    void setGeocode (String longitude, String latitude) {
+    void setGeocode(String longitude, String latitude) {
         this.consigneeLatitude = latitude;
         this.consigneeLongitude = longitude;
     }
 
-    void setSectorId (int id) {
+    void setSectorId(int id) {
         this.sectorId = id;
     }
 
-    void setOrderId (int id) {
+    void setOrderId(int id) {
         this.orderInRoute = id;
     }
 
@@ -129,7 +156,7 @@ public class TmsParcelItem implements Comparable<TmsParcelItem>, Parcelable {
             this.courierContact = contact;
     }
 
-    void setStatus (String newStatus) {
+    void setStatus(String newStatus) {
         if (this.status.equals(newStatus)) {
             return;
         } else {
@@ -202,38 +229,4 @@ public class TmsParcelItem implements Comparable<TmsParcelItem>, Parcelable {
         parcel.writeString(status);
         parcel.writeString(completeImage);
     }
-
-    public static final Parcelable.Creator<TmsParcelItem> CREATOR = new Creator<TmsParcelItem>() {
-        @Override
-        public TmsParcelItem createFromParcel(Parcel parcel) {
-            TmsParcelItem item = new TmsParcelItem();
-            item.id = parcel.readString();
-            item.trackingNum = parcel.readString();
-            item.packageType = parcel.readString();
-            item.date = parcel.readString();
-            item.consignorName = parcel.readString();
-            item.consignorContact = parcel.readString();
-            item.consigneeName = parcel.readString();
-            item.consigneeAddr = parcel.readString();
-            item.consigneeContact = parcel.readString();
-            item.consigneeLongitude = parcel.readString();
-            item.consigneeLatitude = parcel.readString();
-            item.courierName = parcel.readString();
-            item.courierContact = parcel.readString();
-            item.remark = parcel.readString();
-            item.deliveryNote = parcel.readString();
-            item.regionalCode = parcel.readString();
-            item.sectorId = parcel.readInt();
-            item.orderInRoute = parcel.readInt();
-            item.status = parcel.readString();
-            item.completeImage = parcel.readString();
-
-            return item;
-        }
-
-        @Override
-        public TmsParcelItem[] newArray(int i) {
-            return null;
-        }
-    };
 }

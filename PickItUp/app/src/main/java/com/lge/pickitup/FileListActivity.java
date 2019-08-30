@@ -142,7 +142,7 @@ public class FileListActivity extends AppCompatActivity implements View.OnClickL
     private void updateConnectUI() {
         if (mCurrentUser != null) {
             mIvConnStatus.setImageDrawable(getDrawable(R.mipmap.activity_connect_account_settings_connected));
-            mTvAccountName.setText(mCurrentUser.getDisplayName() + " (" +mCurrentUser.getEmail() +")");
+            mTvAccountName.setText(mCurrentUser.getDisplayName() + " (" + mCurrentUser.getEmail() + ")");
             mTvAccountName.setBackground(getDrawable(R.drawable.connected_account_border));
             mTvSignOutText.setBackground(getDrawable(R.drawable.active_border2));
             mTvSignOutText.setClickable(true);
@@ -158,7 +158,7 @@ public class FileListActivity extends AppCompatActivity implements View.OnClickL
     @Override
     public void onClick(View view) {
         switch (view.getId()) {
-            case R.id.goto_parcel_list_btn :
+            case R.id.goto_parcel_list_btn:
                 startActivity(new Intent(FileListActivity.this, ParcelListActivity.class));
                 break;
 
@@ -171,9 +171,9 @@ public class FileListActivity extends AppCompatActivity implements View.OnClickL
     private void readFileList() {
         String sdcardPath = null;
         String sdcardStat = Environment.getExternalStorageState();
-        if(sdcardStat.equals(Environment.MEDIA_MOUNTED)) {
+        if (sdcardStat.equals(Environment.MEDIA_MOUNTED)) {
             sdcardPath = Environment.getExternalStorageDirectory().getAbsolutePath();
-            File addrDir = new File(sdcardPath + "/address/") ;
+            File addrDir = new File(sdcardPath + "/address/");
             if (addrDir.exists() && addrDir.isDirectory()) {
                 File[] files = addrDir.listFiles();
                 if (files != null) {

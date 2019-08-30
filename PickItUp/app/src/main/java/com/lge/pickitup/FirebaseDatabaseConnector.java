@@ -1,11 +1,9 @@
 package com.lge.pickitup;
 
 import android.content.Context;
-import android.renderscript.Sampler;
 import android.text.TextUtils;
 import android.util.Log;
 import android.widget.ArrayAdapter;
-import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 
@@ -18,17 +16,16 @@ import com.google.firebase.database.ValueEventListener;
 
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.EventListener;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 
 public class FirebaseDatabaseConnector {
-    private static final String LOG_TAG = "FirebaseConnector";
     public static final String PARCEL_REF_NAME = "parcel_list";
     public static final String COURIER_REF_NAME = "courier_list";
     public static final String REGISTERED_COURIER_REF_NAME = "registered_courier";
     public static final String JOB_STATUS_NAME = "backend_status";
+    private static final String LOG_TAG = "FirebaseConnector";
     private Context mContext;
     private DatabaseReference mDatabaseRef;
 
@@ -198,8 +195,6 @@ public class FirebaseDatabaseConnector {
         firebaseQuery = mDatabaseRef.child(COURIER_REF_NAME).child(pathString).orderByChild(orderBy);
         firebaseQuery.addListenerForSingleValueEvent(eventlistener);
     }
-
-
 
 
     protected void getRegisteredCourierListFromFirebaseDatabase(String orderBy) {

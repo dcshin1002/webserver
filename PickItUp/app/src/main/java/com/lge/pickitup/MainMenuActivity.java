@@ -16,7 +16,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 
-public class MainMenuActivity extends AppCompatActivity implements View.OnClickListener{
+public class MainMenuActivity extends AppCompatActivity implements View.OnClickListener {
 
     private static final String LOG_TAG = "MainMenuActivity";
     private FirebaseAuth mAuth;
@@ -81,7 +81,7 @@ public class MainMenuActivity extends AppCompatActivity implements View.OnClickL
     private void updateConnectUI() {
         if (mCurrentUser != null) {
             mIvConnStatus.setImageDrawable(getDrawable(R.mipmap.activity_connect_account_settings_connected));
-            mTvAccountName.setText(mCurrentUser.getDisplayName() + " (" +mCurrentUser.getEmail() +")");
+            mTvAccountName.setText(mCurrentUser.getDisplayName() + " (" + mCurrentUser.getEmail() + ")");
             mTvAccountName.setBackground(getDrawable(R.drawable.connected_account_border));
             mTvSignOutText.setBackground(getDrawable(R.drawable.active_border2));
             mTvSignOutText.setClickable(true);
@@ -105,14 +105,14 @@ public class MainMenuActivity extends AppCompatActivity implements View.OnClickL
                 AlertDialog.Builder signOutAlert = new AlertDialog.Builder(MainMenuActivity.this);
 
                 signOutAlert.setTitle(getText(R.string.sign_out_alert_title))
-                .setMessage(getText(R.string.sign_out_alert_message))
-                .setPositiveButton(getText(R.string.text_yes), new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialogInterface, int i) {
-                        mAuth.signOut();
-                        dialogInterface.dismiss();
-                    }
-                }).setNegativeButton(getText(R.string.text_no), new DialogInterface.OnClickListener() {
+                        .setMessage(getText(R.string.sign_out_alert_message))
+                        .setPositiveButton(getText(R.string.text_yes), new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialogInterface, int i) {
+                                mAuth.signOut();
+                                dialogInterface.dismiss();
+                            }
+                        }).setNegativeButton(getText(R.string.text_no), new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialogInterface, int i) {
                         dialogInterface.dismiss();
@@ -160,13 +160,13 @@ public class MainMenuActivity extends AppCompatActivity implements View.OnClickL
 
     @Override
     public void onClick(View view) {
-        switch(view.getId()) {
-            case R.id.upload_menu :
+        switch (view.getId()) {
+            case R.id.upload_menu:
                 Log.d(LOG_TAG, "onClick to upload menu");
                 startActivity(new Intent(this, FileListActivity.class));
                 break;
 
-            case R.id.parcel_list_menu :
+            case R.id.parcel_list_menu:
                 Log.d(LOG_TAG, "onClick to parcel list menu");
                 Intent intent = new Intent(this, ParcelListActivity.class);
                 intent.putExtra(Utils.KEY_COURIER_NAME, getString(R.string.all_couriers));
@@ -174,11 +174,11 @@ public class MainMenuActivity extends AppCompatActivity implements View.OnClickL
                 startActivity(intent);
                 break;
 
-            case R.id.courier_menu :
+            case R.id.courier_menu:
                 Log.d(LOG_TAG, "onClick to courier menu");
                 break;
 
-            case R.id.mapview_menu :
+            case R.id.mapview_menu:
                 Log.d(LOG_TAG, "onClick to mapview menu");
                 break;
 

@@ -10,10 +10,7 @@ import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Typeface;
-import android.net.Uri;
 import android.os.Bundle;
-
-
 import android.text.TextUtils;
 import android.util.Log;
 import android.view.View;
@@ -24,12 +21,6 @@ import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import net.daum.mf.map.api.MapLayout;
-import net.daum.mf.map.api.MapPOIItem;
-import net.daum.mf.map.api.MapPoint;
-import net.daum.mf.map.api.MapView;
-
-import androidx.annotation.ColorRes;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
@@ -37,6 +28,11 @@ import androidx.appcompat.app.AppCompatActivity;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.ValueEventListener;
+
+import net.daum.mf.map.api.MapLayout;
+import net.daum.mf.map.api.MapPOIItem;
+import net.daum.mf.map.api.MapPoint;
+import net.daum.mf.map.api.MapView;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -46,29 +42,15 @@ import java.util.HashMap;
 public class MapViewActivity extends AppCompatActivity
         implements MapView.OpenAPIKeyAuthenticationResultListener, MapView.MapViewEventListener, MapView.POIItemEventListener {
 
-    private FirebaseDatabaseConnector mFbConnector;
-    private static final String LOG_TAG = "MapViewActivity";
-    private static MapView mMapView;
     public static final String DAUM_MAPS_ANDROID_APP_API_KEY = "8be996dd99057764a9876591b3270e31";
-    private AlertDialog.Builder mDeliveryCompleteDialog;
-    private String mSelectedDate;
-    private String mSelectedCourierName;
-    private String mSelectedSectionID;
-
-    private HashMap<String, TmsParcelItem> mParcelDatabaseHash = new HashMap<>();
-    private HashMap<String, TmsCourierItem> mCourierDatabaseHash = new HashMap<>();
-    private ArrayList<String> mArrayKeys = new ArrayList<String>();
+    private static final String LOG_TAG = "MapViewActivity";
+    private static final int SEND_COMPLETED_MESSAGE = 1;
+    private static MapView mMapView;
     private static ArrayList<TmsParcelItem> mArrayValues = new ArrayList<TmsParcelItem>();
     private static ArrayList<TmsCourierItem> mCourierArrayValues = new ArrayList<TmsCourierItem>();
-
     private static String mSort = "id";
-    private RelativeLayout mLayout_parcel_data;
-
     private static float mInitLatitude = 0;
     private static float mInitLongitude = 0;
-    private TmsParcelItem mCompleteTarget;
-    private MapPOIItem mCompleteMarker;
-    private static final int SEND_COMPLETED_MESSAGE = 1;
     private static Bitmap bluepin;
     private static Bitmap redpin;
     private static Bitmap greenpin;
@@ -94,7 +76,6 @@ public class MapViewActivity extends AppCompatActivity
             R.drawable.marker_pinkpin,
             R.drawable.marker_peachpin,
             R.drawable.marker_skybluepin));
-
     private static ArrayList mCourierLocationMarkerList = new ArrayList(Arrays.asList(
             R.drawable.truck_blue,
             R.drawable.truck_orange,
@@ -116,56 +97,33 @@ public class MapViewActivity extends AppCompatActivity
             R.drawable.truck_pink,
             R.drawable.truck_peach,
             R.drawable.truck_skyblue));
-    @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_mapview);
-        initResources();
-        MapLayout mapLayout = new MapLayout(this);
-        mMapView = mapLayout.getMapView();
-        mMapView.setDaumMapApiKey(DAUM_MAPS_ANDROID_APP_API_KEY);
-        mMapView.setOpenAPIKeyAuthenticationResultListener(this);
-        mMapView.setMapViewEventListener(this);
-        mMapView.setPOIItemEventListener(this);
-        mMapView.setMapType(MapView.MapType.Standard);
-        ViewGroup mapViewContainer = (ViewGroup) findViewById(R.id.map_view);
-        mapViewContainer.addView(mapLayout);
-        addCurrentLocationMarker();
-        Bundle b = getIntent().getExtras();
-        if (b != null) {
-            mSelectedDate = b.getString(TmsParcelItem.KEY_DATE);
-            mSelectedCourierName = b.getString(TmsParcelItem.KEY_COURIER_NAME);
-            mSelectedSectionID = b.getString(TmsParcelItem.KEY_SECTOR_ID);
+    private FirebaseDatabaseConnector mFbConnector;
+    private AlertDialog.Builder mDeliveryCompleteDialog;
+    private String mSelectedDate;
+    private String mSelectedCourierName;
+    private String mSelectedSectionID;
+    private HashMap<String, TmsParcelItem> mParcelDatabaseHash = new HashMap<>();
+    private HashMap<String, TmsCourierItem> mCourierDatabaseHash = new HashMap<>();
+    private ArrayList<String> mArrayKeys = new ArrayList<String>();
+    private RelativeLayout mLayout_parcel_data;
+    private TmsParcelItem mCompleteTarget;
+    private MapPOIItem mCompleteMarker;
+    private ValueEventListener mValueEventListener = new ValueEventListener() {
+        @Override
+        public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+            Log.d(LOG_TAG, "mapview CourierList size : " + dataSnapshot.getChildrenCount());
+            for (DataSnapshot postSnapshot : dataSnapshot.getChildren()) {
+                TmsCourierItem item = postSnapshot.getValue(TmsCourierItem.class);
+                Log.i(LOG_TAG, item.id + "," + item.name + "," + item.latitude + "," + item.longitude);
+                addCourierMarker(item);
+            }
         }
-        mFbConnector = new FirebaseDatabaseConnector(this);
-        mFbConnector.setParcelHash(this.mParcelDatabaseHash);
-        mFbConnector.setCourierHash(this.mCourierDatabaseHash);
-        mFbConnector.setParcelKeyArray(this.mArrayKeys);
-        mFbConnector.setParcelValueArray(this.mArrayValues);
-        mFbConnector.setCourierValueArray(this.mCourierArrayValues);
-        getFirebaseList();
 
-    }
+        @Override
+        public void onCancelled(@NonNull DatabaseError databaseError) {
 
-    private void addCurrentLocationMarker() {
-        Log.i(LOG_TAG, "addCurrentLocationMarker");
-        Log.i(LOG_TAG, "mCurrent.getLatitude()=" + Utils.mCurrent.getLatitude());
-        Log.i(LOG_TAG, "mCurrent.getLongitude()=" + Utils.mCurrent.getLongitude());
-        MapPOIItem marker = new MapPOIItem();
-
-        marker.setItemName(getString(R.string.current_location));
-        marker.setMapPoint(MapPoint.mapPointWithGeoCoord(Utils.mCurrent.getLatitude(), Utils.mCurrent.getLongitude()));
-        marker.setMarkerType(MapPOIItem.MarkerType.CustomImage);
-        marker.setCustomImageResourceId(R.drawable.truck);
-        marker.setSelectedMarkerType(MapPOIItem.MarkerType.CustomImage);
-        marker.setCustomSelectedImageResourceId(R.drawable.truck_yellow);
-        mMapView.addPOIItem(marker);
-    }
-
-    protected void initResources() {
-        mLayout_parcel_data = (RelativeLayout) findViewById(R.id.parcel_data);
-        GlobalRes = getResources();
-    }
+        }
+    };
 
     protected static void drawDeliveredStatus(Bitmap bitmap) {
         Paint paint = new Paint();
@@ -243,7 +201,6 @@ public class MapViewActivity extends AppCompatActivity
             Bitmap seleted_pin = getBitmapSeletedPinByParcelItem(item);
 
 
-
             if (item.orderInRoute != -1) {
                 int textVal = item.orderInRoute;
                 Paint paint = new Paint();
@@ -274,6 +231,57 @@ public class MapViewActivity extends AppCompatActivity
         }
     }
 
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_mapview);
+        initResources();
+        MapLayout mapLayout = new MapLayout(this);
+        mMapView = mapLayout.getMapView();
+        mMapView.setDaumMapApiKey(DAUM_MAPS_ANDROID_APP_API_KEY);
+        mMapView.setOpenAPIKeyAuthenticationResultListener(this);
+        mMapView.setMapViewEventListener(this);
+        mMapView.setPOIItemEventListener(this);
+        mMapView.setMapType(MapView.MapType.Standard);
+        ViewGroup mapViewContainer = (ViewGroup) findViewById(R.id.map_view);
+        mapViewContainer.addView(mapLayout);
+        addCurrentLocationMarker();
+        Bundle b = getIntent().getExtras();
+        if (b != null) {
+            mSelectedDate = b.getString(TmsParcelItem.KEY_DATE);
+            mSelectedCourierName = b.getString(TmsParcelItem.KEY_COURIER_NAME);
+            mSelectedSectionID = b.getString(TmsParcelItem.KEY_SECTOR_ID);
+        }
+        mFbConnector = new FirebaseDatabaseConnector(this);
+        mFbConnector.setParcelHash(this.mParcelDatabaseHash);
+        mFbConnector.setCourierHash(this.mCourierDatabaseHash);
+        mFbConnector.setParcelKeyArray(this.mArrayKeys);
+        mFbConnector.setParcelValueArray(this.mArrayValues);
+        mFbConnector.setCourierValueArray(this.mCourierArrayValues);
+        getFirebaseList();
+
+    }
+
+    private void addCurrentLocationMarker() {
+        Log.i(LOG_TAG, "addCurrentLocationMarker");
+        Log.i(LOG_TAG, "mCurrent.getLatitude()=" + Utils.mCurrent.getLatitude());
+        Log.i(LOG_TAG, "mCurrent.getLongitude()=" + Utils.mCurrent.getLongitude());
+        MapPOIItem marker = new MapPOIItem();
+
+        marker.setItemName(getString(R.string.current_location));
+        marker.setMapPoint(MapPoint.mapPointWithGeoCoord(Utils.mCurrent.getLatitude(), Utils.mCurrent.getLongitude()));
+        marker.setMarkerType(MapPOIItem.MarkerType.CustomImage);
+        marker.setCustomImageResourceId(R.drawable.truck);
+        marker.setSelectedMarkerType(MapPOIItem.MarkerType.CustomImage);
+        marker.setCustomSelectedImageResourceId(R.drawable.truck_yellow);
+        mMapView.addPOIItem(marker);
+    }
+
+    protected void initResources() {
+        mLayout_parcel_data = (RelativeLayout) findViewById(R.id.parcel_data);
+        GlobalRes = getResources();
+    }
+
     private void getFirebaseList() {
         if (mSelectedCourierName != null) {
             mFbConnector.getParcelListFromFirebaseDatabase(mSelectedDate, TmsParcelItem.KEY_COURIER_NAME, mSelectedCourierName);
@@ -286,23 +294,6 @@ public class MapViewActivity extends AppCompatActivity
         }
     }
 
-    private ValueEventListener mValueEventListener = new ValueEventListener() {
-        @Override
-        public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-            Log.d(LOG_TAG, "mapview CourierList size : " + dataSnapshot.getChildrenCount());
-            for (DataSnapshot postSnapshot : dataSnapshot.getChildren()) {
-                TmsCourierItem item = postSnapshot.getValue(TmsCourierItem.class);
-                Log.i(LOG_TAG, item.id + "," + item.name +"," + item.latitude + "," + item.longitude);
-                addCourierMarker(item);
-            }
-        }
-
-        @Override
-        public void onCancelled(@NonNull DatabaseError databaseError) {
-
-        }
-    };
-
     private void addCourierMarker(TmsCourierItem courierItem) {
         if (!courierItem.latitude.isEmpty() && !courierItem.longitude.isEmpty()) {
             MapPOIItem marker = new MapPOIItem();
@@ -311,7 +302,7 @@ public class MapViewActivity extends AppCompatActivity
             marker.setMapPoint(MapPoint.mapPointWithGeoCoord(Double.parseDouble(courierItem.latitude), Double.parseDouble(courierItem.longitude)));
             marker.setMarkerType(MapPOIItem.MarkerType.CustomImage);
             marker.setSelectedMarkerType(MapPOIItem.MarkerType.CustomImage); // 마커를 클릭했을때, 기본으로 제공하는 RedPin 마커 모양.
-            int resId =(int) mCourierLocationMarkerList.get((Integer.parseInt(courierItem.id)-1)%20);
+            int resId = (int) mCourierLocationMarkerList.get((Integer.parseInt(courierItem.id) - 1) % 20);
             marker.setCustomImageResourceId(resId);
             marker.setCustomSelectedImageResourceId(R.drawable.truck_yellow);
             marker.setCustomImageAutoscale(true);
@@ -404,7 +395,7 @@ public class MapViewActivity extends AppCompatActivity
             return;
         }
 
-        if (mapPOIItem.getUserObject() instanceof  TmsParcelItem) {
+        if (mapPOIItem.getUserObject() instanceof TmsParcelItem) {
             mLayout_parcel_data.setVisibility(View.VISIBLE);
             final TmsParcelItem item = (TmsParcelItem) mapPOIItem.getUserObject();
             if (item != null) {
