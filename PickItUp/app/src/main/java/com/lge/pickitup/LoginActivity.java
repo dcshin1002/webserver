@@ -59,11 +59,22 @@ public class LoginActivity extends AppCompatActivity {
 
         // Initialize required resources
         initResources();
-        Utils.initLocation(this);
+
+        // Here, thisActivity is the current activity
+        if (ContextCompat.checkSelfPermission(this,Manifest.permission.READ_EXTERNAL_STORAGE)  != PackageManager.PERMISSION_GRANTED
+                || ContextCompat.checkSelfPermission(this,Manifest.permission.ACCESS_FINE_LOCATION)  != PackageManager.PERMISSION_GRANTED
+                || ContextCompat.checkSelfPermission(this,Manifest.permission.CAMERA)  != PackageManager.PERMISSION_GRANTED) {
+
+            // No explanation needed, we can request the permission.
+            ActivityCompat.requestPermissions(this,
+                    new String[]{Manifest.permission.ACCESS_FINE_LOCATION,
+                            Manifest.permission.READ_EXTERNAL_STORAGE,
+                            Manifest.permission.CAMERA},
+                    MY_PERMISSIONS);
+        }
 
         //Get FirebaseAuth instance
         mAuth = FirebaseAuth.getInstance();
-
         //Make AuthStateListener to know oAuth's auth state
         mAuthListener = new FirebaseAuth.AuthStateListener() {
             @Override
@@ -83,16 +94,18 @@ public class LoginActivity extends AppCompatActivity {
                     if (Arrays.asList(Utils.ADMIN_UIDS).contains(user.getUid())) {
                         startActivity(new Intent(LoginActivity.this, MainMenuActivity.class));
                     } else {
+                        Intent intent_service = new Intent(LoginActivity.this, CourierLocationUploadService.class);
+                        intent_service.putExtra(Utils.KEY_COURIER_NAME, user.getDisplayName());
+                        intent_service.putExtra(Utils.KEY_DB_DATE, Utils.getTodayDateStr());
+                        startService(intent_service);
+
                         Intent intent = new Intent(LoginActivity.this, ParcelListActivity.class);
                         intent.putExtra(Utils.KEY_COURIER_NAME, user.getDisplayName());
                         intent.putExtra(Utils.KEY_DB_DATE, Utils.getTodayDateStr());
                         startActivity(intent);
                     }
 
-                    Intent intent_service = new Intent(LoginActivity.this, CourierLocationUploadService.class);
-                    intent_service.putExtra(Utils.KEY_COURIER_NAME, user.getDisplayName());
-                    intent_service.putExtra(Utils.KEY_DB_DATE, Utils.getTodayDateStr());
-                    startService(intent_service);
+
                     finish();
                 } else {
                     // User is signed out
@@ -101,21 +114,7 @@ public class LoginActivity extends AppCompatActivity {
             }
         };
 
-        // Here, thisActivity is the current activity
-        if (ContextCompat.checkSelfPermission(this,
-                Manifest.permission.READ_EXTERNAL_STORAGE)
-                != PackageManager.PERMISSION_GRANTED) {
 
-
-            // No explanation needed, we can request the permission.
-            ActivityCompat.requestPermissions(this,
-                    new String[]{Manifest.permission.ACCESS_FINE_LOCATION,
-                            Manifest.permission.READ_EXTERNAL_STORAGE,
-                            Manifest.permission.CAMERA},
-                    MY_PERMISSIONS);
-        } else {
-            // Do nothing
-        }
     }
 
     @Override
@@ -129,7 +128,7 @@ public class LoginActivity extends AppCompatActivity {
                         && grantResults[1] == PackageManager.PERMISSION_GRANTED
                         && grantResults[2] == PackageManager.PERMISSION_GRANTED
                 ) {
-
+                    Utils.initLocation(this);
                     // permission was granted, yay! Do the
                     // contacts-related task you need to do.
                 } else {
