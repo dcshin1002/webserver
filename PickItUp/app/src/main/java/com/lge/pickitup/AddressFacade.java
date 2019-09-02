@@ -61,7 +61,7 @@ public class AddressFacade {
         @Override
         public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
             mCourierHash.clear();
-            int maxCourierIdInDB = 1;
+            int maxCourierIdInDB = 0;
             Log.d(LOG_TAG, "getCourierListFromFirebaseDatabase : size " + dataSnapshot.getChildrenCount());
             for (DataSnapshot postSnapshot : dataSnapshot.getChildren()) {
                 String key = postSnapshot.getKey();
@@ -132,9 +132,9 @@ public class AddressFacade {
                 if (record.length > 11) {
                     String courierName = record[11];
                     if (!mCourierHash.containsKey(courierName)) {
+                        startIdx++;
                         TmsCourierItem item = new TmsCourierItem(String.valueOf(startIdx), courierName);
                         mCourierHash.put(record[11], item);
-                        startIdx++;
                     }
                 }
                 addRecordToParcelList(mParcelList, record);
