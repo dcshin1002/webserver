@@ -99,15 +99,16 @@ public class MapViewActivity extends AppCompatActivity
 
     private static ArrayList mCourierLocationMarkerList = new ArrayList(Arrays.asList(
             R.drawable.truck_blue,
-            R.drawable.truck_orange,
-            R.drawable.truck_yeondoo,
             R.drawable.truck_purple,
-            R.drawable.truck_red,
             R.drawable.truck_green,
-            R.drawable.truck_grey,
+            R.drawable.truck_skyblue,
+            R.drawable.truck_yeondoo,
+            R.drawable.truck_orange,
             R.drawable.truck_pink,
-            R.drawable.truck_peach,
-            R.drawable.truck_skyblue));
+            R.drawable.truck_red,
+            R.drawable.truck_grey,
+            R.drawable.truck_peach
+            ));
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {

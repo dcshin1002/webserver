@@ -43,7 +43,6 @@ public class AddressFacade {
     String mDateStr;
     Context mContext;
     List<TmsParcelItem> mParcelList = new ArrayList<>();
-    HashMap<String, Integer> mCourierNameIdHash = new HashMap<>();
     private HashMap<String, TmsCourierItem> mCourierHash = new HashMap<>();
     private FirebaseDatabaseConnector mFbConnector;
 
@@ -62,7 +61,6 @@ public class AddressFacade {
         @Override
         public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
             mCourierHash.clear();
-            mCourierNameIdHash.clear();
             int maxCourierIdInDB = 1;
             Log.d(LOG_TAG, "getCourierListFromFirebaseDatabase : size " + dataSnapshot.getChildrenCount());
             for (DataSnapshot postSnapshot : dataSnapshot.getChildren()) {
@@ -70,7 +68,6 @@ public class AddressFacade {
                 TmsCourierItem value = postSnapshot.getValue(TmsCourierItem.class);
                 mCourierHash.put(value.name, value);
                 int id = Integer.valueOf(key);
-                mCourierNameIdHash.put(value.name, id);
                 if (id > maxCourierIdInDB)
                     maxCourierIdInDB = id;
             }
@@ -133,8 +130,11 @@ public class AddressFacade {
             while ((record = reader.readNext()) != null) {
                 // Add it if the courier is new one
                 if (record.length > 11) {
-                    if (!mCourierNameIdHash.containsKey(record[11])) {
-                        mCourierNameIdHash.put(record[11], startIdx++);
+                    String courierName = record[11];
+                    if (!mCourierHash.containsKey(courierName)) {
+                        TmsCourierItem item = new TmsCourierItem(String.valueOf(startIdx), courierName);
+                        mCourierHash.put(record[11], item);
+                        startIdx++;
                     }
                 }
                 addRecordToParcelList(mParcelList, record);
@@ -142,11 +142,13 @@ public class AddressFacade {
 
             // make valueeventlistner
             mFbConnector.getParcelListFromFirebaseDatabase(mDateStr, mValueEventListener);
+
             boolean deleted = file.delete();
             if (deleted)
                 Log.i(LOG_TAG, file.getName() + " file is deleted");
             else
                 Log.i(LOG_TAG, file.getName() + " file is not deleted");
+            
         } catch (FileNotFoundException e) {
             Log.e(LOG_TAG, "FileNotFoundException has been raised");
             e.printStackTrace();
@@ -180,7 +182,7 @@ public class AddressFacade {
         item.regionalCode = regionalCode;
         item.courierName = courierName;
         item.courierContact = courierContact;
-        item.sectorId = mCourierNameIdHash.get(courierName);
+        item.sectorId = Integer.valueOf(mCourierHash.get(courierName).id);
 
         list.add(item);
     }
@@ -192,11 +194,11 @@ public class AddressFacade {
         }
     }
 
-    private List<TmsCourierItem> buildTmsCouriers(List<String> list) {
+    private List<TmsCourierItem> buildTmsCouriers() {
         List<TmsCourierItem> result = new ArrayList<>();
 
-        for (String key : mCourierNameIdHash.keySet()) {
-            TmsCourierItem item = new TmsCourierItem(String.valueOf(mCourierNameIdHash.get(key)), key);
+        for (String key : mCourierHash.keySet()) {
+            TmsCourierItem item = mCourierHash.get(key);
             result.add(item);
         }
         return result;
@@ -239,7 +241,7 @@ public class AddressFacade {
             super.onPostExecute(o);
             asyncDialog.dismiss();
             initParcelId(startIdx);
-            List<TmsCourierItem> couriers = buildTmsCouriers(new ArrayList<String>(mCourierNameIdHash.keySet()));
+            List<TmsCourierItem> couriers = buildTmsCouriers();
 
             for (TmsCourierItem item : couriers) {
                 Log.d(LOG_TAG, "id-" + item.id + ", name-" + item.name);

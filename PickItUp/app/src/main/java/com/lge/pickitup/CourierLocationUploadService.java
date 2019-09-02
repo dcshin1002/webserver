@@ -10,6 +10,8 @@ import androidx.annotation.NonNull;
 
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.Query;
 import com.google.firebase.database.ValueEventListener;
 
 import java.util.Timer;
@@ -26,9 +28,16 @@ public class CourierLocationUploadService extends Service {
     private ValueEventListener mValueEventListener = new ValueEventListener() {
         @Override
         public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+
             for (DataSnapshot postSnapshot : dataSnapshot.getChildren()) {
                 mTmsCourierItem = postSnapshot.getValue(TmsCourierItem.class);
             }
+            if (mTmsCourierItem == null) {
+                Log.i(LOG_TAG, "mTmsCourierItem is null");
+            } else {
+                Log.i(LOG_TAG, "mTmsCourierItem.name is " + mTmsCourierItem.name);
+            }
+
         }
 
         @Override
@@ -56,7 +65,9 @@ public class CourierLocationUploadService extends Service {
 
         mCourierName = intent.getStringExtra(Utils.KEY_COURIER_NAME).toString();
         mTodayDateStr = intent.getStringExtra(Utils.KEY_DB_DATE).toString();
-        mFbConnector.getCourierItemFromFirebaseDatabase(mTodayDateStr, TmsCourierItem.KEY_NAME, mCourierName, mValueEventListener);
+        Query firebaseQuery = FirebaseDatabase.getInstance().getReference().child(FirebaseDatabaseConnector.COURIER_REF_NAME)
+                              .child(mTodayDateStr).orderByChild(TmsCourierItem.KEY_NAME).equalTo(mCourierName);
+        firebaseQuery.addValueEventListener(mValueEventListener);
         return START_REDELIVER_INTENT;
     }
 
@@ -94,7 +105,7 @@ public class CourierLocationUploadService extends Service {
 
                         }
                     };
-                    timer.schedule(TT, 0, 300000);
+                    timer.schedule(TT, 0, 600000);
                 }
             });
         }
