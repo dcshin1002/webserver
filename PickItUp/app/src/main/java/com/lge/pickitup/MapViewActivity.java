@@ -74,28 +74,28 @@ public class MapViewActivity extends AppCompatActivity
     private static Bitmap greenpin;
     private static Resources GlobalRes;
     private static ArrayList mSectorMarkerList = new ArrayList(Arrays.asList(
-            R.drawable.marker_bluepin,
-            R.drawable.marker_orangepin,
-            R.drawable.marker_yeondoopin,
-            R.drawable.marker_purplepin,
-            R.drawable.marker_redpin,
-            R.drawable.marker_greenpin,
-            R.drawable.marker_greypin,
-            R.drawable.marker_pinkpin,
-            R.drawable.marker_peachpin,
-            R.drawable.marker_skybluepin));
+            R.drawable.location_map_pin_blue,
+            R.drawable.location_map_pin_deep_purple,
+            R.drawable.location_map_pin_light_green,
+            R.drawable.location_map_pin_indigo,
+            R.drawable.location_map_pin_lime,
+            R.drawable.location_map_pin_orange,
+            R.drawable.location_map_pin_pink,
+            R.drawable.location_map_pin_purple,
+            R.drawable.location_map_pin_brown,
+            R.drawable.location_map_pin_peach));
 
     private static ArrayList mDeliveredMarkerList = new ArrayList(Arrays.asList(
-            R.drawable.marker_bluepin_ckeck,
-            R.drawable.marker_orangepin_ckeck,
-            R.drawable.marker_yeondoopin_check,
-            R.drawable.marker_purplepin_check,
-            R.drawable.marker_redpin_ckeck,
-            R.drawable.marker_greenpin_ckeck,
-            R.drawable.marker_greypin_ckeck,
-            R.drawable.marker_pinkpin_ckeck,
-            R.drawable.marker_peachpin_ckeck,
-            R.drawable.marker_skybluepin_check));
+            R.drawable.location_map_pin_blue_check,
+            R.drawable.location_map_pin_deep_purple_check,
+            R.drawable.location_map_pin_light_green_check,
+            R.drawable.location_map_pin_indigo_check,
+            R.drawable.location_map_pin_lime_check,
+            R.drawable.location_map_pin_orange_check,
+            R.drawable.location_map_pin_pink_check,
+            R.drawable.location_map_pin_purple_check,
+            R.drawable.location_map_pin_brown_check,
+            R.drawable.location_map_pin_peach_check));
 
     private static ArrayList mCourierLocationMarkerList = new ArrayList(Arrays.asList(
             R.drawable.truck_blue,
@@ -217,9 +217,9 @@ public class MapViewActivity extends AppCompatActivity
         bmOptions.inScaled = false;
         int pinSeletedResourceId;
         if (item.status.equals(TmsParcelItem.STATUS_DELIVERED)) {
-            pinSeletedResourceId = R.drawable.marker_yellowpin_check;
+            pinSeletedResourceId = R.drawable.location_map_pin_yellow_check;
         } else {
-            pinSeletedResourceId = R.drawable.marker_yellowpin;
+            pinSeletedResourceId = R.drawable.location_map_pin_yellow;
         }
         Bitmap bmp = BitmapFactory.decodeResource(GlobalRes, pinSeletedResourceId, bmOptions).copy(Bitmap.Config.ARGB_8888, true);
         return bmp;
