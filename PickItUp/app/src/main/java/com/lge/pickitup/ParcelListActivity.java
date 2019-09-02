@@ -31,11 +31,18 @@ import androidx.core.content.ContextCompat;
 
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.Query;
+import com.google.firebase.database.ValueEventListener;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 
@@ -417,14 +424,54 @@ public class ParcelListActivity extends AppCompatActivity implements View.OnClic
         String[] result = strArrayList.toArray(new String[strArrayList.size()]);
         return result;
     }
+    ValueEventListener mParcelListEventListener = new ValueEventListener() {
+        @Override
+        public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+            mParcelDatabaseHash.clear();
+            mArrayKeys.clear();
+            mArrayValues.clear();
+            boolean isRouted = true;
 
-    private void refreshList(String select) {
-        if (select.equals(getString(R.string.all_couriers))) {
-            mFbConnector.getParcelListFromFirebaseDatabase(mTextCourierDate.getText().toString(), TmsParcelItem.KEY_ID);
-            mFbConnector.getCourierListFromFirebaseDatabase(mTextCourierDate.getText().toString(), TmsParcelItem.KEY_ID);
+            Log.d(LOG_TAG, "getParcelListFromFirebaseDatabase : size " + dataSnapshot.getChildrenCount());
+            for (DataSnapshot postSnapshot : dataSnapshot.getChildren()) {
+                String key = postSnapshot.getKey();
+                TmsParcelItem value = postSnapshot.getValue(TmsParcelItem.class);
+
+                if (value.orderInRoute == -1) {
+                    value.orderInRoute = Integer.MAX_VALUE;
+                }
+
+                mParcelDatabaseHash.put(key, value);
+                mArrayKeys.add(key);
+                mArrayValues.add(value);
+
+                Log.d(LOG_TAG, "mArrayValues size = " + mArrayValues.size());
+            }
+            if (mArrayValues.size() > 0) {
+                Collections.sort(mArrayValues);
+            }
+            if (mArrayAdapter != null) {
+                mArrayAdapter.notifyDataSetChanged();
+            }
+        }
+        @Override
+        public void onCancelled(@NonNull DatabaseError databaseError) {
+        }
+    };
+
+    private void refreshList(String courierName) {
+        String selectedDate = mTextCourierDate.getText().toString();
+        DatabaseReference databaseRef = FirebaseDatabase.getInstance().getReference();
+        mFbConnector.getCourierListFromFirebaseDatabase(selectedDate, TmsParcelItem.KEY_ID);
+        if (courierName.equals(getString(R.string.all_couriers))) {
+            //mFbConnector.getParcelListFromFirebaseDatabase(selectedDate, TmsParcelItem.KEY_ID);
+            Query firebaseQuery = databaseRef.child(FirebaseDatabaseConnector.PARCEL_REF_NAME).child(selectedDate).orderByChild(TmsParcelItem.KEY_ID);
+            firebaseQuery.addValueEventListener(mParcelListEventListener);
         } else {
-            mFbConnector.getParcelListFromFirebaseDatabase(mTextCourierDate.getText().toString(), TmsParcelItem.KEY_COURIER_NAME, select);
-            mFbConnector.getCourierListFromFirebaseDatabase(mTextCourierDate.getText().toString(), TmsParcelItem.KEY_ID);
+            //mFbConnector.getParcelListFromFirebaseDatabase(selectedDate, TmsParcelItem.KEY_COURIER_NAME, select);
+            Query firebaseQuery = databaseRef.child(FirebaseDatabaseConnector.PARCEL_REF_NAME).child(selectedDate).orderByChild(TmsParcelItem.KEY_COURIER_NAME).equalTo(courierName);
+            firebaseQuery.addValueEventListener(mParcelListEventListener);
+
         }
 
         Log.d(LOG_TAG, "ParcelList size = " + mParcelDatabaseHash.size());
@@ -521,7 +568,7 @@ public class ParcelListActivity extends AppCompatActivity implements View.OnClic
 
                 if (addrText != null) {
                     String addrTextValue = "";
-                    if ((item.orderInRoute != -1) && !mTextCourierName.getText().toString().equals(getString(R.string.all_couriers))) {
+                    if ((item.orderInRoute != Integer.MAX_VALUE) && !mTextCourierName.getText().toString().equals(getString(R.string.all_couriers))) {
                         addrTextValue = item.orderInRoute + " : ";
                     }
                     addrText.setText(addrTextValue + item.consigneeAddr);

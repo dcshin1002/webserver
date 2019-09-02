@@ -124,11 +124,13 @@ public class MapViewActivity extends AppCompatActivity
         ViewGroup mapViewContainer = (ViewGroup) findViewById(R.id.map_view);
         mapViewContainer.addView(mapLayout);
         //addCurrentLocationMarker();
-        mMapView.setCurrentLocationEventListener(this);
-        mMapView.setCurrentLocationTrackingMode(MapView.CurrentLocationTrackingMode.TrackingModeOnWithoutHeading);
-        mMapView.setCurrentLocationRadius(10);
-        mMapView.setCustomCurrentLocationMarkerTrackingImage(R.drawable.location_map_pin_pink, new MapPOIItem.ImageOffset(28, 28));
-        mMapView.setShowCurrentLocationMarker(true);
+        if (!Utils.isAdminAuth()) {
+            mMapView.setCurrentLocationEventListener(this);
+            mMapView.setCurrentLocationTrackingMode(MapView.CurrentLocationTrackingMode.TrackingModeOnWithoutHeading);
+            mMapView.setCurrentLocationRadius(10);
+            mMapView.setCustomCurrentLocationMarkerTrackingImage(R.drawable.location_map_pin_pink, new MapPOIItem.ImageOffset(28, 28));
+            mMapView.setShowCurrentLocationMarker(true);
+        }
 
         Bundle b = getIntent().getExtras();
         if (b != null) {
@@ -453,7 +455,7 @@ public class MapViewActivity extends AppCompatActivity
 
                 if (addrText != null) {
                     String addrTextValue = "";
-                    if (item.orderInRoute != -1) {
+                    if (item.orderInRoute != Integer.MAX_VALUE) {
                         addrTextValue += item.orderInRoute + " : ";
                     }
                     addrText.setText(addrTextValue + item.consigneeAddr);
