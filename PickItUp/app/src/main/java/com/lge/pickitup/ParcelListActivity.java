@@ -438,7 +438,7 @@ public class ParcelListActivity extends AppCompatActivity implements View.OnClic
                 TmsParcelItem value = postSnapshot.getValue(TmsParcelItem.class);
 
                 if (value.orderInRoute == -1) {
-                    value.orderInRoute = Integer.MAX_VALUE;
+                    isRouted = false;
                 }
 
                 mParcelDatabaseHash.put(key, value);
@@ -447,6 +447,12 @@ public class ParcelListActivity extends AppCompatActivity implements View.OnClic
 
                 Log.d(LOG_TAG, "mArrayValues size = " + mArrayValues.size());
             }
+            if (!isRouted) {
+                for (TmsParcelItem item : mArrayValues) {
+                    item.orderInRoute = -1;
+                }
+            }
+
             if (mArrayValues.size() > 0) {
                 Collections.sort(mArrayValues);
             }
@@ -568,7 +574,7 @@ public class ParcelListActivity extends AppCompatActivity implements View.OnClic
 
                 if (addrText != null) {
                     String addrTextValue = "";
-                    if ((item.orderInRoute != Integer.MAX_VALUE) && !mTextCourierName.getText().toString().equals(getString(R.string.all_couriers))) {
+                    if ((item.orderInRoute != -1) && !mTextCourierName.getText().toString().equals(getString(R.string.all_couriers))) {
                         addrTextValue = item.orderInRoute + " : ";
                     }
                     addrText.setText(addrTextValue + item.consigneeAddr);
