@@ -46,7 +46,6 @@ public class AddressFacade {
     HashMap<String, Integer> mCourierNameIdHash = new HashMap<>();
     private HashMap<String, TmsCourierItem> mCourierHash = new HashMap<>();
     private FirebaseDatabaseConnector mFbConnector;
-    private int mCourierNum = 0;
 
     public AddressFacade(Context mContext) {
         this.mContext = mContext;
@@ -64,14 +63,18 @@ public class AddressFacade {
         public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
             mCourierHash.clear();
             mCourierNameIdHash.clear();
+            int maxCourierIdInDB = 1;
             Log.d(LOG_TAG, "getCourierListFromFirebaseDatabase : size " + dataSnapshot.getChildrenCount());
             for (DataSnapshot postSnapshot : dataSnapshot.getChildren()) {
                 String key = postSnapshot.getKey();
                 TmsCourierItem value = postSnapshot.getValue(TmsCourierItem.class);
                 mCourierHash.put(value.name, value);
-                mCourierNameIdHash.put(value.name, Integer.valueOf(key));
+                int id = Integer.valueOf(key);
+                mCourierNameIdHash.put(value.name, id);
+                if (id > maxCourierIdInDB)
+                    maxCourierIdInDB = id;
             }
-            initFile(mFileName);
+            initFile(mFileName, maxCourierIdInDB);
         }
         @Override
         public void onCancelled(@NonNull DatabaseError databaseError) {
@@ -86,11 +89,18 @@ public class AddressFacade {
     ValueEventListener mValueEventListener = new ValueEventListener() {
         @Override
         public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-            long parcelCountOnDB = dataSnapshot.getChildrenCount();
-            Log.i(LOG_TAG, "parcelCountOnDB is " + parcelCountOnDB);
+            long initValueOfParcelId = 0;
+            for (DataSnapshot postSnapshot : dataSnapshot.getChildren()) {
+                TmsParcelItem value = postSnapshot.getValue(TmsParcelItem.class);
+                long id = Long.valueOf(value.id);
+                if (id > initValueOfParcelId)
+                    initValueOfParcelId = id;
+            }
+
+            Log.i(LOG_TAG, "initValueOfParcelId is " + initValueOfParcelId);
             // Get longitude and latitude from address through Daum Kakao API
             AddressTranslate addressTranslate = new AddressTranslate();
-            addressTranslate.execute(String.valueOf(parcelCountOnDB));
+            addressTranslate.execute(String.valueOf(initValueOfParcelId));
 
             String[] date_piece = mDateStr.split("-");
             String setUrl = Utils.SERVER_URL + "/route";
@@ -110,9 +120,8 @@ public class AddressFacade {
         }
     };
 
-    void initFile(String filename) {
+    void initFile(String filename, int startIdx) {
         mParcelList.clear();
-        mCourierNum = mCourierNameIdHash.size() + 1;
 
         File file = new File("/sdcard/address/" + filename);
         try {
@@ -125,7 +134,7 @@ public class AddressFacade {
                 // Add it if the courier is new one
                 if (record.length > 11) {
                     if (!mCourierNameIdHash.containsKey(record[11])) {
-                        mCourierNameIdHash.put(record[11], mCourierNum++);
+                        mCourierNameIdHash.put(record[11], startIdx++);
                     }
                 }
                 addRecordToParcelList(mParcelList, record);
@@ -133,8 +142,11 @@ public class AddressFacade {
 
             // make valueeventlistner
             mFbConnector.getParcelListFromFirebaseDatabase(mDateStr, mValueEventListener);
-
-
+            boolean deleted = file.delete();
+            if (deleted)
+                Log.i(LOG_TAG, file.getName() + " file is deleted");
+            else
+                Log.i(LOG_TAG, file.getName() + " file is not deleted");
         } catch (FileNotFoundException e) {
             Log.e(LOG_TAG, "FileNotFoundException has been raised");
             e.printStackTrace();
