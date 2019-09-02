@@ -23,8 +23,12 @@ def index(req):
     return HttpResponse(body)
 
 
-def downloadPage(req):
-    file_path = "PickItUp/app/build/outputs/apk/debug/app-debug.apk"
+def downloadPage(req, year, month, day):
+    if year == None or month == None or day == None:
+        return HttpResponse("<pre>Invalid URL</pre>")
+
+    dateForm = '-'.join([str(year), str("%02d" % month), str("%02d" % day)])
+    file_path = "ApkRelease/"+ dateForm + "/app-release-unsigned.apk"
     if os.path.exists(file_path):
         with open(file_path, 'rb') as fh:
             response = HttpResponse(fh.read(), content_type="application/vnd.android.package-archive")

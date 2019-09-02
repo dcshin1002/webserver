@@ -20,7 +20,7 @@ import tmscore.Adapter as adap
 
 urlpatterns = [
     path('', adap.index, name='firebase_test'),
-    path('download', adap.downloadPage, name='clientAppDownload'),
+    path('download/<int:year>/<int:month>/<int:day>/', adap.downloadPage, name='clientAppDownload'),
     path('get/<int:year>/<int:month>/<int:day>/', adap.getClusters, name='getClusters'),
     path('set/<int:year>/<int:month>/<int:day>/', adap.setClusters, name='setClusters'),
     path('route/<int:year>/<int:month>/<int:day>/', adap.setRoute, name='setRoute'),
