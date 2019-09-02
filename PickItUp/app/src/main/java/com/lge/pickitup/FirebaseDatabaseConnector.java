@@ -284,17 +284,27 @@ public class FirebaseDatabaseConnector {
                 mParcelHash.clear();
                 mArrayKeys.clear();
                 mArrayValues.clear();
+                boolean isRouted = true;
 
                 Log.d(LOG_TAG, "getParcelListFromFirebaseDatabase : size " + dataSnapshot.getChildrenCount());
                 for (DataSnapshot postSnapshot : dataSnapshot.getChildren()) {
                     String key = postSnapshot.getKey();
                     TmsParcelItem value = postSnapshot.getValue(TmsParcelItem.class);
 
+                    if (value.orderInRoute == -1) {
+                        isRouted = false;
+                    }
+
                     mParcelHash.put(key, value);
                     mArrayKeys.add(key);
                     mArrayValues.add(value);
 
                     Log.d(LOG_TAG, "mArrayValues size = " + mArrayValues.size());
+                }
+                if (!isRouted) {
+                    for (TmsParcelItem item : mArrayValues) {
+                        item.orderInRoute = -1;
+                    }
                 }
                 if (mArrayValues.size() > 0) {
                     Collections.sort(mArrayValues);
