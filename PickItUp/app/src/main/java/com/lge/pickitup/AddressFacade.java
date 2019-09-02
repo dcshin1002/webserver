@@ -148,7 +148,7 @@ public class AddressFacade {
                 Log.i(LOG_TAG, file.getName() + " file is deleted");
             else
                 Log.i(LOG_TAG, file.getName() + " file is not deleted");
-            
+
         } catch (FileNotFoundException e) {
             Log.e(LOG_TAG, "FileNotFoundException has been raised");
             e.printStackTrace();

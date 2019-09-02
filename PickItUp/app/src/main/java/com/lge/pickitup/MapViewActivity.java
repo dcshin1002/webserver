@@ -74,40 +74,55 @@ public class MapViewActivity extends AppCompatActivity
     private static Bitmap greenpin;
     private static Resources GlobalRes;
     private static ArrayList mSectorMarkerList = new ArrayList(Arrays.asList(
-            R.drawable.location_map_pin_blue,
-            R.drawable.location_map_pin_deep_purple,
-            R.drawable.location_map_pin_light_green,
-            R.drawable.location_map_pin_indigo,
-            R.drawable.location_map_pin_lime,
-            R.drawable.location_map_pin_orange,
-            R.drawable.location_map_pin_pink,
-            R.drawable.location_map_pin_purple,
-            R.drawable.location_map_pin_brown,
-            R.drawable.location_map_pin_peach));
+            R.drawable.location_map_pin_blue_normal,
+            R.drawable.location_map_pin_green_normal,
+            R.drawable.location_map_pin_indigo_normal,
+            R.drawable.location_map_pin_light_green_normal,
+            R.drawable.location_map_pin_mint_normal,
+            R.drawable.location_map_pin_orange_normal,
+            R.drawable.location_map_pin_pink_normal,
+            R.drawable.location_map_pin_red_normal,
+            R.drawable.location_map_pin_skyplue_normal,
+            R.drawable.location_map_pin_yellow_normal
+            ));
+
+    private static ArrayList mSelectedMarkerList = new ArrayList(Arrays.asList(
+            R.drawable.location_map_pin_blue_selected,
+            R.drawable.location_map_pin_green_selected,
+            R.drawable.location_map_pin_indigo_selected,
+            R.drawable.location_map_pin_light_green_selected,
+            R.drawable.location_map_pin_mint_selected,
+            R.drawable.location_map_pin_orange_selected,
+            R.drawable.location_map_pin_pink_selected,
+            R.drawable.location_map_pin_red_selected,
+            R.drawable.location_map_pin_skyplue_selected,
+            R.drawable.location_map_pin_yellow_selected
+    ));
 
     private static ArrayList mDeliveredMarkerList = new ArrayList(Arrays.asList(
             R.drawable.location_map_pin_blue_check,
-            R.drawable.location_map_pin_deep_purple_check,
-            R.drawable.location_map_pin_light_green_check,
+            R.drawable.location_map_pin_green_check,
             R.drawable.location_map_pin_indigo_check,
-            R.drawable.location_map_pin_lime_check,
+            R.drawable.location_map_pin_light_green_check,
+            R.drawable.location_map_pin_mint_check,
             R.drawable.location_map_pin_orange_check,
             R.drawable.location_map_pin_pink_check,
-            R.drawable.location_map_pin_purple_check,
-            R.drawable.location_map_pin_brown_check,
-            R.drawable.location_map_pin_peach_check));
+            R.drawable.location_map_pin_red_check,
+            R.drawable.location_map_pin_skyplue_check,
+            R.drawable.location_map_pin_yellow_check
+            ));
 
     private static ArrayList mCourierLocationMarkerList = new ArrayList(Arrays.asList(
             R.drawable.truck_blue,
-            R.drawable.truck_purple,
             R.drawable.truck_green,
-            R.drawable.truck_skyblue,
-            R.drawable.truck_yeondoo,
+            R.drawable.truck_indigo,
+            R.drawable.truck_light_green,
+            R.drawable.truck_mint,
             R.drawable.truck_orange,
             R.drawable.truck_pink,
             R.drawable.truck_red,
-            R.drawable.truck_grey,
-            R.drawable.truck_peach
+            R.drawable.truck_skyblue,
+            R.drawable.truck_yellow
             ));
 
     @Override
@@ -219,11 +234,8 @@ public class MapViewActivity extends AppCompatActivity
         BitmapFactory.Options bmOptions = new BitmapFactory.Options();
         bmOptions.inScaled = false;
         int pinSeletedResourceId;
-        if (item.status.equals(TmsParcelItem.STATUS_DELIVERED)) {
-            pinSeletedResourceId = R.drawable.location_map_pin_yellow_check;
-        } else {
-            pinSeletedResourceId = R.drawable.location_map_pin_yellow;
-        }
+        pinSeletedResourceId = (int) mSelectedMarkerList.get((Integer.valueOf(item.sectorId) - 1)%10);
+
         Bitmap bmp = BitmapFactory.decodeResource(GlobalRes, pinSeletedResourceId, bmOptions).copy(Bitmap.Config.ARGB_8888, true);
         return bmp;
     }
@@ -268,24 +280,25 @@ public class MapViewActivity extends AppCompatActivity
                 paint.setColor(Color.BLACK); // Text Color
 //                paint.setTypeface(Typeface.create(Typeface.DEFAULT, Typeface.BOLD));
 
-                int posX = 15; // 1 digit
+                int posX; // 1 digit
                 if (textVal < 10) {
-                    paint.setTextSize(28);
+                    posX = 17;
+                    paint.setTextSize(33);
                 } else if (textVal >= 10) {
                     posX = 11; // 2 digit
-                    paint.setTextSize(23);
+                    paint.setTextSize(30);
                 } else if (textVal >= 100) { // 3 digit
                     posX = 7;
                     paint.setTextSize(18);
                 } else {
                     posX = 3;
-                    paint.setTextSize(18);
+                    paint.setTextSize(15);
                 }
                 Canvas canvas = new Canvas(pin);
-                canvas.drawText(String.valueOf(textVal), posX, 33, paint); // 63
+                canvas.drawText(String.valueOf(textVal), posX, 37, paint); // 63
 
                 Canvas canvas2 = new Canvas(seleted_pin);
-                canvas2.drawText(String.valueOf(textVal), posX, 33, paint); // 63
+                canvas2.drawText(String.valueOf(textVal), posX, 37, paint); // 63
 
             }
             marker.setCustomImageBitmap(pin);
