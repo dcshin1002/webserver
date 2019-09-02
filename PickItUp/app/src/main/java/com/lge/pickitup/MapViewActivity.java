@@ -263,21 +263,26 @@ public class MapViewActivity extends AppCompatActivity
                 Paint paint = new Paint();
                 paint.setStyle(Paint.Style.FILL);
                 paint.setColor(Color.BLACK); // Text Color
-                paint.setTypeface(Typeface.create(Typeface.DEFAULT, Typeface.BOLD));
+//                paint.setTypeface(Typeface.create(Typeface.DEFAULT, Typeface.BOLD));
 
-                int posX = 37; // 1 digit
-                if (textVal >= 10) posX = 21; // 2 digit
-                if (textVal >= 100) { // 3 digit
-                    posX = 18;
-                    paint.setTextSize(35);
+                int posX = 15; // 1 digit
+                if (textVal < 10) {
+                    paint.setTextSize(28);
+                } else if (textVal >= 10) {
+                    posX = 11; // 2 digit
+                    paint.setTextSize(23);
+                } else if (textVal >= 100) { // 3 digit
+                    posX = 7;
+                    paint.setTextSize(18);
                 } else {
-                    paint.setTextSize(50);
+                    posX = 3;
+                    paint.setTextSize(18);
                 }
                 Canvas canvas = new Canvas(pin);
-                canvas.drawText(String.valueOf(textVal), posX, 57, paint); // 63
+                canvas.drawText(String.valueOf(textVal), posX, 33, paint); // 63
 
                 Canvas canvas2 = new Canvas(seleted_pin);
-                canvas2.drawText(String.valueOf(textVal), posX, 57, paint); // 63
+                canvas2.drawText(String.valueOf(textVal), posX, 33, paint); // 63
 
             }
             marker.setCustomImageBitmap(pin);
