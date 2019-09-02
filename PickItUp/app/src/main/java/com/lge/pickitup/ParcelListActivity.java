@@ -334,7 +334,7 @@ public class ParcelListActivity extends AppCompatActivity implements View.OnClic
                 newDate.set(year, monthOfYear, dayOfMonth);
                 String newDateStr = mSdf.format(newDate.getTime());
 
-                if (!newDateStr.equals(mOldDateStr)) {
+                if (!newDateStr.equals(mOldDateStr) && Utils.isAdminAuth()) {
                     resetCourierText();
                 }
                 mTextCourierDate.setText(newDateStr);
