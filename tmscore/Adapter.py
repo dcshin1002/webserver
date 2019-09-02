@@ -28,7 +28,7 @@ def downloadPage(req, year, month, day):
         return HttpResponse("<pre>Invalid URL</pre>")
 
     dateForm = '-'.join([str(year), str("%02d" % month), str("%02d" % day)])
-    file_path = "ApkRelease/"+ dateForm + "/app-release-unsigned.apk"
+    file_path = "ApkRelease/"+ dateForm + "/app-release.apk"
     if os.path.exists(file_path):
         with open(file_path, 'rb') as fh:
             response = HttpResponse(fh.read(), content_type="application/vnd.android.package-archive")
