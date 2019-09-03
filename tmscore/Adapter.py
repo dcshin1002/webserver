@@ -7,6 +7,7 @@ from django.http import HttpResponse, JsonResponse, Http404
 from rq import Queue
 from rq.job import Job, get_current_job
 from worker import conn
+from bs4 import BeautifulSoup
 
 import tmscore.DataBase as db
 import tmscore.DataController as dcon
@@ -17,10 +18,22 @@ q = Queue(connection=conn)
 
 
 def index(req):
-    f = open("index.html", 'r', encoding='utf-8')
-    body = f.read()
-    f.close()
-    return HttpResponse(body)
+    soup = BeautifulSoup(
+        open("index.html", 'r', encoding='utf-8'), 'html.parser')
+
+    for dirname in os.listdir("ApkRelease"):
+        # 2019-09-08 => 2019/9/8
+        dateForm = '/'.join([elem.lstrip('0') for elem in dirname.split('-')])
+
+        soup.body.h2.insert(1, soup.new_tag("pre"))
+        atag = soup.new_tag(
+            "a", href="https://tmsproto-py.herokuapp.com/download/"+dateForm)
+        atag.string = dateForm + " relelased APK"
+
+        soup.body.h2.pre.insert(1, atag)
+        print(soup.body.h2.pre)
+
+    return HttpResponse(soup.contents)
 
 
 def downloadPage(req, year, month, day):
