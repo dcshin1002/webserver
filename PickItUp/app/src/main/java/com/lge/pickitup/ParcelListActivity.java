@@ -85,7 +85,7 @@ public class ParcelListActivity extends AppCompatActivity implements View.OnClic
 
         Bundle b = getIntent().getExtras();
         String dateStr;
-        String courierStr;
+        final String courierStr;
 
         if (b != null) {
             dateStr = b.getString(Utils.KEY_DB_DATE);
@@ -120,7 +120,9 @@ public class ParcelListActivity extends AppCompatActivity implements View.OnClic
                     intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK | Intent.FLAG_ACTIVITY_NEW_TASK);
                     startActivity(intent);
                 }
-                updateConnectUI();
+                updateConnectUI(courierStr);
+
+
             }
         };
 
@@ -226,10 +228,12 @@ public class ParcelListActivity extends AppCompatActivity implements View.OnClic
         mAuth.removeAuthStateListener(mAuthListener);
     }
 
-    private void updateConnectUI() {
+    private void updateConnectUI(String courierName) {
         if (mCurrentUser != null) {
             mIvConnStatus.setImageDrawable(getDrawable(R.mipmap.activity_connect_account_settings_connected));
-            mTvAccountName.setText(mCurrentUser.getDisplayName() + " (" + mCurrentUser.getEmail() + ")");
+            if (mCurrentUser.getDisplayName() != null)
+                courierName = mCurrentUser.getDisplayName();
+            mTvAccountName.setText(courierName + " (" + mCurrentUser.getEmail() + ")");
             mTvAccountName.setBackground(getDrawable(R.drawable.connected_account_border));
             mTvSignOutText.setBackground(getDrawable(R.drawable.active_border2));
             mTvSignOutText.setClickable(true);

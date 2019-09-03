@@ -27,6 +27,7 @@ import com.google.firebase.auth.FirebaseAuthWeakPasswordException;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.auth.UserProfileChangeRequest;
 
+import java.util.Arrays;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -224,7 +225,18 @@ public class CreateAccountActivity extends AppCompatActivity {
                             FirebaseUser user = mAuth.getCurrentUser();
                             user.updateProfile(pofileReq);
                             Log.d(LOG_TAG, "update user profile = " + user.getDisplayName());
-                            startActivity(new Intent(CreateAccountActivity.this, MainMenuActivity.class));
+                            if (Arrays.asList(Utils.ADMIN_UIDS).contains(user.getUid())) {
+                                startActivity(new Intent(CreateAccountActivity.this, MainMenuActivity.class));
+                            } else {
+                                Intent intent_service = new Intent(CreateAccountActivity.this, CourierLocationUploadService.class);
+                                intent_service.putExtra(Utils.KEY_COURIER_NAME, mEtDisplayName.getText().toString()); //user.getDisplayName()
+                                intent_service.putExtra(Utils.KEY_DB_DATE, Utils.getTodayDateStr());
+                                startService(intent_service);
+                                Intent intent = new Intent(CreateAccountActivity.this, ParcelListActivity.class);
+                                intent.putExtra(Utils.KEY_COURIER_NAME, mEtDisplayName.getText().toString()); //user.getDisplayName()
+                                intent.putExtra(Utils.KEY_DB_DATE, Utils.getTodayDateStr());
+                                startActivity(intent);
+                            }
 
                         } else {
                             try {
