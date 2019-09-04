@@ -21,7 +21,8 @@ def index(req):
     soup = BeautifulSoup(
         open("index.html", 'r', encoding='utf-8'), 'html.parser')
 
-    for dirname in os.listdir("ApkRelease"):
+    dirnames = sorted(os.listdir("ApkRelease"))
+    for dirname in dirnames:
         # 2019-09-08 => 2019/9/8
         dateForm = '/'.join([elem.lstrip('0') for elem in dirname.split('-')])
 
