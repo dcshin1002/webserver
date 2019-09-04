@@ -36,6 +36,7 @@ public class Utils {
     static final String[] ADMIN_UIDS = {
             "NCtx9UD1qSO4HAk1lhDma0eYhSq1",
             "eXVbCp7Ne1ZeeqPpxCygUA63NPu2",
+            "dderYymfToWcCk9pwBqQgw0yuAv1",
     };
     static Location mCurrent;
     static LocationManager mLocationMgr;
