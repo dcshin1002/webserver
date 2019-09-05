@@ -39,9 +39,16 @@ public class Utils {
             "eXVbCp7Ne1ZeeqPpxCygUA63NPu2",
             "dderYymfToWcCk9pwBqQgw0yuAv1",
     };
+
+    public static final int NO_NEED_RESULT = 0;
+    public static final int SEND_COMPLETED_MESSAGE = 1;
+    public static final String ACTION_MAKE_DELIVERED = "makedeliveried";
+    public static final String ACTION_SHOWINFO = "showinfo";
+
     static Location mCurrent;
     static LocationManager mLocationMgr;
     static Context mContext;
+    private static int BIAS_HOUR = 6;
     private static final LocationListener mGPSLocationListener = new LocationListener() {
         @Override
         public void onLocationChanged(final Location location) {
@@ -120,6 +127,11 @@ public class Utils {
     public static String getTodayDateStr() {
         long now = System.currentTimeMillis();
         Date date = new Date(now);
+        Log.i(LOG_TAG, "getTodayDateStr now is " + date.toString());
+        now -= BIAS_HOUR * 3600 * 1000;
+        date = new Date(now);
+        Log.i(LOG_TAG, "getTodayDateStr now_bias is " + date.toString());
+
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
         String formattedTime = sdf.format(date);
         return formattedTime;

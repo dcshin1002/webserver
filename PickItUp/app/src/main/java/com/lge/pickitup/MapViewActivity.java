@@ -1,6 +1,7 @@
 package com.lge.pickitup;
 
 import android.app.AlertDialog;
+import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.res.Resources;
@@ -10,7 +11,6 @@ import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Typeface;
-import android.net.Uri;
 import android.os.Bundle;
 
 
@@ -29,7 +29,6 @@ import net.daum.mf.map.api.MapPOIItem;
 import net.daum.mf.map.api.MapPoint;
 import net.daum.mf.map.api.MapView;
 
-import androidx.annotation.ColorRes;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
@@ -55,6 +54,7 @@ public class MapViewActivity extends AppCompatActivity
     private static String mSelectedCourierName;
     private String mSelectedSectionID;
     private ImageView mTrackingModeBtn;
+    private Button mBtnDeliveryinfo;
 
     private HashMap<String, TmsParcelItem> mParcelDatabaseHash = new HashMap<>();
     private HashMap<String, TmsCourierItem> mCourierDatabaseHash = new HashMap<>();
@@ -65,11 +65,12 @@ public class MapViewActivity extends AppCompatActivity
     private static String mSort = "id";
     private RelativeLayout mLayout_parcel_data;
 
+
     private static float mInitLatitude = 0;
     private static float mInitLongitude = 0;
     private TmsParcelItem mCompleteTarget;
     private MapPOIItem mCompleteMarker;
-    private static final int SEND_COMPLETED_MESSAGE = 1;
+
     private static Bitmap bluepin;
     private static Bitmap redpin;
     private static Bitmap greenpin;
@@ -206,7 +207,11 @@ public class MapViewActivity extends AppCompatActivity
         mTrackingModeBtn = (ImageView) findViewById(R.id.ib_tracking);
         mTrackingModeBtn.setOnClickListener(this);
         mTrackingModeBtn.setZ(10);
+        mBtnDeliveryinfo = (Button) findViewById(R.id.btn_deliveryinfo);
+        mBtnDeliveryinfo.setOnClickListener(this);
+
         mLayout_parcel_data.setOnClickListener(this);
+
         GlobalRes = getResources();
     }
     @Override
@@ -216,9 +221,14 @@ public class MapViewActivity extends AppCompatActivity
                 MapPOIItem mapPOIItem = (MapPOIItem)view.getTag(R.id.parcel_data);
                 Utils.startKakaoMapActivity(MapViewActivity.this, mapPOIItem.getMapPoint().getMapPointGeoCoord().latitude, mapPOIItem.getMapPoint().getMapPointGeoCoord().longitude);
                 break;
+            case R.id.btn_deliveryinfo:
+                TmsParcelItem item = (TmsParcelItem)view.getTag(R.id.parcel_data);
+                goToUploadImageActivity(item, Utils.NO_NEED_RESULT);
+                break;
             case R.id.ib_tracking:
                 toggleTrackingMode();
                 break;
+
         }
     }
 
@@ -475,6 +485,7 @@ public class MapViewActivity extends AppCompatActivity
         if (mapPOIItem.getUserObject() instanceof  TmsParcelItem) {
             mLayout_parcel_data.setVisibility(View.VISIBLE);
             mLayout_parcel_data.setTag(R.id.parcel_data, mapPOIItem);
+            mBtnDeliveryinfo.setTag(R.id.parcel_data, mapPOIItem.getUserObject());
             final TmsParcelItem item = (TmsParcelItem) mapPOIItem.getUserObject();
             if (item != null) {
                 boolean isDeliverd = item.status.equals(TmsParcelItem.STATUS_DELIVERED);
@@ -483,6 +494,7 @@ public class MapViewActivity extends AppCompatActivity
                 TextView deliveryNote = findViewById(R.id.listItemTextDeliveryMemo);
                 TextView remark = findViewById(R.id.listItemTextRemark);
                 Button btn_complete = findViewById(R.id.btn_complete);
+                Button btn_deliveryinfo = findViewById(R.id.btn_deliveryinfo);
                 ImageView statusIcon = findViewById(R.id.status_icon);
 
                 btn_complete.setOnClickListener(new View.OnClickListener() {
@@ -499,11 +511,9 @@ public class MapViewActivity extends AppCompatActivity
                     }
                     addrText.setText(addrTextValue + item.consigneeAddr);
                     if (isDeliverd) {
-                        updateStatusToComplete();
+                        updateStatusToComplete(addrText, statusIcon, btn_complete, btn_deliveryinfo);
                     } else {
-                        addrText.setTextColor(0xFF4F4F4F);
-                        statusIcon.setImageDrawable(getDrawable(R.mipmap.tag_in_transit_v2));
-                        btn_complete.setVisibility(View.VISIBLE);
+                        updateStatusToNotDelivery(addrText, statusIcon, btn_complete, btn_deliveryinfo);
                     }
                 }
                 if (customerText != null) {
@@ -520,15 +530,27 @@ public class MapViewActivity extends AppCompatActivity
         }
 
     }
-
-    private void updateStatusToComplete() {
+    private void updateStatusToNotDelivery() {
         TextView addrText = findViewById(R.id.listAddr);
-        Button btn_complete = findViewById(R.id.btn_complete);
         ImageView statusIcon = findViewById(R.id.status_icon);
+        Button btn_complete = findViewById(R.id.btn_complete);
+        Button btn_deliveryinfo = findViewById(R.id.btn_deliveryinfo);
+        updateStatusToNotDelivery(addrText, statusIcon, btn_complete, btn_deliveryinfo);
+
+    }
+
+    private void updateStatusToNotDelivery(TextView addrText, ImageView statusIcon, Button btn_complete, Button btn_deliveryinfo) {
+        addrText.setTextColor(0xFF4F4F4F);
+        statusIcon.setImageDrawable(getDrawable(R.mipmap.tag_in_transit_v2));
+        btn_complete.setVisibility(View.VISIBLE);
+        btn_deliveryinfo.setVisibility(View.GONE);
+    }
+
+    private void updateStatusToComplete(TextView addrText, ImageView statusIcon, Button btn_complete, Button btn_deliveryinfo) {
         addrText.setTextColor(0xFF68c166);
         statusIcon.setImageDrawable(getDrawable(R.mipmap.tag_delivered_v2));
-        btn_complete.setVisibility(View.INVISIBLE);
-
+        btn_complete.setVisibility(View.GONE);
+        btn_deliveryinfo.setVisibility(View.VISIBLE);
     }
 
     private void processLitBtnClick(final TmsParcelItem item, final MapPOIItem mapPOIItem) {
@@ -543,10 +565,7 @@ public class MapViewActivity extends AppCompatActivity
                     public void onClick(DialogInterface dialogInterface, int i) {
                         mCompleteTarget = item;
                         mCompleteMarker = mapPOIItem;
-                        Intent intent = new Intent(MapViewActivity.this, UploadImageActivity.class);
-                        intent.putExtra(Utils.SELECTED_ITEM, item);
-                        intent.putExtra(Utils.SELECTED_DATE, mSelectedDate);
-                        startActivityForResult(intent, SEND_COMPLETED_MESSAGE);
+                        goToUploadImageActivity(item, Utils.SEND_COMPLETED_MESSAGE);
                     }
                 })
                 .setNegativeButton(R.string.cancel, new DialogInterface.OnClickListener() {
@@ -560,6 +579,19 @@ public class MapViewActivity extends AppCompatActivity
         mDeliveryCompleteDialog.show();
     }
 
+    private void goToUploadImageActivity(final TmsParcelItem item, int requestCode) {
+        Intent intent = new Intent(MapViewActivity.this, UploadImageActivity.class);
+        intent.putExtra(Utils.SELECTED_ITEM, item);
+        intent.putExtra(Utils.SELECTED_DATE, mSelectedDate);
+        if (requestCode != Utils.NO_NEED_RESULT) {
+            intent.setAction(Utils.ACTION_MAKE_DELIVERED);
+            startActivityForResult(intent, requestCode);
+        } else {
+            intent.setAction(Utils.ACTION_SHOWINFO);
+            startActivity(intent);
+        }
+    }
+
     @Override
     protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
@@ -570,7 +602,7 @@ public class MapViewActivity extends AppCompatActivity
         }
 
         switch (requestCode) {
-            case SEND_COMPLETED_MESSAGE:
+            case Utils.SEND_COMPLETED_MESSAGE:
                 Log.d(LOG_TAG, "onActivityResult, SEND_COMPLETED_MESSAGE");
                 if (data != null) {
                     String sendResult = data.getStringExtra(UploadImageActivity.EXTRA_SEND_RESULT);
@@ -583,7 +615,7 @@ public class MapViewActivity extends AppCompatActivity
                         mCompleteMarker.setCustomImageBitmap(bm);
                         mCompleteMarker.setCustomSelectedImageBitmap(seleted_bm);
                         mMapView.addPOIItem(mCompleteMarker);
-                        updateStatusToComplete();
+                        updateStatusToNotDelivery();
                     }
                 }
                 break;

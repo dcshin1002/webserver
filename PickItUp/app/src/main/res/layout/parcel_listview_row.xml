@@ -81,6 +81,18 @@
             android:textColor="#FFFFFF"
             android:focusable="false"
             android:text="배송완료" />
+        <Button
+            android:id="@+id/btn_deliveryinfo"
+            android:layout_centerVertical="true"
+            android:layout_width="80dp"
+            android:layout_height="40dp"
+            android:layout_alignParentEnd="true"
+            android:layout_marginRight="15dp"
+            android:background="#42A5F5"
+            android:textColor="#FFFFFF"
+            android:focusable="false"
+            android:visibility="gone"
+            android:text="정보확인" />
     </RelativeLayout>
 
 </RelativeLayout>

@@ -10,6 +10,8 @@ import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.drawable.BitmapDrawable;
+import android.graphics.drawable.ShapeDrawable;
+import android.graphics.drawable.shapes.OvalShape;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
@@ -70,13 +72,17 @@ public class UploadImageActivity extends AppCompatActivity {
     private ImageView mIvPreviewImage;
     private EditText mEtMessageContent;
     private FirebaseStorage mStorage;
+    private StorageReference mStorageRef;
     private FirebaseAuth mAuth;
     private ProgressDialog mProgressDialog;
     private int mFlag;
     private String mCurrentPhotoPath;
     private Uri mPhotoUri;
-    private TmsParcelItem mSelectedItem;
+    private TmsParcelItem mSelectedParcelItem;
     private String mSelectedDate;
+    private String mAction;
+    private String mStorageURL = "gs://smart-router-17060.appspot.com/";
+    private final long ONE_MEGABYTE = 1024 * 1024;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -84,13 +90,17 @@ public class UploadImageActivity extends AppCompatActivity {
         setContentView(R.layout.activity_capture_and_upload);
 
         Intent intent = getIntent();
-        mSelectedItem = intent.getParcelableExtra(Utils.SELECTED_ITEM);
+        mAction = intent.getAction();
+        Log.i(LOG_TAG, "mAction is " + mAction);
+        mSelectedParcelItem = intent.getParcelableExtra(Utils.SELECTED_ITEM);
         mSelectedDate = intent.getStringExtra(Utils.SELECTED_DATE);
+
 
         initResources();
 
         mAuth = FirebaseAuth.getInstance();
         mStorage = FirebaseStorage.getInstance();
+        mStorageRef = mStorage.getReferenceFromUrl(mStorageURL);
 
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA)
                 != PackageManager.PERMISSION_GRANTED) {
@@ -121,7 +131,48 @@ public class UploadImageActivity extends AppCompatActivity {
             mBtnCapture.setEnabled(true);
             mBtnPickImgFromGallery.setEnabled(true);
             mIvPreviewImage.setClickable(true);
+            if (isShowInfoAction()) {
+                showCompleteImage();
+                setInvisibleAllButtonAndEditText();
+            } else {
+                mIvPreviewImage.setImageDrawable(getResources().getDrawable(R.drawable.capture_image_icon, UploadImageActivity.this.getTheme()));
+            }
         }
+    }
+    private void setInvisibleAllButtonAndEditText() {
+        mEtMessageContent.setVisibility(View.INVISIBLE);
+        mBtnCapture.setVisibility(View.INVISIBLE);
+        mBtnPickImgFromGallery.setVisibility(View.INVISIBLE);
+        mBtnSendMsg.setVisibility(View.INVISIBLE);
+    }
+
+    private void showCompleteImage() {
+        // if (mSelectedParcelItem.completeImage is != ""
+        StorageReference ref = mStorageRef.child(mSelectedParcelItem.completeImage);
+        Log.i(LOG_TAG, "showCompleteImage refpath is " + ref);
+        ref.getBytes(ONE_MEGABYTE).addOnSuccessListener(new OnSuccessListener<byte[]>() {
+            @Override
+            public void onSuccess(byte[] bytes) {
+                Log.d(LOG_TAG, "onSeuccess to download data : length = " + bytes.length);
+                Bitmap bm = BitmapFactory.decodeByteArray(bytes, 0, bytes.length);
+                //mIvPreviewImage.setBackground(new ShapeDrawable(new OvalShape()));
+                //mIvPreviewImage.setClipToOutline(true);
+                mIvPreviewImage.setImageBitmap(bm);
+            }
+        }).addOnFailureListener(new OnFailureListener() {
+            @Override
+            public void onFailure(@NonNull Exception e) {
+                e.printStackTrace();
+            }
+        });
+    }
+
+    private boolean isMakeDeliveredAction() {
+        return (mAction == Utils.ACTION_MAKE_DELIVERED);
+    }
+
+    private boolean isShowInfoAction() {
+        return (mAction == Utils.ACTION_SHOWINFO);
     }
 
     @Override
@@ -204,7 +255,7 @@ public class UploadImageActivity extends AppCompatActivity {
         mIvPreviewImage = findViewById(R.id.ivImagePreview);
         mEtMessageContent = findViewById(R.id.etMessageContent);
 
-        mEtMessageContent.setText("고객(" + mSelectedItem.consigneeName + ")님께서 배송요청하신 물품이 배송완료되었습니다.");
+        mEtMessageContent.setText("고객(" + mSelectedParcelItem.consigneeName + ")님께서 배송요청하신 물품이 배송완료되었습니다.");
         mIvPreviewImage.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -423,11 +474,9 @@ public class UploadImageActivity extends AppCompatActivity {
         String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date());
         String filename = currentUid + "_" + timeStamp;
 
-        StorageReference storageRef = mStorage.getReferenceFromUrl("gs://smart-router-17060.appspot.com/")
-                .child(Utils.getTodayDateStr() + "/")
-                .child("Images/" + filename);
+        StorageReference ref = mStorageRef.child(mSelectedDate + "/").child("Images/" + filename + ".jpg");
 
-        final String firebaseStoragePath = Utils.getTodayDateStr() + "/Images/" + filename + ".jpg";
+        final String firebaseStoragePath = mSelectedDate + "/Images/" + filename + ".jpg";
 
         UploadTask uploadTask = null;
         Uri uri = null;
@@ -447,7 +496,7 @@ public class UploadImageActivity extends AppCompatActivity {
                 Log.e(LOG_TAG, "mFlag has some wrong value");
             }
 
-            uploadTask = storageRef.putFile(uri);
+            uploadTask = ref.putFile(uri);
         } else if (mUploadMethod.equals(UPLOAD_BY_BYTES)) {
             mIvPreviewImage.setDrawingCacheEnabled(true);
             mIvPreviewImage.buildDrawingCache();
@@ -455,7 +504,7 @@ public class UploadImageActivity extends AppCompatActivity {
             ByteArrayOutputStream baos = new ByteArrayOutputStream();
             bm.compress(Bitmap.CompressFormat.JPEG, 80, baos);
             byte[] outputData = baos.toByteArray();
-            uploadTask = storageRef.putBytes(outputData);
+            uploadTask = ref.putBytes(outputData);
         } else if (mUploadMethod.equals(UPLOAD_BY_STREAM)) {
             InputStream is = null;
             if (mFlag == FROM_CAMERA) {
@@ -471,7 +520,7 @@ public class UploadImageActivity extends AppCompatActivity {
                     e.printStackTrace();
                 }
             }
-            uploadTask = storageRef.putStream(is);
+            uploadTask = ref.putStream(is);
         } else {
             Log.e(LOG_TAG, "Unknown uploading methodology");
         }
@@ -534,7 +583,7 @@ public class UploadImageActivity extends AppCompatActivity {
 
             // Make intent to send a MMS message including message
             Intent sendIntent = new Intent(Intent.ACTION_SEND);
-            sendIntent.putExtra("address", mSelectedItem.consigneeContact);
+            sendIntent.putExtra("address", mSelectedParcelItem.consigneeContact);
             sendIntent.putExtra(Intent.EXTRA_SUBJECT, getString(R.string.message_title));
             sendIntent.putExtra(Intent.EXTRA_TEXT, mEtMessageContent.getText().toString());
             sendIntent.setType("image/*");
