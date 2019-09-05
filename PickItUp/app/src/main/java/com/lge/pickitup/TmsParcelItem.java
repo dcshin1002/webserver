@@ -37,11 +37,13 @@ public class TmsParcelItem implements Comparable<TmsParcelItem>, Parcelable {
     public static final String KEY_REMARK = "remark";
     public static final String KEY_DELIVERY_NOTE = "deliveryNote";
     public static final String KEY_REGIONAL_CODE = "regionalCode";
+    public static final String KEY_ZIP_CODE = "zipCode";
     public static final String KEY_SECTOR_ID = "sectorId";
     public static final String KEY_ORDER_ID = "orderInRoute";
     public static final String KEY_STATUS = "status";
     public static final String KEY_COMPLETE_MSG_IMG = "completeImage";
     public static final String KEY_COMPLETE_TIME = "completeTime";
+
     public static final Parcelable.Creator<TmsParcelItem> CREATOR = new Creator<TmsParcelItem>() {
         @Override
         public TmsParcelItem createFromParcel(Parcel parcel) {
@@ -62,6 +64,7 @@ public class TmsParcelItem implements Comparable<TmsParcelItem>, Parcelable {
             item.remark = parcel.readString();
             item.deliveryNote = parcel.readString();
             item.regionalCode = parcel.readString();
+            item.zipCode = parcel.readString();
             item.sectorId = parcel.readInt();
             item.orderInRoute = parcel.readInt();
             item.status = parcel.readString();
@@ -76,27 +79,34 @@ public class TmsParcelItem implements Comparable<TmsParcelItem>, Parcelable {
             return null;
         }
     };
-    public String id;
-    public String trackingNum = UNSET;
-    public String packageType = UNSET;
-    public String date = UNSET;
+
+    public String id = UNSET;
+
     // Information about Consignor (Sender)
-    public String consignorName = UNSET;
+    public String trackingNum;
+    public String consignorName;
     public String consignorContact = UNSET;
+    public String packageType;
+    public String date;
+
     // Information about Consignee (Receiver)
-    public String consigneeName = UNSET;
-    public String consigneeAddr = UNSET;
-    public String consigneeContact = UNSET;
+    public String consigneeName;
+    public String consigneeAddr;
+    public String consigneeContact;
     public String consigneeLongitude = UNSET;
     public String consigneeLatitude = UNSET;
-    // Information about courier (driver or individual to transfer)
-    public String courierName = UNSET;
-    public String courierContact = UNSET;
+
     // Delivery note (memo)
-    public String remark = UNSET;
-    public String deliveryNote = UNSET;
+    public String remark;
+    public String deliveryNote;
+    public String regionalCode;
+    public String zipCode;
+
+    // Information about courier (driver or individual to transfer)
+    public String courierName;
+    public String courierContact;
+
     // Information to process parcel
-    public String regionalCode = UNSET;
     public int sectorId = -1;
     public int orderInRoute = -1;
     public String status = STATUS_COLLECTED;
@@ -107,56 +117,20 @@ public class TmsParcelItem implements Comparable<TmsParcelItem>, Parcelable {
         // Default constructor required for calls to DataSnapshot.getValue(TmsParcelItem.class)
     }
 
-    public TmsParcelItem(String id, String trackingNum, String packageType, String date,
-                         String consignorName, String consignorContact,
-                         String consigneeName, String consigneeAddr, String consigneeContact,
-                         String remark, String deliveryNote) {
-        this.id = id;
-        this.trackingNum = trackingNum;
-
-        if (packageType != null) {
-            this.packageType = packageType;
-        }
-
-        this.date = date;
-        this.consignorName = consignorName;
-
-        if (consignorContact != null) {
-            this.consignorContact = consignorContact;
-        }
-
-        this.consigneeName = consigneeName;
-        this.consigneeAddr = consigneeAddr;
-
-        if (consigneeContact != null) {
-            this.consigneeContact = consigneeContact;
-        }
-        if (remark != null) {
-            this.remark = remark;
-        }
-        if (deliveryNote != null) {
-            this.deliveryNote = deliveryNote;
-        }
-    }
-
-    void setGeocode(String longitude, String latitude) {
-        this.consigneeLatitude = latitude;
-        this.consigneeLongitude = longitude;
-    }
-
-    void setSectorId(int id) {
-        this.sectorId = id;
-    }
-
-    void setOrderId(int id) {
-        this.orderInRoute = id;
-    }
-
-    void setCourier(String name, String contact) {
-        if (name != null)
-            this.courierName = name;
-        if (contact != null)
-            this.courierContact = contact;
+    public TmsParcelItem(String dateRecord, String[] record) {
+        this.id = UNSET;
+        this.trackingNum = record[0];
+        this.consignorName = record[1];
+        this.packageType = record[2];
+        this.date = dateRecord;
+        this.consigneeName = record[3];
+        this.consigneeAddr = record[4];
+        this.consigneeContact = record[5];
+        this.remark = record[6];
+        this.deliveryNote = record[7];
+        this.regionalCode = record[8];
+        this.zipCode = record[9];
+        this.courierName = record[10];
     }
 
     void setStatus(String newStatus) {
@@ -197,6 +171,7 @@ public class TmsParcelItem implements Comparable<TmsParcelItem>, Parcelable {
         result.put(KEY_REMARK, remark);
         result.put(KEY_DELIVERY_NOTE, deliveryNote);
         result.put(KEY_REGIONAL_CODE, regionalCode);
+        result.put(KEY_ZIP_CODE, zipCode);
         result.put(KEY_SECTOR_ID, sectorId);
         result.put(KEY_ORDER_ID, orderInRoute);
         result.put(KEY_STATUS, status);
@@ -228,6 +203,7 @@ public class TmsParcelItem implements Comparable<TmsParcelItem>, Parcelable {
         parcel.writeString(remark);
         parcel.writeString(deliveryNote);
         parcel.writeString(regionalCode);
+        parcel.writeString(zipCode);
         parcel.writeInt(sectorId);
         parcel.writeInt(orderInRoute);
         parcel.writeString(status);
