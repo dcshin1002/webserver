@@ -127,17 +127,23 @@ public class AddressFacade {
             InputStreamReader is = new InputStreamReader(fis, "EUC-KR");
             CSVReader reader = new CSVReader(is);
             String[] record = null;
+            boolean firstLine = true;
             while ((record = reader.readNext()) != null) {
+                if (firstLine) {
+                    firstLine = false;
+                    continue;
+                }
+
                 // Add it if the courier is new one
-                if (record.length > 11) {
-                    String courierName = record[11];
+                if (record.length > 10) {
+                    String courierName = record[10];
                     if (!mCourierHash.containsKey(courierName)) {
                         startIdx++;
                         TmsCourierItem item = new TmsCourierItem(String.valueOf(startIdx), courierName);
-                        mCourierHash.put(record[11], item);
+                        mCourierHash.put(record[10], item);
                     }
                 }
-                addRecordToParcelList(mParcelList, record);
+                addRecordToParcelList(mParcelList, mDateStr, record);
             }
 
             // make valueeventlistner
@@ -157,32 +163,9 @@ public class AddressFacade {
         }
     }
 
-    void addRecordToParcelList(List<TmsParcelItem> list, String[] record) {
-        String trackingNum = record[0];
-        String packageType = record[1];
-        String date = record[2];
-        String consignorName = record[3];
-        String consignorContact = record[4];
-        String consigneeName = record[5];
-        String consigneeAddr = record[6];
-        String consigneeContact = record[7];
-        String remark = record[8];
-        String deliveryNote = record[9];
-        String regionalCode = record[10];
-        String courierName = "";
-        String courierContact = "";
-        if (record.length > 11) {
-            courierName = record[11];
-            courierContact = record[12];
-        }
-
-        TmsParcelItem item = new TmsParcelItem(TmsParcelItem.UNSET, trackingNum, packageType, date,
-                consignorName, consignorContact, consigneeName, consigneeAddr, consigneeContact,
-                remark, deliveryNote);
-        item.regionalCode = regionalCode;
-        item.courierName = courierName;
-        item.courierContact = courierContact;
-        item.sectorId = Integer.valueOf(mCourierHash.get(courierName).id);
+    void addRecordToParcelList(List<TmsParcelItem> list, String dateRecord, String[] record) {
+        TmsParcelItem item = new TmsParcelItem(dateRecord, record);
+        item.sectorId = Integer.valueOf(mCourierHash.get(item.courierName).id);
 
         list.add(item);
     }
