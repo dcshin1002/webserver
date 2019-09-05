@@ -22,6 +22,7 @@ import java.text.SimpleDateFormat;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
+import java.util.Locale;
 
 public class Utils {
 
@@ -169,9 +170,9 @@ public class Utils {
         Log.d(LOG_TAG, "uploaded path = " + path);
         item.completeImage = path;
         item.status = TmsParcelItem.STATUS_DELIVERED;
-        mFbConnector.postParcelItemToFirebaseDatabase(date.toString(), item);
+        item.completeTime = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()).format(new Date());
+        mFbConnector.postParcelItemToFirebaseDatabase(date, item);
         //mArrayAdapter.notifyDataSetChanged();
-        item = null;
     }
 
     public static boolean isAdminAuth() {

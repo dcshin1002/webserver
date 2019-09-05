@@ -40,7 +40,8 @@ public class TmsParcelItem implements Comparable<TmsParcelItem>, Parcelable {
     public static final String KEY_SECTOR_ID = "sectorId";
     public static final String KEY_ORDER_ID = "orderInRoute";
     public static final String KEY_STATUS = "status";
-    public static final String KEY_COMPLTE_MSG_IMG = "completeImage";
+    public static final String KEY_COMPLETE_MSG_IMG = "completeImage";
+    public static final String KEY_COMPLETE_TIME = "completeTime";
     public static final Parcelable.Creator<TmsParcelItem> CREATOR = new Creator<TmsParcelItem>() {
         @Override
         public TmsParcelItem createFromParcel(Parcel parcel) {
@@ -65,6 +66,7 @@ public class TmsParcelItem implements Comparable<TmsParcelItem>, Parcelable {
             item.orderInRoute = parcel.readInt();
             item.status = parcel.readString();
             item.completeImage = parcel.readString();
+            item.completeTime = parcel.readString();
 
             return item;
         }
@@ -99,6 +101,7 @@ public class TmsParcelItem implements Comparable<TmsParcelItem>, Parcelable {
     public int orderInRoute = -1;
     public String status = STATUS_COLLECTED;
     public String completeImage = UNSET;
+    public String completeTime = UNSET;
 
     public TmsParcelItem() {
         // Default constructor required for calls to DataSnapshot.getValue(TmsParcelItem.class)
@@ -197,7 +200,8 @@ public class TmsParcelItem implements Comparable<TmsParcelItem>, Parcelable {
         result.put(KEY_SECTOR_ID, sectorId);
         result.put(KEY_ORDER_ID, orderInRoute);
         result.put(KEY_STATUS, status);
-        result.put(KEY_COMPLTE_MSG_IMG, completeImage);
+        result.put(KEY_COMPLETE_MSG_IMG, completeImage);
+        result.put(KEY_COMPLETE_TIME, completeTime);
         return result;
     }
 
@@ -228,5 +232,6 @@ public class TmsParcelItem implements Comparable<TmsParcelItem>, Parcelable {
         parcel.writeInt(orderInRoute);
         parcel.writeString(status);
         parcel.writeString(completeImage);
+        parcel.writeString(completeTime);
     }
 }
