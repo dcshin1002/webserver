@@ -190,7 +190,8 @@ public class AddressFacade {
     private void initParcelId(long startIdx) {
         for (int i = 0; i < mParcelList.size(); i++) {
             TmsParcelItem item = mParcelList.get(i);
-            item.id = String.valueOf(startIdx + i + 1);
+            item.id = String.format("%06d", startIdx + i + 1);;
+
         }
     }
 
