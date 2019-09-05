@@ -5,12 +5,7 @@
     android:orientation="vertical" android:layout_width="match_parent"
     android:layout_height="match_parent">
 
-    <ImageButton
-        android:id="@+id/ib_tracking"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_gravity="right"
-        app:srcCompat="@drawable/btn_tracking_mode" />
+
     <include
         android:id="@+id/parcel_data"
         android:layout_width="fill_parent"
@@ -21,7 +16,16 @@
     <RelativeLayout
         android:id="@+id/map_view"
         android:layout_width="match_parent"
-        android:layout_height="match_parent" >
+        android:layout_height="match_parent"
+
+        >
+        <ImageButton
+            android:id="@+id/ib_tracking"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            app:srcCompat="@drawable/btn_tracking_mode"
+            android:layout_alignParentRight="true"
+            />
 
 
     </RelativeLayout>

@@ -144,7 +144,6 @@ public class MapViewActivity extends AppCompatActivity
         if (!Utils.isAdminAuth()) {
             turnOnTrackingMode();
             mMapView.setCurrentLocationEventListener(this);
-            mMapView.setCurrentLocationRadius(10);
             mMapView.setCustomCurrentLocationMarkerTrackingImage(R.drawable.location_map_pin_pink, new MapPOIItem.ImageOffset(28, 28));
         }
 
@@ -170,7 +169,7 @@ public class MapViewActivity extends AppCompatActivity
     }
     private void turnOffTrackingMode() {
         mMapView.setCurrentLocationTrackingMode(MapView.CurrentLocationTrackingMode.TrackingModeOff);
-        mTrackingModeBtn.setColorFilter(Color.BLACK);
+        mTrackingModeBtn.setColorFilter(Color.WHITE);
         mMapView.setShowCurrentLocationMarker(false);
     }
     private boolean isTrackingModeOff() {
@@ -206,6 +205,7 @@ public class MapViewActivity extends AppCompatActivity
         mLayout_parcel_data = (RelativeLayout) findViewById(R.id.parcel_data);
         mTrackingModeBtn = (ImageView) findViewById(R.id.ib_tracking);
         mTrackingModeBtn.setOnClickListener(this);
+        mTrackingModeBtn.setZ(10);
         mLayout_parcel_data.setOnClickListener(this);
         GlobalRes = getResources();
     }
