@@ -54,6 +54,7 @@ public class MapViewActivity extends AppCompatActivity
     private String mSelectedDate;
     private static String mSelectedCourierName;
     private String mSelectedSectionID;
+    private ImageView mTrackingModeBtn;
 
     private HashMap<String, TmsParcelItem> mParcelDatabaseHash = new HashMap<>();
     private HashMap<String, TmsCourierItem> mCourierDatabaseHash = new HashMap<>();
@@ -141,11 +142,10 @@ public class MapViewActivity extends AppCompatActivity
         mapViewContainer.addView(mapLayout);
         //addCurrentLocationMarker();
         if (!Utils.isAdminAuth()) {
+            turnOnTrackingMode();
             mMapView.setCurrentLocationEventListener(this);
-            mMapView.setCurrentLocationTrackingMode(MapView.CurrentLocationTrackingMode.TrackingModeOnWithoutHeading);
             mMapView.setCurrentLocationRadius(10);
             mMapView.setCustomCurrentLocationMarkerTrackingImage(R.drawable.location_map_pin_pink, new MapPOIItem.ImageOffset(28, 28));
-            mMapView.setShowCurrentLocationMarker(true);
         }
 
         Bundle b = getIntent().getExtras();
@@ -162,6 +162,26 @@ public class MapViewActivity extends AppCompatActivity
         mFbConnector.setCourierValueArray(this.mCourierArrayValues);
         getFirebaseList();
 
+    }
+    private void turnOnTrackingMode() {
+        mMapView.setCurrentLocationTrackingMode(MapView.CurrentLocationTrackingMode.TrackingModeOnWithoutHeading);
+        mTrackingModeBtn.setColorFilter(Color.RED);
+        mMapView.setShowCurrentLocationMarker(true);
+    }
+    private void turnOffTrackingMode() {
+        mMapView.setCurrentLocationTrackingMode(MapView.CurrentLocationTrackingMode.TrackingModeOff);
+        mTrackingModeBtn.setColorFilter(Color.BLACK);
+        mMapView.setShowCurrentLocationMarker(false);
+    }
+    private boolean isTrackingModeOff() {
+        return (mMapView.getCurrentLocationTrackingMode() == MapView.CurrentLocationTrackingMode.TrackingModeOff);
+    }
+    private void toggleTrackingMode() {
+        if (isTrackingModeOff()) {
+            turnOnTrackingMode();
+        } else {
+            turnOffTrackingMode();
+        }
     }
 
     private void addCurrentLocationMarker() {
@@ -184,6 +204,8 @@ public class MapViewActivity extends AppCompatActivity
 
     protected void initResources() {
         mLayout_parcel_data = (RelativeLayout) findViewById(R.id.parcel_data);
+        mTrackingModeBtn = (ImageView) findViewById(R.id.ib_tracking);
+        mTrackingModeBtn.setOnClickListener(this);
         mLayout_parcel_data.setOnClickListener(this);
         GlobalRes = getResources();
     }
@@ -193,6 +215,9 @@ public class MapViewActivity extends AppCompatActivity
             case R.id.parcel_data:
                 MapPOIItem mapPOIItem = (MapPOIItem)view.getTag(R.id.parcel_data);
                 Utils.startKakaoMapActivity(MapViewActivity.this, mapPOIItem.getMapPoint().getMapPointGeoCoord().latitude, mapPOIItem.getMapPoint().getMapPointGeoCoord().longitude);
+                break;
+            case R.id.ib_tracking:
+                toggleTrackingMode();
                 break;
         }
     }
