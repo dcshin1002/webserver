@@ -48,7 +48,7 @@ public class TmsParcelItem implements Comparable<TmsParcelItem>, Parcelable {
         @Override
         public TmsParcelItem createFromParcel(Parcel parcel) {
             TmsParcelItem item = new TmsParcelItem();
-            item.id = parcel.readString();
+            item.id = parcel.readInt();
             item.trackingNum = parcel.readString();
             item.packageType = parcel.readString();
             item.date = parcel.readString();
@@ -80,7 +80,7 @@ public class TmsParcelItem implements Comparable<TmsParcelItem>, Parcelable {
         }
     };
 
-    public String id = UNSET;
+    public int id = -1;
 
     // Information about Consignor (Sender)
     public String trackingNum;
@@ -118,7 +118,6 @@ public class TmsParcelItem implements Comparable<TmsParcelItem>, Parcelable {
     }
 
     public TmsParcelItem(String dateRecord, String[] record) {
-        this.id = UNSET;
         this.trackingNum = record[0];
         this.consignorName = record[1];
         this.packageType = record[2];
@@ -144,9 +143,9 @@ public class TmsParcelItem implements Comparable<TmsParcelItem>, Parcelable {
 
     @Override
     public int compareTo(TmsParcelItem s) {
-        if (Integer.valueOf(this.id) < Integer.valueOf(s.id)) {
+        if (this.id < s.id) {
             return -1;
-        } else if (Integer.valueOf(this.id) > Integer.valueOf(s.id)) {
+        } else if (this.id > s.id) {
             return 1;
         }
         return 0;
@@ -187,7 +186,7 @@ public class TmsParcelItem implements Comparable<TmsParcelItem>, Parcelable {
 
     @Override
     public void writeToParcel(Parcel parcel, int i) {
-        parcel.writeString(id);
+        parcel.writeInt(id);
         parcel.writeString(trackingNum);
         parcel.writeString(packageType);
         parcel.writeString(date);

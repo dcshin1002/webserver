@@ -170,11 +170,10 @@ public class AddressFacade {
         list.add(item);
     }
 
-    private void initParcelId(long startIdx) {
+    private void initParcelId(int startIdx) {
         for (int i = 0; i < mParcelList.size(); i++) {
             TmsParcelItem item = mParcelList.get(i);
-            item.id = String.format("%06d", startIdx + i + 1);;
-
+            item.id = startIdx + i + 1;
         }
     }
 
@@ -197,7 +196,7 @@ public class AddressFacade {
 
     class AddressTranslate extends AsyncTask<String, Void, String> {
         ProgressDialog asyncDialog = new ProgressDialog(mContext);
-        long startIdx;
+        int startIdx;
         @Override
         protected void onPreExecute() {
             asyncDialog.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
@@ -208,7 +207,7 @@ public class AddressFacade {
 
         @Override
         protected String doInBackground(String... s) {
-            startIdx = Long.valueOf(s[0]);
+            startIdx = Integer.valueOf(s[0]);
             asyncDialog.setMax(mParcelList.size());
             asyncDialog.setProgress(0);
 
