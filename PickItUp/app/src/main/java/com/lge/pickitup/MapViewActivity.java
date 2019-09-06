@@ -538,7 +538,6 @@ public class MapViewActivity extends AppCompatActivity
         Button btn_complete = findViewById(R.id.btn_complete);
         Button btn_deliveryinfo = findViewById(R.id.btn_deliveryinfo);
         updateStatusToNotDelivery(addrText, statusIcon, btn_complete, btn_deliveryinfo);
-
     }
 
     private void updateStatusToNotDelivery(TextView addrText, ImageView statusIcon, Button btn_complete, Button btn_deliveryinfo) {
@@ -546,6 +545,14 @@ public class MapViewActivity extends AppCompatActivity
         statusIcon.setImageDrawable(getDrawable(R.mipmap.tag_in_transit_v2));
         btn_complete.setVisibility(View.VISIBLE);
         btn_deliveryinfo.setVisibility(View.GONE);
+    }
+
+    private void updateStatusToComplete() {
+        TextView addrText = findViewById(R.id.listAddr);
+        ImageView statusIcon = findViewById(R.id.status_icon);
+        Button btn_complete = findViewById(R.id.btn_complete);
+        Button btn_deliveryinfo = findViewById(R.id.btn_deliveryinfo);
+        updateStatusToComplete(addrText, statusIcon, btn_complete, btn_deliveryinfo);
     }
 
     private void updateStatusToComplete(TextView addrText, ImageView statusIcon, Button btn_complete, Button btn_deliveryinfo) {
@@ -617,7 +624,7 @@ public class MapViewActivity extends AppCompatActivity
                         mCompleteMarker.setCustomImageBitmap(bm);
                         mCompleteMarker.setCustomSelectedImageBitmap(seleted_bm);
                         mMapView.addPOIItem(mCompleteMarker);
-                        updateStatusToNotDelivery();
+                        updateStatusToComplete();
                     }
                 }
                 break;

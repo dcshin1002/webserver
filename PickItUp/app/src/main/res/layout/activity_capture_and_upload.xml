@@ -5,8 +5,8 @@
 
     <ImageView
         android:id="@+id/ivImagePreview"
-        android:layout_width="380dp"
-        android:layout_height="250dp"
+        android:layout_width="350dp"
+        android:layout_height="210dp"
         android:layout_centerHorizontal="true"
         android:layout_marginTop="40dp"
         android:padding="8dp"
