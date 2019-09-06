@@ -22,17 +22,21 @@ def index(req):
         open("index.html", 'r', encoding='utf-8'), 'html.parser')
 
     dirnames = sorted(os.listdir("ApkRelease"))
-    for dirname in dirnames:
+    for idx in range(len(dirnames)-1):
         # 2019-09-08 => 2019/9/8
-        dateForm = '/'.join([elem.lstrip('0') for elem in dirname.split('-')])
+        dateForm = '/'.join([elem.lstrip('0') for elem in dirnames[idx].split('-')])
 
-        soup.body.h2.insert(1, soup.new_tag("pre"))
-        atag = soup.new_tag(
-            "a", href="https://tmsproto-py.herokuapp.com/download/"+dateForm)
-        atag.string = dateForm + " relelased APK"
+        pretag = soup.new_tag("pre")
+        pretag.string = dateForm + " released APK"
+        soup.body.h2.insert(1, pretag)
 
-        soup.body.h2.pre.insert(1, atag)
-        print(soup.body.h2.pre)
+    # added hyperlink only for the last element
+    dateForm = '/'.join([elem.lstrip('0') for elem in dirnames[-1].split('-')])
+    soup.body.h2.insert(1, soup.new_tag("pre"))
+    atag = soup.new_tag(
+        "a", href="https://tmsproto-py.herokuapp.com/download/"+dateForm)
+    atag.string = dateForm + " relelased APK"
+    soup.body.h2.pre.insert(1, atag)
 
     return HttpResponse(soup.contents)
 
