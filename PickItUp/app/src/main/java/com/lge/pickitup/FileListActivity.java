@@ -180,7 +180,7 @@ public class FileListActivity extends AppCompatActivity implements View.OnClickL
                     Log.i(LOG_TAG, files.length + " will be listed");
                     for (File file : files) {
                         String filename = file.getName();
-                        if (filename.substring(filename.lastIndexOf(".")).equals("csv")) {
+                        if (filename.substring(filename.lastIndexOf(".")).equals(".csv")) {
                             Log.i(LOG_TAG, "file name is " + filename);
                             mFileList.add(filename);
                         }
