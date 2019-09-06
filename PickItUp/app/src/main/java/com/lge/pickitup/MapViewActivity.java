@@ -209,6 +209,7 @@ public class MapViewActivity extends AppCompatActivity
         mTrackingModeBtn = (ImageView) findViewById(R.id.ib_tracking);
         mTrackingModeBtn.setOnClickListener(this);
         mTrackingModeBtn.setZ(10);
+        mLayout_parcel_data.setZ(20);
         mBtnDeliveryinfo = (Button) findViewById(R.id.btn_deliveryinfo);
         mBtnDeliveryinfo.setOnClickListener(this);
 
@@ -451,6 +452,7 @@ public class MapViewActivity extends AppCompatActivity
     @Override
     public void onMapViewSingleTapped(MapView mapView, MapPoint mapPoint) {
         MapPoint.GeoCoordinate mapPointGeo = mapPoint.getMapPointGeoCoord();
+        mLayout_parcel_data.setVisibility(View.GONE);
         Log.i(LOG_TAG, String.format("MapView onMapViewSingleTapped (%f,%f)", mapPointGeo.latitude, mapPointGeo.longitude));
     }
 
@@ -625,6 +627,10 @@ public class MapViewActivity extends AppCompatActivity
                         mCompleteMarker.setCustomSelectedImageBitmap(seleted_bm);
                         mMapView.addPOIItem(mCompleteMarker);
                         updateStatusToComplete();
+                        mMapView.setMapCenterPointAndZoomLevel(
+                                MapPoint.mapPointWithGeoCoord(mCompleteMarker.getMapPoint().getMapPointGeoCoord().latitude, mCompleteMarker.getMapPoint().getMapPointGeoCoord().longitude),
+                                7,
+                                true);
                     }
                 }
                 break;

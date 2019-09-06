@@ -74,7 +74,7 @@
     <string name="default_courier_date">배송 날짜</string>
     <string name="update_parcel_list">배달항목 업데이트</string>
     <string name="assign_courier">기사에게 할당</string>
-    <string name="change_parcel_view">지도에서 보기</string>
+    <string name="change_parcel_view">지도보기</string>
     <string name="delivered">배송완료</string>
     <string name="delivering">배송중</string>
     <string name="customer">고객명</string>

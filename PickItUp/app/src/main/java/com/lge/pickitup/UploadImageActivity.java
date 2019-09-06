@@ -4,6 +4,7 @@ import android.Manifest;
 import android.app.AlertDialog;
 import android.app.ProgressDialog;
 import android.content.ActivityNotFoundException;
+import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
@@ -84,6 +85,9 @@ public class UploadImageActivity extends AppCompatActivity {
     private String mAction;
     private String mStorageURL = "gs://smart-router-17060.appspot.com/";
     private final long ONE_MEGABYTE = 1024 * 1024;
+    private int KEY_IMVSTATUS = 1;
+    private int IMGVIEW_INIT = 0;
+    private int IMGVIEW_CAPTURED = 1;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -136,8 +140,10 @@ public class UploadImageActivity extends AppCompatActivity {
                 showCompleteImage();
                 setShowDeliveryInfoUI();
                 mIvPreviewImage.setImageDrawable(getResources().getDrawable(R.drawable.img_downloading, UploadImageActivity.this.getTheme()));
+
             } else {
                 mIvPreviewImage.setImageDrawable(getResources().getDrawable(R.drawable.capture_image_icon, UploadImageActivity.this.getTheme()));
+                mIvPreviewImage.setTag(R.id.ivImagePreview, IMGVIEW_INIT);
             }
         }
     }
@@ -305,7 +311,11 @@ public class UploadImageActivity extends AppCompatActivity {
                                 dialogInterface.cancel();
                             }
                         });
-                diag_bulder.show();
+                if (mIvPreviewImage.getTag(R.id.ivImagePreview).equals(IMGVIEW_CAPTURED)) {
+                    diag_bulder.show();
+                } else {
+                    Toast.makeText(UploadImageActivity.this, "사진을 찍거나 선택 후에\n메세지 전송과 배송완료 처리가 가능합니다.", Toast.LENGTH_LONG).show();
+                }
             }
         });
 
@@ -433,6 +443,7 @@ public class UploadImageActivity extends AppCompatActivity {
 
         Bitmap bitmap = BitmapFactory.decodeFile(mCurrentPhotoPath, bmOptions);
         mIvPreviewImage.setImageBitmap(bitmap);
+        mIvPreviewImage.setTag(R.id.ivImagePreview, IMGVIEW_CAPTURED);
     }
 
     private void setResizedGalleryPic() {
@@ -481,6 +492,7 @@ public class UploadImageActivity extends AppCompatActivity {
 
         bitmap = BitmapFactory.decodeStream(is, null, bmOptions);
         mIvPreviewImage.setImageBitmap(bitmap);
+        mIvPreviewImage.setTag(R.id.ivImagePreview, IMGVIEW_CAPTURED);
     }
 
     private void uploadImageToServer() {

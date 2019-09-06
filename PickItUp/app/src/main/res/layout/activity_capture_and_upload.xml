@@ -6,9 +6,9 @@
     <ImageView
         android:id="@+id/ivImagePreview"
         android:layout_width="350dp"
-        android:layout_height="210dp"
+        android:layout_height="200dp"
         android:layout_centerHorizontal="true"
-        android:layout_marginTop="40dp"
+        android:layout_marginTop="20dp"
         android:padding="8dp"
         android:scaleType="centerCrop"/>
 
