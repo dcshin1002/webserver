@@ -294,6 +294,7 @@ public class FirebaseDatabaseConnector {
                     if (value.orderInRoute == -1) {
                         isRouted = false;
                     }
+                    value.orderInRoute = -1;
 
                     mParcelHash.put(key, value);
                     mArrayKeys.add(key);
@@ -301,13 +302,13 @@ public class FirebaseDatabaseConnector {
 
                     Log.d(LOG_TAG, "mArrayValues size = " + mArrayValues.size());
                 }
-                if (!isRouted) {
+                if (false) { //  change temporary (!isRouted) {
                     for (TmsParcelItem item : mArrayValues) {
                         item.orderInRoute = -1;
                     }
                 }
                 if (mArrayValues.size() > 0) {
-                    Collections.sort(mArrayValues);
+                    //Collections.sort(mArrayValues);
                     /*
                     getJobStatusFromFirebaseDatabase(pathString, new ValueEventListener() {
                         @Override

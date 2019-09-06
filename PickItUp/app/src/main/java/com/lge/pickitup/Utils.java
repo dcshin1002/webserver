@@ -48,7 +48,7 @@ public class Utils {
     static Location mCurrent;
     static LocationManager mLocationMgr;
     static Context mContext;
-    private static int BIAS_HOUR = 6;
+    private static int BIAS_HOUR = 7;
     private static final LocationListener mGPSLocationListener = new LocationListener() {
         @Override
         public void onLocationChanged(final Location location) {

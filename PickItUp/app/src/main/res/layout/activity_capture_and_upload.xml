@@ -63,4 +63,30 @@
         android:background="#42A5F5"
         android:textColor="#FFFFFF"
         android:text="@string/send_message_with_image" />
+    <TextView
+        android:id="@+id/tvDeliveryTime"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:padding="5dp"
+        android:layout_marginTop="20dp"
+        android:textSize="18dp"
+        android:layout_below="@id/etMessageContent"
+        android:layout_alignLeft="@id/etMessageContent"
+        android:layout_alignRight="@id/etMessageContent"
+        android:visibility="gone" />
+
+    <Button
+        android:id="@+id/btnFinishActivity"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:padding="5dp"
+        android:layout_marginTop="20dp"
+        android:layout_below="@id/tvDeliveryTime"
+        android:layout_alignLeft="@id/tvDeliveryTime"
+        android:layout_alignRight="@id/tvDeliveryTime"
+        android:background="#42A5F5"
+        android:textColor="#FFFFFF"
+        android:visibility="gone"
+        android:text="이전화면 돌아가기" />
+
 </RelativeLayout>
