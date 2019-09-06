@@ -452,6 +452,7 @@ public class ParcelListActivity extends AppCompatActivity implements View.OnClic
                 if (value.orderInRoute == -1) {
                     isRouted = false;
                 }
+                value.orderInRoute = -1;
 
                 mParcelDatabaseHash.put(key, value);
                 mArrayKeys.add(key);
@@ -459,15 +460,15 @@ public class ParcelListActivity extends AppCompatActivity implements View.OnClic
 
                 Log.d(LOG_TAG, "mArrayValues size = " + mArrayValues.size());
             }
-            if (!isRouted) {
+            if (false) {
                 for (TmsParcelItem item : mArrayValues) {
                     item.orderInRoute = -1;
                 }
             }
 
-            if (mArrayValues.size() > 0) {
-                Collections.sort(mArrayValues);
-            }
+//            if (mArrayValues.size() > 0) {
+//                Collections.sort(mArrayValues);
+//            }
             if (mArrayAdapter != null) {
                 mArrayAdapter.notifyDataSetChanged();
             }

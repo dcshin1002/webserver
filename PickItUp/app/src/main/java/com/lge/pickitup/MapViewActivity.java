@@ -146,6 +146,8 @@ public class MapViewActivity extends AppCompatActivity
             turnOnTrackingMode();
             mMapView.setCurrentLocationEventListener(this);
             mMapView.setCustomCurrentLocationMarkerTrackingImage(R.drawable.location_map_pin_pink, new MapPOIItem.ImageOffset(28, 28));
+        } else {
+            mTrackingModeBtn.setVisibility(View.GONE);
         }
 
         Bundle b = getIntent().getExtras();

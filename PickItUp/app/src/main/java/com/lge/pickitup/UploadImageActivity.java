@@ -10,8 +10,6 @@ import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.drawable.BitmapDrawable;
-import android.graphics.drawable.ShapeDrawable;
-import android.graphics.drawable.shapes.OvalShape;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
@@ -22,6 +20,7 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
@@ -69,8 +68,10 @@ public class UploadImageActivity extends AppCompatActivity {
     private Button mBtnCapture;
     private Button mBtnPickImgFromGallery;
     private Button mBtnSendMsg;
+    private Button mBtnFinishActivity;
     private ImageView mIvPreviewImage;
     private EditText mEtMessageContent;
+    private TextView mTvDeliveryTime;
     private FirebaseStorage mStorage;
     private StorageReference mStorageRef;
     private FirebaseAuth mAuth;
@@ -133,17 +134,22 @@ public class UploadImageActivity extends AppCompatActivity {
             mIvPreviewImage.setClickable(true);
             if (isShowInfoAction()) {
                 showCompleteImage();
-                setInvisibleAllButtonAndEditText();
+                setShowDeliveryInfoUI();
+                mIvPreviewImage.setImageDrawable(getResources().getDrawable(R.drawable.img_downloading, UploadImageActivity.this.getTheme()));
             } else {
                 mIvPreviewImage.setImageDrawable(getResources().getDrawable(R.drawable.capture_image_icon, UploadImageActivity.this.getTheme()));
             }
         }
     }
-    private void setInvisibleAllButtonAndEditText() {
-        mEtMessageContent.setVisibility(View.INVISIBLE);
-        mBtnCapture.setVisibility(View.INVISIBLE);
-        mBtnPickImgFromGallery.setVisibility(View.INVISIBLE);
-        mBtnSendMsg.setVisibility(View.INVISIBLE);
+    private void setShowDeliveryInfoUI() {
+        mEtMessageContent.setVisibility(View.GONE);
+        mBtnCapture.setVisibility(View.GONE);
+        mBtnPickImgFromGallery.setVisibility(View.GONE);
+        mBtnSendMsg.setVisibility(View.GONE);
+
+        mTvDeliveryTime.setVisibility(View.VISIBLE);
+        mTvDeliveryTime.setText("배송완료 시간:  " + mSelectedParcelItem.completeTime);
+        mBtnFinishActivity.setVisibility(View.VISIBLE);
     }
 
     private void showCompleteImage() {
@@ -254,6 +260,8 @@ public class UploadImageActivity extends AppCompatActivity {
         mBtnSendMsg = findViewById(R.id.btnSendMessage);
         mIvPreviewImage = findViewById(R.id.ivImagePreview);
         mEtMessageContent = findViewById(R.id.etMessageContent);
+        mBtnFinishActivity = findViewById(R.id.btnFinishActivity);
+        mTvDeliveryTime = findViewById(R.id.tvDeliveryTime);
 
         mEtMessageContent.setText("고객(" + mSelectedParcelItem.consigneeName + ")님께서 배송요청하신 물품이 배송완료되었습니다.");
         mIvPreviewImage.setOnClickListener(new View.OnClickListener() {
@@ -301,6 +309,12 @@ public class UploadImageActivity extends AppCompatActivity {
             }
         });
 
+        mBtnFinishActivity.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                finish();
+            }
+        });
     }
 
     private void makeDialog() {

@@ -144,9 +144,9 @@ public class TmsParcelItem implements Comparable<TmsParcelItem>, Parcelable {
 
     @Override
     public int compareTo(TmsParcelItem s) {
-        if (this.orderInRoute < s.orderInRoute) {
+        if (Integer.valueOf(this.id) < Integer.valueOf(s.id)) {
             return -1;
-        } else if (this.orderInRoute > s.orderInRoute) {
+        } else if (Integer.valueOf(this.id) > Integer.valueOf(s.id)) {
             return 1;
         }
         return 0;
