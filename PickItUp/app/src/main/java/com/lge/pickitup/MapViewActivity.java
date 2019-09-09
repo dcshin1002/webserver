@@ -20,6 +20,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -63,7 +64,7 @@ public class MapViewActivity extends AppCompatActivity
     private static ArrayList<TmsCourierItem> mCourierArrayValues = new ArrayList<TmsCourierItem>();
 
     private static String mSort = "id";
-    private RelativeLayout mLayout_parcel_data;
+    private LinearLayout mLayout_parcel_data;
 
 
     private static float mInitLatitude = 0;
@@ -205,7 +206,7 @@ public class MapViewActivity extends AppCompatActivity
     }
 
     protected void initResources() {
-        mLayout_parcel_data = (RelativeLayout) findViewById(R.id.parcel_data);
+        mLayout_parcel_data = (LinearLayout) findViewById(R.id.parcel_data);
         mTrackingModeBtn = (ImageView) findViewById(R.id.ib_tracking);
         mTrackingModeBtn.setOnClickListener(this);
         mTrackingModeBtn.setZ(10);
