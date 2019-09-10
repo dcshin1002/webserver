@@ -146,6 +146,7 @@ public class MapViewActivity extends AppCompatActivity
             mMapView.setCurrentLocationEventListener(this);
             mMapView.setCustomCurrentLocationMarkerTrackingImage(R.drawable.location_map_pin_pink, new MapPOIItem.ImageOffset(28, 28));
         } else {
+            turnOffTrackingMode();
             mTrackingModeBtn.setVisibility(View.GONE);
         }
 
@@ -342,7 +343,6 @@ public class MapViewActivity extends AppCompatActivity
             marker.setCustomImageBitmap(pin);
             marker.setCustomSelectedImageBitmap(seleted_pin);
             marker.setCustomImageAutoscale(false);
-
             mMapView.addPOIItem(marker);
             num++;
         }

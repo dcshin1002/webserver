@@ -31,8 +31,9 @@ public class CourierLocationUploadService extends Service {
             Log.i(LOG_TAG, "CourierLocationUploadService ValueEventListener is called");
             mTmsCourierItem = null;
             for (DataSnapshot postSnapshot : dataSnapshot.getChildren()) {
-                mTmsCourierItem = postSnapshot.getValue(TmsCourierItem.class);
-                if (mCourierName.equals(mTmsCourierItem.name)) {
+                TmsCourierItem item = postSnapshot.getValue(TmsCourierItem.class);
+                if (mCourierName.equals(item.name)) {
+                    mTmsCourierItem = item;
                     break;
                 }
             }
