@@ -79,11 +79,17 @@ def loadData(fname):
 
 
 def saveParcelDataToFirebaseDB(dateForm, cluster, problem, route):
-    dateKey = "parcel_list" + dateForm
+    parcels = db.firebaseDB.child("parcel_list").child(dateForm).get()
+    parcelsArr = parcels.val()
+
+    dateKey = "parcel_list/" + dateForm
     data = {dateKey: {}}
+    data[dateKey] = parcelsArr
     for i, v in enumerate(route):
         city = problem.iloc[v][0]
-        data[dateKey][city] = {"sectorId": cluster, "orderInRoute": i+1}
+        idx = int(city)
+        data[dateKey][idx]['sectorId'] = cluster
+        data[dateKey][idx]['orderInRoute'] = i+1
     db.firebaseDB.update(data)
 
 
