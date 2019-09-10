@@ -1,7 +1,6 @@
 package com.lge.pickitup;
 
 import android.app.AlertDialog;
-import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.res.Resources;
@@ -21,7 +20,6 @@ import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
-import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -281,7 +279,7 @@ public class MapViewActivity extends AppCompatActivity
 
     protected static void addMarker() {
         Log.i(LOG_TAG, "mArrayValues.size = " + mArrayValues.size());
-
+        int num = 1;
         for (TmsParcelItem item : mArrayValues) {
             String strLatitude = item.consigneeLatitude;
             String strLongitude = item.consigneeLongitude;
@@ -312,8 +310,9 @@ public class MapViewActivity extends AppCompatActivity
             Bitmap pin = getBitmapPinByParcelItem(item);
             Bitmap seleted_pin = getBitmapSeletedPinByParcelItem(item);
             boolean isDeliverd = item.status.equals(TmsParcelItem.STATUS_DELIVERED);
-            if (!isDeliverd &&  item.orderInRoute != -1 && !mSelectedCourierName.equals(GlobalRes.getString(R.string.all_couriers))) {
-                int textVal = item.orderInRoute;
+            //if (!isDeliverd &&  item.orderInRoute != -1 && !mSelectedCourierName.equals(GlobalRes.getString(R.string.all_couriers))) {
+            if (!isDeliverd &&  !mSelectedCourierName.equals(GlobalRes.getString(R.string.all_couriers))) {
+                int textVal = num;
                 Paint paint = new Paint();
                 paint.setStyle(Paint.Style.FILL);
                 paint.setColor(Color.BLACK); // Text Color
@@ -345,6 +344,7 @@ public class MapViewActivity extends AppCompatActivity
             marker.setCustomImageAutoscale(false);
 
             mMapView.addPOIItem(marker);
+            num++;
         }
     }
 
@@ -356,11 +356,11 @@ public class MapViewActivity extends AppCompatActivity
         }
         mFbConnector.getCourierListFromFirebaseDatabase(mSelectedDate, TmsParcelItem.KEY_ID);
         if (Utils.isAdminAuth()) {
-            mFbConnector.getCourierListFromFirebaseDatabaseWithListener(mSelectedDate, mValueEventListener);
+            mFbConnector.getCourierListFromFirebaseDatabaseWithListener(mSelectedDate, mCourierValueEventListener);
         }
     }
 
-    private ValueEventListener mValueEventListener = new ValueEventListener() {
+    private ValueEventListener mCourierValueEventListener = new ValueEventListener() {
         @Override
         public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
             Log.d(LOG_TAG, "mapview CourierList size : " + dataSnapshot.getChildrenCount());
@@ -647,6 +647,9 @@ public class MapViewActivity extends AppCompatActivity
     @Override
     public void onCalloutBalloonOfPOIItemTouched(MapView mapView, MapPOIItem mapPOIItem, MapPOIItem.CalloutBalloonButtonType calloutBalloonButtonType) {
         if (mapPOIItem.getItemName().equals(getString(R.string.current_location))) {
+            return;
+        }
+        if (mapPOIItem.getUserObject() instanceof TmsCourierItem) {
             return;
         }
         Utils.startKakaoMapActivity(MapViewActivity.this, mapPOIItem.getMapPoint().getMapPointGeoCoord().latitude, mapPOIItem.getMapPoint().getMapPointGeoCoord().longitude);

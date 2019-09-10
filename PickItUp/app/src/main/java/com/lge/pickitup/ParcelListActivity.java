@@ -588,19 +588,20 @@ public class ParcelListActivity extends AppCompatActivity implements View.OnClic
 
                 if (addrText != null) {
                     String addrTextValue = "";
-                    if ((item.orderInRoute != -1) && !mTextCourierName.getText().toString().equals(getString(R.string.all_couriers))) {
-                        addrTextValue = item.orderInRoute + " : ";
+                    if (!mTextCourierName.getText().toString().equals(getString(R.string.all_couriers))) {
+                        addrTextValue = (position+1) + " : ";
                     }
                     addrText.setText(addrTextValue + item.consigneeAddr);
                     if (isDeliverd) {
                         addrText.setTextColor(0xFF68c166);
+                        statusIcon.setVisibility(View.VISIBLE);
                         statusIcon.setImageDrawable(getDrawable(R.mipmap.tag_delivered_v2));
                         btn_complete.setVisibility(View.GONE);
                         btn_deliveryinfo.setVisibility(View.VISIBLE);
                         btn_deliveryinfo.setBackgroundColor(0xFF68c166);
                     } else {
                         addrText.setTextColor(0xFF4F4F4F);
-                        statusIcon.setImageDrawable(getDrawable(R.mipmap.tag_in_transit_v2));
+                        statusIcon.setVisibility(View.INVISIBLE);
                         btn_complete.setVisibility(View.VISIBLE);
                         btn_complete.setBackgroundColor(0xFF42A5F5);
                         btn_deliveryinfo.setVisibility(View.GONE);
