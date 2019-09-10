@@ -355,7 +355,9 @@ public class ParcelListActivity extends AppCompatActivity implements View.OnClic
     private DatabaseReference.CompletionListener mParcelListRemove = new DatabaseReference.CompletionListener() {
         @Override
         public void onComplete(@Nullable DatabaseError databaseError, @NonNull DatabaseReference databaseReference) {
+            String selectedDate = mTextCourierDate.getText().toString();
             Log.i(LOG_TAG, "mParcelListRemove is called");
+            Toast.makeText(ParcelListActivity.this, selectedDate + " 날짜의 정보가 초기화 되었습니다. csv 파일을 다시 올려주세요",Toast.LENGTH_LONG).show();
         }
     };
 
@@ -375,8 +377,9 @@ public class ParcelListActivity extends AppCompatActivity implements View.OnClic
                                 DatabaseReference databaseRef = FirebaseDatabase.getInstance().getReference();
 
                                 databaseRef.child(FirebaseDatabaseConnector.PARCEL_REF_NAME).child(selectedDate).removeValue(mParcelListRemove);
-                                databaseRef.child(FirebaseDatabaseConnector.COURIER_REF_NAME).child(selectedDate).removeValue(mParcelListRemove);
-                                databaseRef.child(FirebaseDatabaseConnector.JOB_STATUS_NAME).child(selectedDate).removeValue(mParcelListRemove);
+                                databaseRef.child(FirebaseDatabaseConnector.COURIER_REF_NAME).child(selectedDate).removeValue();
+                                databaseRef.child(FirebaseDatabaseConnector.JOB_STATUS_NAME).child(selectedDate).removeValue();
+
                             }
                         }).setNegativeButton(getText(R.string.text_no), new DialogInterface.OnClickListener() {
                             @Override
