@@ -68,6 +68,7 @@ public class ParcelListActivity extends AppCompatActivity implements View.OnClic
     private TextView mTextCourierName;
     private TextView mTextCourierDate;
     private TextView mTextCount;
+    private Button mBtnResetdb;
     private Button mBtnChangeView;
     private DatePickerDialog mDatePickerDialog;
     private AlertDialog.Builder mCourierPickerDialog;
@@ -278,7 +279,7 @@ public class ParcelListActivity extends AppCompatActivity implements View.OnClic
 
 
         mBtnChangeView = findViewById(R.id.btn_change_view);
-
+        mBtnResetdb = findViewById(R.id.btn_resetdb);
         mTouchListner = new View.OnTouchListener() {
             @Override
             public boolean onTouch(View view, MotionEvent motionEvent) {
@@ -292,12 +293,17 @@ public class ParcelListActivity extends AppCompatActivity implements View.OnClic
         };
 
         mBtnChangeView.setOnTouchListener(mTouchListner);
+        mBtnResetdb.setOnTouchListener(mTouchListner);
 
-        mTextCourierDate.setOnClickListener(this);
-        if (Arrays.asList(Utils.ADMIN_UIDS).contains(mAuth.getUid())) {
-            mTextCourierName.setOnClickListener(this);
-        }
         mBtnChangeView.setOnClickListener(this);
+        mBtnResetdb.setOnClickListener(this);
+        mTextCourierDate.setOnClickListener(this);
+
+        if (Utils.isAdminAuth()) {
+            mTextCourierName.setOnClickListener(this);
+            mBtnResetdb.setVisibility(View.VISIBLE);
+        }
+
 
         mSdf = new SimpleDateFormat("yyyy-MM-dd");
 
@@ -346,10 +352,39 @@ public class ParcelListActivity extends AppCompatActivity implements View.OnClic
         return mTextCourierName.getText().equals(getString(R.string.all_couriers));
     }
 
+    private DatabaseReference.CompletionListener mParcelListRemove = new DatabaseReference.CompletionListener() {
+        @Override
+        public void onComplete(@Nullable DatabaseError databaseError, @NonNull DatabaseReference databaseReference) {
+            Log.i(LOG_TAG, "mParcelListRemove is called");
+        }
+    };
+
     @Override
     public void onClick(View view) {
         TmsParcelItem item;
         switch (view.getId()) {
+            case R.id.btn_resetdb:
+
+                AlertDialog.Builder resetDBAlert = new AlertDialog.Builder(ParcelListActivity.this);
+                final String selectedDate = mTextCourierDate.getText().toString();
+                resetDBAlert.setTitle(getText(R.string.reset_db_title))
+                        .setMessage(String.format(getResources().getString(R.string.reset_db_alert_title), selectedDate))
+                        .setPositiveButton(getText(R.string.text_yes), new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialogInterface, int i) {
+                                DatabaseReference databaseRef = FirebaseDatabase.getInstance().getReference();
+
+                                databaseRef.child(FirebaseDatabaseConnector.PARCEL_REF_NAME).child(selectedDate).removeValue(mParcelListRemove);
+                                databaseRef.child(FirebaseDatabaseConnector.COURIER_REF_NAME).child(selectedDate).removeValue(mParcelListRemove);
+                                databaseRef.child(FirebaseDatabaseConnector.JOB_STATUS_NAME).child(selectedDate).removeValue(mParcelListRemove);
+                            }
+                        }).setNegativeButton(getText(R.string.text_no), new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialogInterface, int i) {
+                                dialogInterface.dismiss();
+                            }
+                        }).show();
+                break;
 
             case R.id.btn_change_view:
                 Intent intent = new Intent(ParcelListActivity.this, MapViewActivity.class);

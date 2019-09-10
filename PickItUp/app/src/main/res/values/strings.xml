@@ -50,6 +50,8 @@
     <string name="invalid_credential_alert_message">사용자 자격증명이 잘못되었거나 만료되었습니다.</string>
     <string name="sign_out_text">로그아웃</string>
     <string name="sign_out_alert_title">로그아웃</string>
+    <string name="reset_db_title">초기화</string>
+    <string name="reset_db_alert_title">%1$s 날짜의 정보를 초기화 하시겠습니까?</string>
     <string name="sign_out_alert_message">로그아웃을 하시겠습니까?</string>
     <string name="text_yes">예</string>
     <string name="text_no">아니오</string>
