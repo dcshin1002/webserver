@@ -546,6 +546,7 @@ public class MapViewActivity extends AppCompatActivity
     private void updateStatusToNotDelivery(TextView addrText, ImageView statusIcon, Button btn_complete, Button btn_deliveryinfo) {
         addrText.setTextColor(0xFF4F4F4F);
         statusIcon.setImageDrawable(getDrawable(R.mipmap.tag_in_transit_v2));
+        statusIcon.setVisibility(View.INVISIBLE);
         btn_complete.setVisibility(View.VISIBLE);
         btn_deliveryinfo.setVisibility(View.GONE);
     }
@@ -560,6 +561,7 @@ public class MapViewActivity extends AppCompatActivity
 
     private void updateStatusToComplete(TextView addrText, ImageView statusIcon, Button btn_complete, Button btn_deliveryinfo) {
         addrText.setTextColor(0xFF68c166);
+        statusIcon.setVisibility(View.VISIBLE);
         statusIcon.setImageDrawable(getDrawable(R.mipmap.tag_delivered_v2));
         btn_complete.setVisibility(View.GONE);
         btn_deliveryinfo.setVisibility(View.VISIBLE);
