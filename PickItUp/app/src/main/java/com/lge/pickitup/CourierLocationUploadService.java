@@ -28,9 +28,13 @@ public class CourierLocationUploadService extends Service {
     private ValueEventListener mValueEventListener = new ValueEventListener() {
         @Override
         public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-
+            Log.i(LOG_TAG, "CourierLocationUploadService ValueEventListener is called");
+            mTmsCourierItem = null;
             for (DataSnapshot postSnapshot : dataSnapshot.getChildren()) {
                 mTmsCourierItem = postSnapshot.getValue(TmsCourierItem.class);
+                if (mCourierName.equals(mTmsCourierItem.name)) {
+                    break;
+                }
             }
             if (mTmsCourierItem == null) {
                 Log.i(LOG_TAG, "mTmsCourierItem is null");
@@ -65,8 +69,7 @@ public class CourierLocationUploadService extends Service {
 
         mCourierName = intent.getStringExtra(Utils.KEY_COURIER_NAME).toString();
         mTodayDateStr = intent.getStringExtra(Utils.KEY_DB_DATE).toString();
-        Query firebaseQuery = FirebaseDatabase.getInstance().getReference().child(FirebaseDatabaseConnector.COURIER_REF_NAME)
-                              .child(mTodayDateStr).orderByChild(TmsCourierItem.KEY_NAME).equalTo(mCourierName);
+        Query firebaseQuery = FirebaseDatabase.getInstance().getReference().child(FirebaseDatabaseConnector.COURIER_REF_NAME).child(mTodayDateStr); //.orderByChild(TmsCourierItem.KEY_NAME).equalTo(mCourierName);
         firebaseQuery.addValueEventListener(mValueEventListener);
         return START_REDELIVER_INTENT;
     }
@@ -90,7 +93,6 @@ public class CourierLocationUploadService extends Service {
                 @Override
                 public void run() {
                     Log.e(LOG_TAG, "Runnable run is called");
-                    Log.e(LOG_TAG, "likepaul make log");
                     Timer timer = new Timer();
                     TimerTask TT = new TimerTask() {
                         @Override
@@ -99,7 +101,7 @@ public class CourierLocationUploadService extends Service {
                             if (mTmsCourierItem != null) {
                                 mTmsCourierItem.latitude = String.valueOf(Utils.mCurrent.getLatitude());
                                 mTmsCourierItem.longitude = String.valueOf(Utils.mCurrent.getLongitude());
-                                Log.e(LOG_TAG, "likepaul :" + Utils.mCurrent.getLatitude() + " / " + Utils.mCurrent.getLongitude());
+                                Log.e(LOG_TAG, "current Location is :" + Utils.mCurrent.getLatitude() + " / " + Utils.mCurrent.getLongitude());
                                 mFbConnector.postCourierItemToFirebaseDatabase(mTodayDateStr, mTmsCourierItem);
                             }
 
