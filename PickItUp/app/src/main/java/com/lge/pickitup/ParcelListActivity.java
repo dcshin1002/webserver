@@ -68,7 +68,6 @@ public class ParcelListActivity extends AppCompatActivity implements View.OnClic
     private TextView mTextCourierName;
     private TextView mTextCourierDate;
     private TextView mTextCount;
-    private Button mBtnUpdateList;
     private Button mBtnChangeView;
     private DatePickerDialog mDatePickerDialog;
     private AlertDialog.Builder mCourierPickerDialog;
@@ -278,7 +277,6 @@ public class ParcelListActivity extends AppCompatActivity implements View.OnClic
         mTextCourierDate = findViewById(R.id.text_courier_date);
 
 
-        mBtnUpdateList = findViewById(R.id.btn_update);
         mBtnChangeView = findViewById(R.id.btn_change_view);
 
         mTouchListner = new View.OnTouchListener() {
@@ -293,14 +291,12 @@ public class ParcelListActivity extends AppCompatActivity implements View.OnClic
             }
         };
 
-        mBtnUpdateList.setOnTouchListener(mTouchListner);
         mBtnChangeView.setOnTouchListener(mTouchListner);
 
         mTextCourierDate.setOnClickListener(this);
         if (Arrays.asList(Utils.ADMIN_UIDS).contains(mAuth.getUid())) {
             mTextCourierName.setOnClickListener(this);
         }
-        mBtnUpdateList.setOnClickListener(this);
         mBtnChangeView.setOnClickListener(this);
 
         mSdf = new SimpleDateFormat("yyyy-MM-dd");
@@ -354,9 +350,6 @@ public class ParcelListActivity extends AppCompatActivity implements View.OnClic
     public void onClick(View view) {
         TmsParcelItem item;
         switch (view.getId()) {
-            case R.id.btn_update:
-                refreshList(mTextCourierName.getText().toString());
-                break;
 
             case R.id.btn_change_view:
                 Intent intent = new Intent(ParcelListActivity.this, MapViewActivity.class);
@@ -604,10 +597,12 @@ public class ParcelListActivity extends AppCompatActivity implements View.OnClic
                         statusIcon.setImageDrawable(getDrawable(R.mipmap.tag_delivered_v2));
                         btn_complete.setVisibility(View.GONE);
                         btn_deliveryinfo.setVisibility(View.VISIBLE);
+                        btn_deliveryinfo.setBackgroundColor(0xFF68c166);
                     } else {
                         addrText.setTextColor(0xFF4F4F4F);
                         statusIcon.setImageDrawable(getDrawable(R.mipmap.tag_in_transit_v2));
                         btn_complete.setVisibility(View.VISIBLE);
+                        btn_complete.setBackgroundColor(0xFF42A5F5);
                         btn_deliveryinfo.setVisibility(View.GONE);
                     }
                 }
