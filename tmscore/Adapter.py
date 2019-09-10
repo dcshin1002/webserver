@@ -128,7 +128,7 @@ def setRouteWork(year, month, day, cluster=None):
             dateForm, c+1, finder.problem, finder.route)
         print('firebaseDB updated for cluster', c+1)
     dcon.saveJobStateToFirebaseDB(dateForm, "finished")
-    print('setRoute Done')
+    print('setRouter Done')
 
 
 def getWorkProgress(req, jobid):
