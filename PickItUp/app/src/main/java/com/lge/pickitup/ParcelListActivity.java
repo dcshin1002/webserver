@@ -612,6 +612,7 @@ public class ParcelListActivity extends AppCompatActivity implements View.OnClic
 
             if (item != null) {
                 TextView addrText = v.findViewById(R.id.listAddr);
+                TextView providerText = v.findViewById(R.id.listItemTextProvider);
                 TextView customerText = v.findViewById(R.id.listItemTextCustomer);
                 TextView deliveryNote = v.findViewById(R.id.listItemTextDeliveryMemo);
                 TextView remark = v.findViewById(R.id.listItemTextRemark);
@@ -644,6 +645,9 @@ public class ParcelListActivity extends AppCompatActivity implements View.OnClic
                         btn_complete.setBackgroundColor(0xFF42A5F5);
                         btn_deliveryinfo.setVisibility(View.GONE);
                     }
+                }
+                if (providerText != null) {
+                    providerText.setText("업체명" + " : " + item.consignorName);
                 }
                 if (customerText != null) {
                     customerText.setText(getString(R.string.customer) + " : " + item.consigneeName + " (" + item.consigneeContact + ")");

@@ -25,6 +25,15 @@
             android:textStyle="bold" />
 
         <TextView
+            android:id="@+id/listItemTextProvider"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center_vertical"
+            android:paddingLeft="5dp"
+            android:paddingBottom="1dp"
+            android:textSize="16dp" />
+
+        <TextView
             android:id="@+id/listItemTextCustomer"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"

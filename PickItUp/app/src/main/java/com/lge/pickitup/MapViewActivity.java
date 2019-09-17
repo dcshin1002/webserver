@@ -495,6 +495,7 @@ public class MapViewActivity extends AppCompatActivity
             if (item != null) {
                 boolean isDeliverd = item.status.equals(TmsParcelItem.STATUS_DELIVERED);
                 TextView addrText = findViewById(R.id.listAddr);
+                TextView providerText = findViewById(R.id.listItemTextProvider);
                 TextView customerText = findViewById(R.id.listItemTextCustomer);
                 TextView deliveryNote = findViewById(R.id.listItemTextDeliveryMemo);
                 TextView remark = findViewById(R.id.listItemTextRemark);
@@ -520,6 +521,9 @@ public class MapViewActivity extends AppCompatActivity
                     } else {
                         updateStatusToNotDelivery(addrText, statusIcon, btn_complete, btn_deliveryinfo);
                     }
+                }
+                if (providerText != null) {
+                    providerText.setText("업체명" + " : " + item.consignorName);
                 }
                 if (customerText != null) {
                     customerText.setText(getString(R.string.customer) + " : " + item.consigneeName + " (" + item.consigneeContact + ")");
