@@ -275,8 +275,8 @@ public class AddressFacade {
 
                 JSONObject json_addr = new JSONObject(sb.toString());
                 JSONArray addr_arr = json_addr.getJSONArray("documents");
-                String latitude_y = null;
-                String longitude_x = null;
+                String latitude_y = "0";
+                String longitude_x = "0";
                 for (int i = 0; i < addr_arr.length(); i++) {
                     latitude_y = addr_arr.getJSONObject(i).getString("y");  // Latitude
                     longitude_x = addr_arr.getJSONObject(i).getString("x"); // Longitude

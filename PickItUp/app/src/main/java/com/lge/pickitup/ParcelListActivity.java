@@ -609,6 +609,7 @@ public class ParcelListActivity extends AppCompatActivity implements View.OnClic
 
             final TmsParcelItem item = getItem(position);
             boolean isDeliverd = item.status.equals(TmsParcelItem.STATUS_DELIVERED);
+            boolean isValidAddress = !(item.consigneeLatitude.equals("0") || item.consigneeLongitude.equals("0"));
 
             if (item != null) {
                 TextView addrText = v.findViewById(R.id.listAddr);
@@ -632,14 +633,18 @@ public class ParcelListActivity extends AppCompatActivity implements View.OnClic
                     }
                     addrText.setText(addrTextValue + item.consigneeAddr);
                     if (isDeliverd) {
-                        addrText.setTextColor(0xFF68c166);
+                        addrText.setTextColor(0xFF68C166);
                         statusIcon.setVisibility(View.VISIBLE);
                         statusIcon.setImageDrawable(getDrawable(R.mipmap.tag_delivered_v2));
                         btn_complete.setVisibility(View.GONE);
                         btn_deliveryinfo.setVisibility(View.VISIBLE);
-                        btn_deliveryinfo.setBackgroundColor(0xFF68c166);
+                        btn_deliveryinfo.setBackgroundColor(0xFF68C166);
                     } else {
-                        addrText.setTextColor(0xFF4F4F4F);
+                        if (isValidAddress) {
+                            addrText.setTextColor(0xFF4F4F4F);
+                        } else {
+                            addrText.setTextColor(0xFFC12F2F);
+                        }
                         statusIcon.setVisibility(View.INVISIBLE);
                         btn_complete.setVisibility(View.VISIBLE);
                         btn_complete.setBackgroundColor(0xFF42A5F5);
