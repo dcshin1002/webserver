@@ -34,6 +34,9 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.Query;
 import com.google.firebase.database.ValueEventListener;
 
 import java.util.ArrayList;
@@ -57,6 +60,7 @@ public class MapViewActivity extends AppCompatActivity
 
     private HashMap<String, TmsParcelItem> mParcelDatabaseHash = new HashMap<>();
     private HashMap<String, TmsCourierItem> mCourierDatabaseHash = new HashMap<>();
+    private static HashMap<MarkerItem, ArrayList<TmsParcelItem>> mMarkerHash = new HashMap();
     private ArrayList<String> mArrayKeys = new ArrayList<String>();
     private static ArrayList<TmsParcelItem> mArrayValues = new ArrayList<TmsParcelItem>();
     private static ArrayList<TmsCourierItem> mCourierArrayValues = new ArrayList<TmsCourierItem>();
@@ -343,21 +347,23 @@ public class MapViewActivity extends AppCompatActivity
             marker.setCustomImageBitmap(pin);
             marker.setCustomSelectedImageBitmap(seleted_pin);
             marker.setCustomImageAutoscale(false);
+
+            MarkerItem markeritem = new MarkerItem(strLatitude, strLongitude);
+            ArrayList<TmsParcelItem> list_parcelitem;
+            if (mMarkerHash.containsKey(markeritem)) {
+                list_parcelitem = mMarkerHash.get(markeritem);
+            } else {
+                list_parcelitem = new ArrayList<>();
+            }
+            list_parcelitem.add(item);
+            mMarkerHash.put(markeritem, list_parcelitem);
             mMapView.addPOIItem(marker);
             num++;
         }
     }
 
     private void getFirebaseList() {
-        if (mSelectedCourierName != null) {
-            mFbConnector.getParcelListFromFirebaseDatabase(mSelectedDate, TmsParcelItem.KEY_COURIER_NAME, mSelectedCourierName);
-        } else if (mSelectedSectionID != null) {
-            mFbConnector.getParcelListFromFirebaseDatabase(mSelectedDate, TmsParcelItem.KEY_SECTOR_ID, mSelectedSectionID);
-        }
-        mFbConnector.getCourierListFromFirebaseDatabase(mSelectedDate, TmsParcelItem.KEY_ID);
-        if (Utils.isAdminAuth()) {
-            mFbConnector.getCourierListFromFirebaseDatabaseWithListener(mSelectedDate, mCourierValueEventListener);
-        }
+        mFbConnector.getCourierListFromFirebaseDatabaseWithListener(mSelectedDate, mCourierValueEventListener);
     }
 
     private ValueEventListener mCourierValueEventListener = new ValueEventListener() {
@@ -366,14 +372,84 @@ public class MapViewActivity extends AppCompatActivity
             Log.d(LOG_TAG, "mapview CourierList size : " + dataSnapshot.getChildrenCount());
             for (DataSnapshot postSnapshot : dataSnapshot.getChildren()) {
                 TmsCourierItem item = postSnapshot.getValue(TmsCourierItem.class);
-                Log.i(LOG_TAG, item.id + "," + item.name +"," + item.latitude + "," + item.longitude);
-                addCourierMarker(item);
+                mCourierDatabaseHash.put(item.name, item);
+                mCourierArrayValues.add(item);
+                if (Utils.isAdminAuth()) {
+                    addCourierMarker(item);
+                }
+            }
+            if (mSelectedCourierName != null) {
+                getParcelListFromFirebaseDatabase(mSelectedDate, TmsParcelItem.KEY_COURIER_NAME, mSelectedCourierName);
             }
         }
 
         @Override
         public void onCancelled(@NonNull DatabaseError databaseError) {
 
+        }
+    };
+
+    protected void getParcelListFromFirebaseDatabase(final String pathString, String orderBy, String select) {
+        DatabaseReference mDatabaseRef;
+        Query firebaseQuery;
+        mDatabaseRef = FirebaseDatabase.getInstance().getReference();
+        if (select.equals(getString(R.string.all_couriers))) {
+            firebaseQuery = mDatabaseRef.child(mFbConnector.PARCEL_REF_NAME).child(pathString).orderByChild(orderBy);
+        } else {
+            firebaseQuery = mDatabaseRef.child(mFbConnector.PARCEL_REF_NAME).child(pathString).orderByChild(orderBy).equalTo(select);
+        }
+        firebaseQuery.addListenerForSingleValueEvent(mParcelValueEventListener);
+    }
+
+
+
+    private ValueEventListener mParcelValueEventListener = new ValueEventListener() {
+        @Override
+        public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+            mParcelDatabaseHash.clear();
+            mArrayKeys.clear();
+            mArrayValues.clear();
+            boolean isRouted = true;
+
+            Log.d(LOG_TAG, "getParcelListFromFirebaseDatabase : size " + dataSnapshot.getChildrenCount());
+            for (DataSnapshot postSnapshot : dataSnapshot.getChildren()) {
+                String key = postSnapshot.getKey();
+                TmsParcelItem value = postSnapshot.getValue(TmsParcelItem.class);
+
+                if (value.orderInRoute == -1) {
+                    isRouted = false;
+                }
+                value.orderInRoute = -1;
+
+                mParcelDatabaseHash.put(key, value);
+                mArrayKeys.add(key);
+                mArrayValues.add(value);
+
+                Log.d(LOG_TAG, "mArrayValues size = " + mArrayValues.size());
+            }
+
+            String courierName = mSelectedCourierName;
+            if (!courierName.equals(R.string.all_couriers) ) {
+                TmsCourierItem courierItem = mCourierDatabaseHash.get(courierName);
+                Log.i(LOG_TAG, "courierItem != null value is " + (courierItem != null));
+                if(courierItem != null) {
+                    TmsParcelItem parcelItem = mParcelDatabaseHash.get(String.valueOf(courierItem.startparcelid));
+                    mArrayValues.clear();
+
+                    mArrayValues.add(parcelItem);
+                    while(parcelItem.nextParcel != -1) {
+                        Log.i(LOG_TAG, "likepaul String.valueOf(parcelItem.nextParcel is " + String.valueOf(parcelItem.nextParcel));
+                        parcelItem = mParcelDatabaseHash.get(String.valueOf(parcelItem.nextParcel));
+                        mArrayValues.add(parcelItem);
+                    }
+                }
+            }
+            addMarker();
+        }
+
+        @Override
+        public void onCancelled(@NonNull DatabaseError databaseError) {
+            Log.w(LOG_TAG, "getParcelListFromFirebaseDatabase, ValueEventListener.onCancelled", databaseError.toException());
         }
     };
 

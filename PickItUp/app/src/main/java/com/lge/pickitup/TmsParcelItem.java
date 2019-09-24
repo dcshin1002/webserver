@@ -40,6 +40,7 @@ public class TmsParcelItem implements Comparable<TmsParcelItem>, Parcelable {
     public static final String KEY_ZIP_CODE = "zipCode";
     public static final String KEY_SECTOR_ID = "sectorId";
     public static final String KEY_ORDER_ID = "orderInRoute";
+    public static final String KEY_NEXT_PARCEL = "nextParcel";
     public static final String KEY_STATUS = "status";
     public static final String KEY_COMPLETE_MSG_IMG = "completeImage";
     public static final String KEY_COMPLETE_TIME = "completeTime";
@@ -67,6 +68,7 @@ public class TmsParcelItem implements Comparable<TmsParcelItem>, Parcelable {
             item.zipCode = parcel.readString();
             item.sectorId = parcel.readInt();
             item.orderInRoute = parcel.readInt();
+            item.nextParcel = parcel.readInt();
             item.status = parcel.readString();
             item.completeImage = parcel.readString();
             item.completeTime = parcel.readString();
@@ -109,6 +111,7 @@ public class TmsParcelItem implements Comparable<TmsParcelItem>, Parcelable {
     // Information to process parcel
     public int sectorId = -1;
     public int orderInRoute = -1;
+    public int nextParcel = -1;
     public String status = STATUS_COLLECTED;
     public String completeImage = UNSET;
     public String completeTime = UNSET;
@@ -173,6 +176,7 @@ public class TmsParcelItem implements Comparable<TmsParcelItem>, Parcelable {
         result.put(KEY_ZIP_CODE, zipCode);
         result.put(KEY_SECTOR_ID, sectorId);
         result.put(KEY_ORDER_ID, orderInRoute);
+        result.put(KEY_NEXT_PARCEL, nextParcel);
         result.put(KEY_STATUS, status);
         result.put(KEY_COMPLETE_MSG_IMG, completeImage);
         result.put(KEY_COMPLETE_TIME, completeTime);
@@ -205,6 +209,7 @@ public class TmsParcelItem implements Comparable<TmsParcelItem>, Parcelable {
         parcel.writeString(zipCode);
         parcel.writeInt(sectorId);
         parcel.writeInt(orderInRoute);
+        parcel.writeInt(nextParcel);
         parcel.writeString(status);
         parcel.writeString(completeImage);
         parcel.writeString(completeTime);

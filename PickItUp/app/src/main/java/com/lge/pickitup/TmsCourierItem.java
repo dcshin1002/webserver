@@ -12,11 +12,13 @@ public class TmsCourierItem {
     public static final String KEY_NAME = "name";
     public static final String KEY_LATITUDE = "latitude";
     public static final String KEY_LONGITUDE = "longitude";
+    public static final String KEY_START_PARCEL_ID = "startparcelid";
 
     public String id;
     public String name;
     public String latitude = "";
     public String longitude = "";
+    public int startparcelid = -1;
 
     public TmsCourierItem() {
 
@@ -41,6 +43,7 @@ public class TmsCourierItem {
         result.put(KEY_NAME, name);
         result.put(KEY_LATITUDE, latitude);
         result.put(KEY_LONGITUDE, longitude);
+        result.put(KEY_START_PARCEL_ID, startparcelid);
         return result;
     }
 }

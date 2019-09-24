@@ -484,22 +484,26 @@ public class ParcelListActivity extends AppCompatActivity implements View.OnClic
                     isRouted = false;
                 }
                 value.orderInRoute = -1;
-
                 mParcelDatabaseHash.put(key, value);
                 mArrayKeys.add(key);
                 mArrayValues.add(value);
-
                 Log.d(LOG_TAG, "mArrayValues size = " + mArrayValues.size());
             }
-            if (false) {
-                for (TmsParcelItem item : mArrayValues) {
-                    item.orderInRoute = -1;
+
+            String courierName = mTextCourierName.getText().toString();
+            if (!courierName.equals(R.string.all_couriers) ) {
+                TmsCourierItem courierItem = mCourierDatabaseHash.get(courierName);
+                if(courierItem != null) {
+                    TmsParcelItem parcelItem = mParcelDatabaseHash.get(String.valueOf(courierItem.startparcelid));
+                    mArrayValues.clear();
+                    mArrayValues.add(parcelItem);
+                    while(parcelItem.nextParcel != -1) {
+                        parcelItem = mParcelDatabaseHash.get(String.valueOf(parcelItem.nextParcel));
+                        mArrayValues.add(parcelItem);
+                    }
                 }
             }
 
-//            if (mArrayValues.size() > 0) {
-//                Collections.sort(mArrayValues);
-//            }
             if (mArrayAdapter != null) {
                 mArrayAdapter.notifyDataSetChanged();
             }
@@ -509,25 +513,41 @@ public class ParcelListActivity extends AppCompatActivity implements View.OnClic
         }
     };
 
-    private void refreshList(String courierName) {
+    private void getFirebaseList() {
         String selectedDate = mTextCourierDate.getText().toString();
-        DatabaseReference databaseRef = FirebaseDatabase.getInstance().getReference();
-        mFbConnector.getCourierListFromFirebaseDatabase(selectedDate, TmsParcelItem.KEY_ID);
-        if (courierName.equals(getString(R.string.all_couriers))) {
-            //mFbConnector.getParcelListFromFirebaseDatabase(selectedDate, TmsParcelItem.KEY_ID);
-            Query firebaseQuery = databaseRef.child(FirebaseDatabaseConnector.PARCEL_REF_NAME).child(selectedDate).orderByChild(TmsParcelItem.KEY_ID);
-            firebaseQuery.addValueEventListener(mParcelListEventListener);
-        } else {
-            //mFbConnector.getParcelListFromFirebaseDatabase(selectedDate, TmsParcelItem.KEY_COURIER_NAME, select);
-            Query firebaseQuery = databaseRef.child(FirebaseDatabaseConnector.PARCEL_REF_NAME).child(selectedDate).orderByChild(TmsParcelItem.KEY_COURIER_NAME).equalTo(courierName);
-            firebaseQuery.addValueEventListener(mParcelListEventListener);
+        mFbConnector.getCourierListFromFirebaseDatabaseWithListener(selectedDate, mCourierValueEventListener);
+    }
 
+    private ValueEventListener mCourierValueEventListener = new ValueEventListener() {
+        @Override
+        public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+            Log.d(LOG_TAG, "mapview CourierList size : " + dataSnapshot.getChildrenCount());
+            for (DataSnapshot postSnapshot : dataSnapshot.getChildren()) {
+                TmsCourierItem item = postSnapshot.getValue(TmsCourierItem.class);
+                mCourierDatabaseHash.put(item.name, item);
+                mCourierArrayValues.add(item);
+            }
+            String courierName = mTextCourierName.getText().toString();
+            String selectedDate = mTextCourierDate.getText().toString();
+            DatabaseReference databaseRef = FirebaseDatabase.getInstance().getReference();
+
+            if (courierName.equals(getString(R.string.all_couriers))) {
+                Query firebaseQuery = databaseRef.child(FirebaseDatabaseConnector.PARCEL_REF_NAME).child(selectedDate).orderByChild(TmsParcelItem.KEY_ID);
+                firebaseQuery.addValueEventListener(mParcelListEventListener);
+            } else {
+                Query firebaseQuery = databaseRef.child(FirebaseDatabaseConnector.PARCEL_REF_NAME).child(selectedDate).orderByChild(TmsParcelItem.KEY_COURIER_NAME).equalTo(courierName);
+                firebaseQuery.addValueEventListener(mParcelListEventListener);
+            }
         }
 
-        Log.d(LOG_TAG, "ParcelList size = " + mParcelDatabaseHash.size());
-        Log.d(LOG_TAG, "CourierList size = " + mCourierDatabaseHash.size());
-        Log.d(LOG_TAG, "KeyArray size = " + mArrayKeys.size());
-        Log.d(LOG_TAG, "ValueArray size = " + mArrayValues.size());
+        @Override
+        public void onCancelled(@NonNull DatabaseError databaseError) {
+
+        }
+    };
+
+    private void refreshList(String courierName) {
+        getFirebaseList();
     }
 
     private void goToUploadImageActivity(final TmsParcelItem item, int requestCode) {

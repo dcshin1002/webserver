@@ -167,12 +167,10 @@ public class FirebaseDatabaseConnector {
             public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
                 mCourierHash.clear();
 
-                Log.d(LOG_TAG, "getCourierListFromFirebaseDatabase : size " + dataSnapshot.getChildrenCount());
                 for (DataSnapshot postSnapshot : dataSnapshot.getChildren()) {
                     String key = postSnapshot.getKey();
                     TmsCourierItem value = postSnapshot.getValue(TmsCourierItem.class);
-
-                    mCourierHash.put(key, value);
+                    mCourierHash.put(value.name, value);
                     mCourierArrayValues.add(value);
                 }
             }
@@ -306,34 +304,6 @@ public class FirebaseDatabaseConnector {
                     for (TmsParcelItem item : mArrayValues) {
                         item.orderInRoute = -1;
                     }
-                }
-                if (mArrayValues.size() > 0) {
-                    //Collections.sort(mArrayValues);
-                    /*
-                    getJobStatusFromFirebaseDatabase(pathString, new ValueEventListener() {
-                        @Override
-                        public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-                            long numElements = dataSnapshot.getChildrenCount();
-                            if (numElements > 0 ) {
-                                TmsStatusItem jobStatus = dataSnapshot.getValue(TmsStatusItem.class);
-                                if (jobStatus.route_job.equals("finished")) {
-                                    int nearIdx = getNearIdx(mArrayValues);
-                                    int newOrderInRoute = 1;
-                                    for (int i=0; i < mArrayValues.size(); i++) {
-                                        int idx = (nearIdx + i) % mArrayValues.size();
-                                        mArrayValues.get(idx).orderInRoute = newOrderInRoute++;
-                                    }
-                                    Collections.sort(mArrayValues);
-                                }
-                            }
-                        }
-                        @Override
-                        public void onCancelled(@NonNull DatabaseError databaseError) {
-
-                        }
-                    });
-                    */
-
                 }
 
                 if (mListAdapter != null) {

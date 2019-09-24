@@ -43,6 +43,7 @@ public class AddressFacade {
     String mDateStr;
     Context mContext;
     List<TmsParcelItem> mParcelList = new ArrayList<>();
+    private HashMap<Integer, TmsParcelItem> mLastParcelItemInSector = new HashMap<>();
     private HashMap<String, TmsCourierItem> mCourierHash = new HashMap<>();
     private FirebaseDatabaseConnector mFbConnector;
 
@@ -174,6 +175,14 @@ public class AddressFacade {
         for (int i = 0; i < mParcelList.size(); i++) {
             TmsParcelItem item = mParcelList.get(i);
             item.id = startIdx + i + 1;
+
+            TmsParcelItem lastItemInHash = mLastParcelItemInSector.get(item.sectorId);
+            if (lastItemInHash != null) {
+                lastItemInHash.nextParcel = item.id;
+            } else {
+                mCourierHash.get(item.courierName).startparcelid = item.id;
+            }
+            mLastParcelItemInSector.put(item.sectorId, item);
         }
     }
 
