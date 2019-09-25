@@ -431,16 +431,15 @@ public class MapViewActivity extends AppCompatActivity
             String courierName = mSelectedCourierName;
             if (!courierName.equals(R.string.all_couriers) ) {
                 TmsCourierItem courierItem = mCourierDatabaseHash.get(courierName);
-                Log.i(LOG_TAG, "courierItem != null value is " + (courierItem != null));
                 if(courierItem != null) {
                     TmsParcelItem parcelItem = mParcelDatabaseHash.get(String.valueOf(courierItem.startparcelid));
-                    mArrayValues.clear();
-
-                    mArrayValues.add(parcelItem);
-                    while(parcelItem.nextParcel != -1) {
-                        Log.i(LOG_TAG, "likepaul String.valueOf(parcelItem.nextParcel is " + String.valueOf(parcelItem.nextParcel));
-                        parcelItem = mParcelDatabaseHash.get(String.valueOf(parcelItem.nextParcel));
+                    if (parcelItem != null) {
+                        mArrayValues.clear();
                         mArrayValues.add(parcelItem);
+                        while(parcelItem.nextParcel != -1) {
+                            parcelItem = mParcelDatabaseHash.get(String.valueOf(parcelItem.nextParcel));
+                            mArrayValues.add(parcelItem);
+                        }
                     }
                 }
             }

@@ -495,11 +495,13 @@ public class ParcelListActivity extends AppCompatActivity implements View.OnClic
                 TmsCourierItem courierItem = mCourierDatabaseHash.get(courierName);
                 if(courierItem != null) {
                     TmsParcelItem parcelItem = mParcelDatabaseHash.get(String.valueOf(courierItem.startparcelid));
-                    mArrayValues.clear();
-                    mArrayValues.add(parcelItem);
-                    while(parcelItem.nextParcel != -1) {
-                        parcelItem = mParcelDatabaseHash.get(String.valueOf(parcelItem.nextParcel));
+                    if (parcelItem != null) {
+                        mArrayValues.clear();
                         mArrayValues.add(parcelItem);
+                        while(parcelItem.nextParcel != -1) {
+                            parcelItem = mParcelDatabaseHash.get(String.valueOf(parcelItem.nextParcel));
+                            mArrayValues.add(parcelItem);
+                        }
                     }
                 }
             }
