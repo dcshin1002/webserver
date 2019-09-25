@@ -10,6 +10,8 @@ import androidx.annotation.NonNull;
 
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 import com.opencsv.CSVReader;
 
@@ -32,6 +34,7 @@ import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import javax.net.ssl.HttpsURLConnection;
 
@@ -43,8 +46,9 @@ public class AddressFacade {
     String mDateStr;
     Context mContext;
     List<TmsParcelItem> mParcelList = new ArrayList<>();
-    private HashMap<Integer, TmsParcelItem> mLastParcelItemInSector = new HashMap<>();
+    private HashMap<Integer, TmsParcelItem> mPreviousParcelItemInSector = new HashMap<>();
     private HashMap<String, TmsCourierItem> mCourierHash = new HashMap<>();
+    private HashMap<String, TmsParcelItem> mLastParcelItemInSectorOnDB = new HashMap<>();
     private FirebaseDatabaseConnector mFbConnector;
 
     public AddressFacade(Context mContext) {
@@ -90,6 +94,9 @@ public class AddressFacade {
             long initValueOfParcelId = 0;
             for (DataSnapshot postSnapshot : dataSnapshot.getChildren()) {
                 TmsParcelItem value = postSnapshot.getValue(TmsParcelItem.class);
+                if (value.nextParcel == -1) {
+                    mLastParcelItemInSectorOnDB.put(value.courierName, value);
+                }
                 long id = Long.valueOf(value.id);
                 if (id > initValueOfParcelId)
                     initValueOfParcelId = id;
@@ -176,13 +183,24 @@ public class AddressFacade {
             TmsParcelItem item = mParcelList.get(i);
             item.id = startIdx + i + 1;
 
-            TmsParcelItem lastItemInHash = mLastParcelItemInSector.get(item.sectorId);
+            TmsParcelItem lastItemInHash = mPreviousParcelItemInSector.get(item.sectorId);
             if (lastItemInHash != null) {
                 lastItemInHash.nextParcel = item.id;
             } else {
-                mCourierHash.get(item.courierName).startparcelid = item.id;
+                if (mCourierHash.get(item.courierName).startparcelid == -1) {
+                    mCourierHash.get(item.courierName).startparcelid = item.id;
+                } else {
+                    TmsParcelItem tailItem = mLastParcelItemInSectorOnDB.get(item.courierName);
+                    tailItem.nextParcel = item.id;
+
+                    DatabaseReference ref = FirebaseDatabase.getInstance().getReference().child(mFbConnector.PARCEL_REF_NAME);
+                    Map<String, Object> childUpdates = new HashMap<>();
+                    childUpdates.put("/" + mDateStr + "/" + tailItem.id, tailItem.toMap());
+                    ref.updateChildren(childUpdates);
+                }
+
             }
-            mLastParcelItemInSector.put(item.sectorId, item);
+            mPreviousParcelItemInSector.put(item.sectorId, item);
         }
     }
 

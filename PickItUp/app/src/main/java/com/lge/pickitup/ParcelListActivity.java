@@ -523,6 +523,8 @@ public class ParcelListActivity extends AppCompatActivity implements View.OnClic
     private ValueEventListener mCourierValueEventListener = new ValueEventListener() {
         @Override
         public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+            mCourierDatabaseHash.clear();
+            mCourierArrayValues.clear();
             Log.d(LOG_TAG, "mapview CourierList size : " + dataSnapshot.getChildrenCount());
             for (DataSnapshot postSnapshot : dataSnapshot.getChildren()) {
                 TmsCourierItem item = postSnapshot.getValue(TmsCourierItem.class);
