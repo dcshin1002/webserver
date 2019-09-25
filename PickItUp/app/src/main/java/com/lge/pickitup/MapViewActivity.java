@@ -61,6 +61,7 @@ public class MapViewActivity extends AppCompatActivity
     private HashMap<String, TmsParcelItem> mParcelDatabaseHash = new HashMap<>();
     private HashMap<String, TmsCourierItem> mCourierDatabaseHash = new HashMap<>();
     private static HashMap<MarkerItem, ArrayList<TmsParcelItem>> mMarkerHash = new HashMap();
+    private static HashMap<MarkerItem, ArrayList<MapPOIItem>> mMapPOItemHash = new HashMap();
     private ArrayList<String> mArrayKeys = new ArrayList<String>();
     private static ArrayList<TmsParcelItem> mArrayValues = new ArrayList<TmsParcelItem>();
     private static ArrayList<TmsCourierItem> mCourierArrayValues = new ArrayList<TmsCourierItem>();
@@ -282,7 +283,7 @@ public class MapViewActivity extends AppCompatActivity
         return bmp;
     }
 
-    protected static void addMarker() {
+    protected void addMarker() {
         Log.i(LOG_TAG, "mArrayValues.size = " + mArrayValues.size());
         int num = 1;
         for (TmsParcelItem item : mArrayValues) {
@@ -344,11 +345,19 @@ public class MapViewActivity extends AppCompatActivity
                 canvas2.drawText(String.valueOf(textVal), posX, 37, paint); // 63
 
             }
+            if (mSelectedCourierName.equals(GlobalRes.getString(R.string.all_couriers))) {
+                marker.setTag(-1);
+            } else {
+                marker.setTag(num);
+            }
+
             marker.setCustomImageBitmap(pin);
             marker.setCustomSelectedImageBitmap(seleted_pin);
             marker.setCustomImageAutoscale(false);
 
+
             MarkerItem markeritem = new MarkerItem(strLatitude, strLongitude);
+
             ArrayList<TmsParcelItem> list_parcelitem;
             if (mMarkerHash.containsKey(markeritem)) {
                 list_parcelitem = mMarkerHash.get(markeritem);
@@ -356,7 +365,19 @@ public class MapViewActivity extends AppCompatActivity
                 list_parcelitem = new ArrayList<>();
             }
             list_parcelitem.add(item);
+
             mMarkerHash.put(markeritem, list_parcelitem);
+
+
+            ArrayList<MapPOIItem> list_poiitem;
+            if (mMapPOItemHash.containsKey(markeritem)) {
+                list_poiitem = mMapPOItemHash.get(markeritem);
+            } else {
+                list_poiitem = new ArrayList<>();
+            }
+            list_poiitem.add(marker);
+            mMapPOItemHash.put(markeritem, list_poiitem);
+
             mMapView.addPOIItem(marker);
             num++;
         }
@@ -409,6 +430,8 @@ public class MapViewActivity extends AppCompatActivity
             mParcelDatabaseHash.clear();
             mArrayKeys.clear();
             mArrayValues.clear();
+            mMarkerHash.clear();
+            mMapPOItemHash.clear();
             boolean isRouted = true;
 
             Log.d(LOG_TAG, "getParcelListFromFirebaseDatabase : size " + dataSnapshot.getChildrenCount());
@@ -555,6 +578,66 @@ public class MapViewActivity extends AppCompatActivity
         Log.i(LOG_TAG, String.format("MapView onMapViewZoomLevelChanged (%d)", zoomLevel));
     }
 
+    private void showSameGeoParcelDialog(ArrayList<TmsParcelItem> sameGeoMarkerItems) {
+
+    }
+
+    private void updateInfoUI(final TmsParcelItem parcelItem, final MapPOIItem mapPOIItem){
+
+
+        mLayout_parcel_data.setVisibility(View.VISIBLE);
+        mLayout_parcel_data.setTag(R.id.parcel_data, mapPOIItem);
+        mBtnDeliveryinfo.setTag(R.id.parcel_data, mapPOIItem.getUserObject());
+
+        if (parcelItem != null) {
+            boolean isDeliverd = parcelItem.status.equals(TmsParcelItem.STATUS_DELIVERED);
+            TextView addrText = findViewById(R.id.listAddr);
+            TextView providerText = findViewById(R.id.listItemTextProvider);
+            TextView customerText = findViewById(R.id.listItemTextCustomer);
+            TextView deliveryNote = findViewById(R.id.listItemTextDeliveryMemo);
+            TextView remark = findViewById(R.id.listItemTextRemark);
+            Button btn_complete = findViewById(R.id.btn_complete);
+            Button btn_deliveryinfo = findViewById(R.id.btn_deliveryinfo);
+            ImageView statusIcon = findViewById(R.id.status_icon);
+
+            btn_complete.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View view) {
+                    processLitBtnClick(parcelItem, mapPOIItem);
+                }
+            });
+
+            if (addrText != null) {
+                String addrTextValue = "";
+                int deliveryOrder = mapPOIItem.getTag();
+                //if (deliveryOrder != 0) {
+                if (deliveryOrder != -1) {
+                    addrTextValue += deliveryOrder + " : ";
+                }
+                //}
+                addrText.setText(addrTextValue + parcelItem.consigneeAddr);
+                if (isDeliverd) {
+                    updateStatusToComplete(addrText, statusIcon, btn_complete, btn_deliveryinfo);
+                } else {
+                    updateStatusToNotDelivery(addrText, statusIcon, btn_complete, btn_deliveryinfo);
+                }
+            }
+            if (providerText != null) {
+                providerText.setText("업체명" + " : " + parcelItem.consignorName);
+            }
+            if (customerText != null) {
+                customerText.setText(getString(R.string.customer) + " : " + parcelItem.consigneeName + " (" + parcelItem.consigneeContact + ")");
+            }
+            if (deliveryNote != null) {
+                deliveryNote.setText(getString(R.string.delivery_note) + " : " + parcelItem.deliveryNote);
+            }
+            if (remark != null) {
+                remark.setText(getString(R.string.remark) + " : " + parcelItem.remark);
+            }
+        }
+    }
+
+
     @Override
     public void onPOIItemSelected(MapView mapView, final MapPOIItem mapPOIItem) {
         Log.i(LOG_TAG, "onPOIItemSelected");
@@ -563,57 +646,45 @@ public class MapViewActivity extends AppCompatActivity
         }
 
         if (mapPOIItem.getUserObject() instanceof  TmsParcelItem) {
-            mLayout_parcel_data.setVisibility(View.VISIBLE);
-            mLayout_parcel_data.setTag(R.id.parcel_data, mapPOIItem);
-            mBtnDeliveryinfo.setTag(R.id.parcel_data, mapPOIItem.getUserObject());
             final TmsParcelItem item = (TmsParcelItem) mapPOIItem.getUserObject();
-            if (item != null) {
-                boolean isDeliverd = item.status.equals(TmsParcelItem.STATUS_DELIVERED);
-                TextView addrText = findViewById(R.id.listAddr);
-                TextView providerText = findViewById(R.id.listItemTextProvider);
-                TextView customerText = findViewById(R.id.listItemTextCustomer);
-                TextView deliveryNote = findViewById(R.id.listItemTextDeliveryMemo);
-                TextView remark = findViewById(R.id.listItemTextRemark);
-                Button btn_complete = findViewById(R.id.btn_complete);
-                Button btn_deliveryinfo = findViewById(R.id.btn_deliveryinfo);
-                ImageView statusIcon = findViewById(R.id.status_icon);
 
-                btn_complete.setOnClickListener(new View.OnClickListener() {
-                    @Override
-                    public void onClick(View view) {
-                        processLitBtnClick(item, mapPOIItem);
+            MarkerItem markeritem = new MarkerItem(item.consigneeLatitude, item.consigneeLongitude);
+            final ArrayList<TmsParcelItem> sameGeoMarkerItems = mMarkerHash.get(markeritem);
+            final ArrayList<MapPOIItem> sameGeoPOIItems = mMapPOItemHash.get(markeritem);
+
+            Log.i(LOG_TAG, "sameGeoPOIItems size is " + sameGeoPOIItems.size());
+
+            if (sameGeoMarkerItems.size() > 1) {
+
+                final ArrayList<String> ListItems = new ArrayList<>();
+                for (MapPOIItem poiitem : sameGeoPOIItems) {
+                    TmsParcelItem parcelItem = (TmsParcelItem) poiitem.getUserObject();
+                    String strOrder;
+                    if (poiitem.getTag() != -1) {
+                        strOrder = poiitem.getTag()  + " : ";
+                    } else {
+                        strOrder = "";
+                    }
+                    ListItems.add(strOrder + parcelItem.consigneeName + " : " + parcelItem.consigneeAddr);
+                }
+                final CharSequence[] items =  ListItems.toArray(new String[ ListItems.size()]);
+
+                AlertDialog.Builder builder = new AlertDialog.Builder(this);
+                builder.setTitle("주문을 선택하세요");
+                builder.setItems(items, new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int pos) {
+                        updateInfoUI(sameGeoMarkerItems.get(pos), sameGeoPOIItems.get(pos));
                     }
                 });
-
-                if (addrText != null) {
-                    String addrTextValue = "";
-                    if (item.orderInRoute != -1) {
-                        addrTextValue += item.orderInRoute + " : ";
-                    }
-                    addrText.setText(addrTextValue + item.consigneeAddr);
-                    if (isDeliverd) {
-                        updateStatusToComplete(addrText, statusIcon, btn_complete, btn_deliveryinfo);
-                    } else {
-                        updateStatusToNotDelivery(addrText, statusIcon, btn_complete, btn_deliveryinfo);
-                    }
-                }
-                if (providerText != null) {
-                    providerText.setText("업체명" + " : " + item.consignorName);
-                }
-                if (customerText != null) {
-                    customerText.setText(getString(R.string.customer) + " : " + item.consigneeName + " (" + item.consigneeContact + ")");
-                }
-                if (deliveryNote != null) {
-                    deliveryNote.setText(getString(R.string.delivery_note) + " : " + item.deliveryNote);
-                }
-                if (remark != null) {
-                    remark.setText(getString(R.string.remark) + " : " + item.remark);
-                }
-
+                builder.show();
+            } else {
+                updateInfoUI(item, mapPOIItem);
             }
         }
 
     }
+
+
     private void updateStatusToNotDelivery() {
         TextView addrText = findViewById(R.id.listAddr);
         ImageView statusIcon = findViewById(R.id.status_icon);

@@ -212,10 +212,6 @@ public class FirebaseDatabaseConnector {
 
                     mCourierHash.put(key, value);
                 }
-                if (mContext instanceof MapViewActivity) {
-                    MapViewActivity.addMarker();
-                }
-
             }
 
             @Override
@@ -308,9 +304,6 @@ public class FirebaseDatabaseConnector {
 
                 if (mListAdapter != null) {
                     mListAdapter.notifyDataSetChanged();
-                }
-                if (mContext instanceof MapViewActivity) {
-                    MapViewActivity.addMarker();
                 }
             }
 
