@@ -496,9 +496,6 @@ public class MapViewActivity extends AppCompatActivity
                 marker.setTag(num);
             }
 
-            marker.setCustomImageBitmap(pin);
-            marker.setCustomSelectedImageBitmap(seleted_pin);
-            marker.setCustomImageAutoscale(false);
 
 
             MarkerItem markeritem = new MarkerItem(strLatitude, strLongitude);
@@ -520,13 +517,37 @@ public class MapViewActivity extends AppCompatActivity
             } else {
                 list_poiitem = new ArrayList<>();
             }
+
+            if (list_poiitem.size() > 1) {
+                int count = list_poiitem.size();
+                pin = drawCountPaint(count, pin);
+            }
+
+            marker.setCustomImageBitmap(pin);
+            marker.setCustomSelectedImageBitmap(seleted_pin);
+            marker.setCustomImageAutoscale(false);
+
             list_poiitem.add(marker);
             mMapPOItemHash.put(markeritem, list_poiitem);
-
             mMapView.addPOIItem(marker);
             num++;
         }
     }
+
+    private Bitmap drawCountPaint(int count, Bitmap pin) {
+        Paint paint_circle = new Paint();
+        Paint paint_text = new Paint();
+        paint_circle.setStyle(Paint.Style.FILL_AND_STROKE);
+        paint_circle.setColor(Color.RED); // Text Color
+        paint_text.setStyle(Paint.Style.FILL);
+        paint_text.setColor(Color.BLACK); // Text Color
+        paint_text.setTextSize(100);
+        Canvas canvas = new Canvas(pin);
+        canvas.drawCircle(10, 10, 10, paint_circle);
+        //canvas.drawText(String.valueOf(count), 0, 0, paint_text); // 63
+        return pin;
+    }
+
 
     private void getFirebaseList() {
         mFbConnector.getCourierListFromFirebaseDatabaseWithListener(mSelectedDate, mCourierValueEventListener);
