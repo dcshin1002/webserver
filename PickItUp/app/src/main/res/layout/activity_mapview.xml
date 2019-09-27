@@ -2,7 +2,9 @@
 
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    android:orientation="vertical" android:layout_width="match_parent"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:orientation="vertical"
+    android:layout_width="match_parent"
     android:layout_height="match_parent">
 
     <RelativeLayout
@@ -22,11 +24,30 @@
 
 
     </RelativeLayout>
-    <include
-        android:id="@+id/parcel_data"
+
+    <TextView
+        android:id="@+id/tv_countinfo"
+        android:layout_width="match_parent"
+        android:layout_height="20dp"
+        android:text="hello"
+        android:background="#DCDCDC"
+        android:layout_alignParentTop="true"
+        android:visibility="gone"
+        />
+
+    <ScrollView
+        android:id="@+id/scroll_view"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        layout="@layout/parcel_listview_row"
-        android:layout_alignParentTop="true"
-        android:visibility="gone"/>
+        android:layout_below="@id/tv_countinfo"
+        android:fillViewport="true"
+        android:visibility="gone"
+        >
+
+    <ListView
+        android:id="@+id/db_list_view"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"></ListView>
+    </ScrollView>
+
 </RelativeLayout>

@@ -7,6 +7,7 @@ import android.os.AsyncTask;
 import android.util.Log;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
@@ -257,11 +258,16 @@ public class AddressFacade {
                 Log.d(LOG_TAG, "id-" + item.id + ", name-" + item.name);
             }
 
-            mFbConnector.postParcelListToFirebaseDatabase(mDateStr, (ArrayList<TmsParcelItem>) mParcelList);
             mFbConnector.postCourierListToFirbaseDatabase(mDateStr, (ArrayList<TmsCourierItem>) couriers);
             mFbConnector.postJobStatusFromFirebaseDatabase(mDateStr);
-            goToParcelList();
+            mFbConnector.postParcelListToFirebaseDatabase2(mDateStr, (ArrayList<TmsParcelItem>) mParcelList, new DatabaseReference.CompletionListener() {
+                @Override
+                public void onComplete(@Nullable DatabaseError databaseError, @NonNull DatabaseReference databaseReference) {
+                    goToParcelList();
+                }
+            });
         }
+
 
         private void makeAddressWithKakao(TmsParcelItem item) {
             String address = item.consigneeAddr;

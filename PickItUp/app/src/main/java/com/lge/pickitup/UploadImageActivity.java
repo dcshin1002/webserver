@@ -10,7 +10,9 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.Matrix;
 import android.graphics.drawable.BitmapDrawable;
+import android.media.ExifInterface;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
@@ -167,8 +169,6 @@ public class UploadImageActivity extends AppCompatActivity {
             public void onSuccess(byte[] bytes) {
                 Log.d(LOG_TAG, "onSeuccess to download data : length = " + bytes.length);
                 Bitmap bm = BitmapFactory.decodeByteArray(bytes, 0, bytes.length);
-                //mIvPreviewImage.setBackground(new ShapeDrawable(new OvalShape()));
-                //mIvPreviewImage.setClipToOutline(true);
                 mIvPreviewImage.setImageBitmap(bm);
             }
         }).addOnFailureListener(new OnFailureListener() {
@@ -419,7 +419,7 @@ public class UploadImageActivity extends AppCompatActivity {
         this.sendBroadcast(mediaScanIntent);
     }
 
-    private void setResizedTakenPic() {
+    private void setResizedTakenPic()  {
         // Get the dimensions of the View
         int targetW = mIvPreviewImage.getWidth();
         int targetH = mIvPreviewImage.getHeight();
@@ -429,7 +429,6 @@ public class UploadImageActivity extends AppCompatActivity {
         bmOptions.inJustDecodeBounds = true;
         bmOptions.inPreferredConfig = Bitmap.Config.RGB_565;
         BitmapFactory.decodeFile(mCurrentPhotoPath, bmOptions);
-
         int photoW = bmOptions.outWidth;
         int photoH = bmOptions.outHeight;
 
@@ -442,9 +441,16 @@ public class UploadImageActivity extends AppCompatActivity {
         bmOptions.inPurgeable = true;
 
         Bitmap bitmap = BitmapFactory.decodeFile(mCurrentPhotoPath, bmOptions);
+
+        try {
+            bitmap = rotate(bitmap, mCurrentPhotoPath);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
         mIvPreviewImage.setImageBitmap(bitmap);
         mIvPreviewImage.setTag(R.id.ivImagePreview, IMGVIEW_CAPTURED);
     }
+
 
     private void setResizedGalleryPic() {
         // Get the dimensions of the View
@@ -491,9 +497,51 @@ public class UploadImageActivity extends AppCompatActivity {
         }
 
         bitmap = BitmapFactory.decodeStream(is, null, bmOptions);
+        try {
+            bitmap = rotate(bitmap, mPhotoUri.getPath());
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
         mIvPreviewImage.setImageBitmap(bitmap);
         mIvPreviewImage.setTag(R.id.ivImagePreview, IMGVIEW_CAPTURED);
     }
+
+    public int exifOrientationToDegrees(int exifOrientation) {
+        if(exifOrientation == ExifInterface.ORIENTATION_ROTATE_90) {
+            return 90;
+        } else if(exifOrientation == ExifInterface.ORIENTATION_ROTATE_180) {
+            return 180;
+        } else if(exifOrientation == ExifInterface.ORIENTATION_ROTATE_270)  {
+            return 270;
+        }
+        return 0;
+    }
+
+    public Bitmap rotate(Bitmap bitmap, String path) throws IOException {
+        ExifInterface exif = new ExifInterface(path);
+        int exifOrientation = exif.getAttributeInt(ExifInterface.TAG_ORIENTATION, ExifInterface.ORIENTATION_NORMAL);
+        int degrees = exifOrientationToDegrees(exifOrientation);
+
+        if(degrees != 0 && bitmap != null) {
+            Matrix m = new Matrix();
+            m.setRotate(degrees, (float) bitmap.getWidth() / 2,
+                    (float) bitmap.getHeight() / 2);
+            try {
+                Bitmap converted = Bitmap.createBitmap(bitmap, 0, 0,
+                        bitmap.getWidth(), bitmap.getHeight(), m, true);
+                if(bitmap != converted) {
+                    bitmap.recycle();
+                    bitmap = converted;
+                }
+            }
+            catch(OutOfMemoryError ex) {
+                // 메모리가 부족하여 회전을 시키지 못할 경우 그냥 원본을 반환합니다.
+            }
+        }
+        return bitmap;
+    }
+
+
 
     private void uploadImageToServer() {
         final String currentUid = mAuth.getUid();

@@ -31,6 +31,8 @@ import androidx.core.content.ContextCompat;
 
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.DatabaseReference;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -326,7 +328,12 @@ public class CourierSectionMatchingActivity extends AppCompatActivity implements
                     //mFbConnector.postParcelItemToFirebaseDatabase(mTextCourierDate.getText().toString(),item);
                 }
                 // Let update those on FirebaseDdatabse
-                mFbConnector.postParcelListToFirebaseDatabase2(mTextCourierDate.getText().toString(), mArrayValues);
+                mFbConnector.postParcelListToFirebaseDatabase2(mTextCourierDate.getText().toString(), mArrayValues, new DatabaseReference.CompletionListener() {
+                    @Override
+                    public void onComplete(@Nullable DatabaseError databaseError, @NonNull DatabaseReference databaseReference) {
+
+                    }
+                });
 
                 TmsCourierItem courierItem = new TmsCourierItem(String.valueOf(mCurrentCourierItemId++), mTextCourierName.getText().toString());
                 mFbConnector.postCourierItemToFirebaseDatabase(mTextCourierDate.getText().toString(), courierItem);

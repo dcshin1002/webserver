@@ -1,6 +1,7 @@
 package com.lge.pickitup;
 
 import android.app.AlertDialog;
+import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.res.Resources;
@@ -13,13 +14,19 @@ import android.graphics.Typeface;
 import android.os.Bundle;
 
 
+import android.text.InputType;
 import android.text.TextUtils;
 import android.util.Log;
+import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
 import android.widget.Button;
+import android.widget.EditText;
 import android.widget.ImageView;
-import android.widget.LinearLayout;
+import android.widget.ListView;
+import android.widget.ScrollView;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -42,6 +49,7 @@ import com.google.firebase.database.ValueEventListener;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 
 
 public class MapViewActivity extends AppCompatActivity
@@ -52,11 +60,13 @@ public class MapViewActivity extends AppCompatActivity
     private static MapView mMapView;
     public static final String DAUM_MAPS_ANDROID_APP_API_KEY = "8be996dd99057764a9876591b3270e31";
     private AlertDialog.Builder mDeliveryCompleteDialog;
+    private AlertDialog.Builder mChangeOrderDialog;
     private String mSelectedDate;
     private static String mSelectedCourierName;
     private String mSelectedSectionID;
     private ImageView mTrackingModeBtn;
-    private Button mBtnDeliveryinfo;
+    private TextView mTvCountInfo;
+    private TmsItemAdapter mArrayAdapter;
 
     private HashMap<String, TmsParcelItem> mParcelDatabaseHash = new HashMap<>();
     private HashMap<String, TmsCourierItem> mCourierDatabaseHash = new HashMap<>();
@@ -64,10 +74,12 @@ public class MapViewActivity extends AppCompatActivity
     private static HashMap<MarkerItem, ArrayList<MapPOIItem>> mMapPOItemHash = new HashMap();
     private ArrayList<String> mArrayKeys = new ArrayList<String>();
     private static ArrayList<TmsParcelItem> mArrayValues = new ArrayList<TmsParcelItem>();
+    private static ArrayList<TmsParcelItem> mArrayParcelListValues = new ArrayList<TmsParcelItem>();
+    private static ArrayList<Integer> mArrayValuesOrder = new ArrayList<>();
     private static ArrayList<TmsCourierItem> mCourierArrayValues = new ArrayList<TmsCourierItem>();
 
     private static String mSort = "id";
-    private LinearLayout mLayout_parcel_data;
+    private ScrollView mScrollView;
 
 
     private static float mInitLatitude = 0;
@@ -210,33 +222,166 @@ public class MapViewActivity extends AppCompatActivity
     }
 
     protected void initResources() {
-        mLayout_parcel_data = (LinearLayout) findViewById(R.id.parcel_data);
+        mScrollView = (ScrollView) findViewById(R.id.scroll_view);
+        mTvCountInfo = (TextView) findViewById(R.id.tv_countinfo);
         mTrackingModeBtn = (ImageView) findViewById(R.id.ib_tracking);
         mTrackingModeBtn.setOnClickListener(this);
         mTrackingModeBtn.setZ(10);
-        mLayout_parcel_data.setZ(20);
-        mBtnDeliveryinfo = (Button) findViewById(R.id.btn_deliveryinfo);
-        mBtnDeliveryinfo.setOnClickListener(this);
+        mScrollView.setZ(20);
+        //mBtnDeliveryinfo = (Button) findViewById(R.id.btn_deliveryinfo);
+        //mBtnDeliveryinfo.setOnClickListener(this);
 
-        mLayout_parcel_data.setOnClickListener(this);
+        mScrollView.setOnClickListener(this);
 
         GlobalRes = getResources();
+
+        mArrayAdapter = new TmsItemAdapter(this, R.layout.parcel_listview_row, mArrayParcelListValues);
+        ListView listView = findViewById(R.id.db_list_view);
+        listView.setAdapter(mArrayAdapter);
+
+        listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> adapterView, View view, int position, long id) {
+                TmsParcelItem item = (TmsParcelItem) adapterView.getItemAtPosition(position);
+                String LatitudeStr = item.consigneeLatitude;
+                String LongitudeStr = item.consigneeLongitude;
+
+                Log.d(LOG_TAG, "Address = " + item.consigneeAddr + ", Id = " + item.id);
+                Log.d(LOG_TAG, "lat = " + LatitudeStr + ", long = " + LongitudeStr);
+
+                if (TextUtils.isEmpty(LatitudeStr) || TextUtils.isEmpty(LongitudeStr)) {
+                    Toast.makeText(MapViewActivity.this, R.string.need_manual_input, Toast.LENGTH_SHORT).show();
+                    return;
+                }
+                Utils.startKakaoMapActivity(MapViewActivity.this, Double.valueOf(LatitudeStr), Double.valueOf(LongitudeStr));
+            }
+        });
+
     }
     @Override
     public void onClick(View view) {
+        MapPOIItem poiitem;
+        TmsParcelItem parcelItem;
         switch (view.getId()) {
+            /* likepaul block
             case R.id.parcel_data:
                 MapPOIItem mapPOIItem = (MapPOIItem)view.getTag(R.id.parcel_data);
                 Utils.startKakaoMapActivity(MapViewActivity.this, mapPOIItem.getMapPoint().getMapPointGeoCoord().latitude, mapPOIItem.getMapPoint().getMapPointGeoCoord().longitude);
                 break;
+             */
             case R.id.btn_deliveryinfo:
-                TmsParcelItem item = (TmsParcelItem)view.getTag(R.id.parcel_data);
+                TmsParcelItem item = (TmsParcelItem)view.getTag(R.id.btn_deliveryinfo);
                 goToUploadImageActivity(item, Utils.NO_NEED_RESULT);
+                break;
+            case R.id.btn_changeorder:
+                poiitem = (MapPOIItem)view.getTag(R.id.btn_changeorder);
+                parcelItem = (TmsParcelItem) poiitem.getUserObject();
+                processChangeOrderDialog(parcelItem, poiitem);
+                break;
+            case R.id.btn_complete:
+                poiitem = (MapPOIItem)view.getTag(R.id.btn_complete);
+                parcelItem = (TmsParcelItem) poiitem.getUserObject();
+                processListBtnClick(parcelItem, poiitem);
                 break;
             case R.id.ib_tracking:
                 toggleTrackingMode();
                 break;
 
+        }
+    }
+
+    protected class TmsItemAdapter extends ArrayAdapter<TmsParcelItem> {
+
+        public TmsItemAdapter(Context context, int resource, List<TmsParcelItem> list) {
+            super(context, resource, list);
+        }
+
+        @Override
+        public void notifyDataSetChanged() {
+            super.notifyDataSetChanged();
+            /*likepaul block
+            mTextCourierName.setClickable(true);
+            mTextCourierDate.setClickable(true);
+            mBtnChangeView.setEnabled(true);
+            mTextCount.setText(getItemString(mArrayValues));
+            */
+        }
+
+        @Override
+        public View getView(int position, View convertView, ViewGroup parent) {
+            View v = convertView;
+
+            if (v == null) {
+                LayoutInflater inflater = (LayoutInflater) getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+                v = inflater.inflate(R.layout.parcel_listview_row, null);
+            }
+
+            final TmsParcelItem item = getItem(position);
+            boolean isDeliverd = item.status.equals(TmsParcelItem.STATUS_DELIVERED);
+            boolean isValidAddress = !(item.consigneeLatitude.equals("0") || item.consigneeLongitude.equals("0"));
+
+            if (item != null) {
+                TextView addrText = v.findViewById(R.id.listAddr);
+                TextView providerText = v.findViewById(R.id.listItemTextProvider);
+                TextView customerText = v.findViewById(R.id.listItemTextCustomer);
+                TextView deliveryNote = v.findViewById(R.id.listItemTextDeliveryMemo);
+                TextView remark = v.findViewById(R.id.listItemTextRemark);
+                Button btn_changeorder = v.findViewById(R.id.btn_changeorder);
+                Button btn_complete = v.findViewById(R.id.btn_complete);
+                Button btn_deliveryinfo = v.findViewById(R.id.btn_deliveryinfo);
+                ImageView statusIcon = v.findViewById(R.id.status_icon);
+
+                ArrayList<MapPOIItem> arrPoiitems = mMapPOItemHash.get(new MarkerItem(item.consigneeLatitude, item.consigneeLongitude));
+
+                btn_complete.setOnClickListener(MapViewActivity.this);
+                btn_complete.setTag(R.id.btn_complete, arrPoiitems.get(position));
+                btn_changeorder.setOnClickListener(MapViewActivity.this);
+                btn_changeorder.setTag(R.id.btn_changeorder, arrPoiitems.get(position));
+                btn_deliveryinfo.setOnClickListener(MapViewActivity.this);
+                btn_deliveryinfo.setTag(R.id.btn_deliveryinfo, item);
+
+                if (addrText != null) {
+                    String addrTextValue = "";
+
+                    if (!mSelectedCourierName.equals(getString(R.string.all_couriers))) {
+                        addrTextValue = mArrayValuesOrder.get(position) + " : ";
+                    }
+                    addrText.setText(addrTextValue + item.consigneeAddr);
+                    if (isDeliverd) {
+                        addrText.setTextColor(0xFF68C166);
+                        statusIcon.setVisibility(View.VISIBLE);
+                        statusIcon.setImageDrawable(getDrawable(R.mipmap.tag_delivered_v2));
+                        btn_complete.setVisibility(View.GONE);
+                        btn_changeorder.setVisibility(View.GONE);
+                        btn_deliveryinfo.setVisibility(View.VISIBLE);
+                        btn_deliveryinfo.setBackgroundColor(0xFF68C166);
+                    } else {
+                        if (isValidAddress) {
+                            addrText.setTextColor(0xFF4F4F4F);
+                        } else {
+                            addrText.setTextColor(0xFFC12F2F);
+                        }
+                        statusIcon.setVisibility(View.INVISIBLE);
+                        btn_complete.setVisibility(View.VISIBLE);
+                        btn_changeorder.setVisibility(View.VISIBLE);
+                        btn_complete.setBackgroundColor(0xFF42A5F5);
+                        btn_deliveryinfo.setVisibility(View.GONE);
+                    }
+                }
+                if (providerText != null) {
+                    providerText.setText("업체명" + " : " + item.consignorName);
+                }
+                if (customerText != null) {
+                    customerText.setText(getString(R.string.customer) + " : " + item.consigneeName + " (" + item.consigneeContact + ")");
+                }
+                if (deliveryNote != null) {
+                    deliveryNote.setText(getString(R.string.delivery_note) + " : " + item.deliveryNote);
+                }
+                if (remark != null) {
+                    remark.setText(getString(R.string.remark) + " : " + item.remark);
+                }
+            }
+            return v;
         }
     }
 
@@ -284,7 +429,7 @@ public class MapViewActivity extends AppCompatActivity
     }
 
     protected void addMarker() {
-        Log.i(LOG_TAG, "mArrayValues.size = " + mArrayValues.size());
+        mMapView.removeAllPOIItems();
         int num = 1;
         for (TmsParcelItem item : mArrayValues) {
             String strLatitude = item.consigneeLatitude;
@@ -390,7 +535,8 @@ public class MapViewActivity extends AppCompatActivity
     private ValueEventListener mCourierValueEventListener = new ValueEventListener() {
         @Override
         public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-            Log.d(LOG_TAG, "mapview CourierList size : " + dataSnapshot.getChildrenCount());
+            mCourierDatabaseHash.clear();
+            mCourierArrayValues.clear();
             for (DataSnapshot postSnapshot : dataSnapshot.getChildren()) {
                 TmsCourierItem item = postSnapshot.getValue(TmsCourierItem.class);
                 mCourierDatabaseHash.put(item.name, item);
@@ -432,23 +578,13 @@ public class MapViewActivity extends AppCompatActivity
             mArrayValues.clear();
             mMarkerHash.clear();
             mMapPOItemHash.clear();
-            boolean isRouted = true;
 
-            Log.d(LOG_TAG, "getParcelListFromFirebaseDatabase : size " + dataSnapshot.getChildrenCount());
             for (DataSnapshot postSnapshot : dataSnapshot.getChildren()) {
                 String key = postSnapshot.getKey();
                 TmsParcelItem value = postSnapshot.getValue(TmsParcelItem.class);
-
-                if (value.orderInRoute == -1) {
-                    isRouted = false;
-                }
-                value.orderInRoute = -1;
-
                 mParcelDatabaseHash.put(key, value);
                 mArrayKeys.add(key);
                 mArrayValues.add(value);
-
-                Log.d(LOG_TAG, "mArrayValues size = " + mArrayValues.size());
             }
 
             String courierName = mSelectedCourierName;
@@ -551,7 +687,8 @@ public class MapViewActivity extends AppCompatActivity
     @Override
     public void onMapViewSingleTapped(MapView mapView, MapPoint mapPoint) {
         MapPoint.GeoCoordinate mapPointGeo = mapPoint.getMapPointGeoCoord();
-        mLayout_parcel_data.setVisibility(View.GONE);
+        mScrollView.setVisibility(View.GONE);
+        mTvCountInfo.setVisibility(View.GONE);
         Log.i(LOG_TAG, String.format("MapView onMapViewSingleTapped (%f,%f)", mapPointGeo.latitude, mapPointGeo.longitude));
     }
 
@@ -585,9 +722,10 @@ public class MapViewActivity extends AppCompatActivity
     private void updateInfoUI(final TmsParcelItem parcelItem, final MapPOIItem mapPOIItem){
 
 
-        mLayout_parcel_data.setVisibility(View.VISIBLE);
-        mLayout_parcel_data.setTag(R.id.parcel_data, mapPOIItem);
-        mBtnDeliveryinfo.setTag(R.id.parcel_data, mapPOIItem.getUserObject());
+        mScrollView.setVisibility(View.VISIBLE);
+        mScrollView.setTag(R.id.scroll_view, mapPOIItem);
+        // likepaul block
+        //mBtnDeliveryinfo.setTag(R.id.btn_deliveryinfo, mapPOIItem.getUserObject());
 
         if (parcelItem != null) {
             boolean isDeliverd = parcelItem.status.equals(TmsParcelItem.STATUS_DELIVERED);
@@ -597,13 +735,14 @@ public class MapViewActivity extends AppCompatActivity
             TextView deliveryNote = findViewById(R.id.listItemTextDeliveryMemo);
             TextView remark = findViewById(R.id.listItemTextRemark);
             Button btn_complete = findViewById(R.id.btn_complete);
+            Button btn_changeorder = findViewById(R.id.btn_changeorder);
             Button btn_deliveryinfo = findViewById(R.id.btn_deliveryinfo);
             ImageView statusIcon = findViewById(R.id.status_icon);
 
             btn_complete.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View view) {
-                    processLitBtnClick(parcelItem, mapPOIItem);
+                    //processListBtnClick(parcelItem);
                 }
             });
 
@@ -617,9 +756,9 @@ public class MapViewActivity extends AppCompatActivity
                 //}
                 addrText.setText(addrTextValue + parcelItem.consigneeAddr);
                 if (isDeliverd) {
-                    updateStatusToComplete(addrText, statusIcon, btn_complete, btn_deliveryinfo);
+                    updateStatusToComplete(addrText, statusIcon, btn_complete, btn_deliveryinfo, btn_changeorder);
                 } else {
-                    updateStatusToNotDelivery(addrText, statusIcon, btn_complete, btn_deliveryinfo);
+                    updateStatusToNotDelivery(addrText, statusIcon, btn_complete, btn_deliveryinfo, btn_changeorder);
                 }
             }
             if (providerText != null) {
@@ -644,44 +783,38 @@ public class MapViewActivity extends AppCompatActivity
         if (mapPOIItem.getItemName().equals(getString(R.string.current_location))) {
             return;
         }
-
         if (mapPOIItem.getUserObject() instanceof  TmsParcelItem) {
-            final TmsParcelItem item = (TmsParcelItem) mapPOIItem.getUserObject();
-
-            MarkerItem markeritem = new MarkerItem(item.consigneeLatitude, item.consigneeLongitude);
-            final ArrayList<TmsParcelItem> sameGeoMarkerItems = mMarkerHash.get(markeritem);
-            final ArrayList<MapPOIItem> sameGeoPOIItems = mMapPOItemHash.get(markeritem);
-
-            Log.i(LOG_TAG, "sameGeoPOIItems size is " + sameGeoPOIItems.size());
-
-            if (sameGeoMarkerItems.size() > 1) {
-
-                final ArrayList<String> ListItems = new ArrayList<>();
-                for (MapPOIItem poiitem : sameGeoPOIItems) {
-                    TmsParcelItem parcelItem = (TmsParcelItem) poiitem.getUserObject();
-                    String strOrder;
-                    if (poiitem.getTag() != -1) {
-                        strOrder = poiitem.getTag()  + " : ";
-                    } else {
-                        strOrder = "";
-                    }
-                    ListItems.add(strOrder + parcelItem.consigneeName + " : " + parcelItem.consigneeAddr);
-                }
-                final CharSequence[] items =  ListItems.toArray(new String[ ListItems.size()]);
-
-                AlertDialog.Builder builder = new AlertDialog.Builder(this);
-                builder.setTitle("주문을 선택하세요");
-                builder.setItems(items, new DialogInterface.OnClickListener() {
-                    public void onClick(DialogInterface dialog, int pos) {
-                        updateInfoUI(sameGeoMarkerItems.get(pos), sameGeoPOIItems.get(pos));
-                    }
-                });
-                builder.show();
-            } else {
-                updateInfoUI(item, mapPOIItem);
-            }
+            mScrollView.setVisibility(View.VISIBLE);
+            showInfoListview(mapPOIItem);
         }
+    }
 
+    private void showInfoListview(MapPOIItem mapPOIItem) {
+        final TmsParcelItem item = (TmsParcelItem) mapPOIItem.getUserObject();
+
+        MarkerItem markeritem = new MarkerItem(item.consigneeLatitude, item.consigneeLongitude);
+        final ArrayList<TmsParcelItem> sameGeoMarkerItems = mMarkerHash.get(markeritem);
+        final ArrayList<MapPOIItem> sameGeoPOIItems = mMapPOItemHash.get(markeritem);
+        Log.i(LOG_TAG, "sameGeoPOIItems size is " + sameGeoPOIItems.size());
+        mArrayParcelListValues.clear();
+        mArrayValuesOrder.clear();
+        if (sameGeoMarkerItems.size() > 1) {
+            int deliveryed_count = 0;
+            for (MapPOIItem poiItem : sameGeoPOIItems) {
+                TmsParcelItem parcelItem = (TmsParcelItem)poiItem.getUserObject();
+                if (parcelItem.status.equals(TmsParcelItem.STATUS_DELIVERED)) {
+                    deliveryed_count++;
+                }
+                mArrayParcelListValues.add(parcelItem);
+                mArrayValuesOrder.add(poiItem.getTag());
+            }
+            mTvCountInfo.setText("선택된 주문 총 " + mArrayParcelListValues.size()  + "개 중 " + deliveryed_count + "개 배송완료" );
+            mTvCountInfo.setVisibility(View.VISIBLE);
+        } else {
+            mArrayParcelListValues.add(item);
+            mArrayValuesOrder.add(mapPOIItem.getTag());
+        }
+        mArrayAdapter.notifyDataSetChanged();
     }
 
 
@@ -690,14 +823,16 @@ public class MapViewActivity extends AppCompatActivity
         ImageView statusIcon = findViewById(R.id.status_icon);
         Button btn_complete = findViewById(R.id.btn_complete);
         Button btn_deliveryinfo = findViewById(R.id.btn_deliveryinfo);
-        updateStatusToNotDelivery(addrText, statusIcon, btn_complete, btn_deliveryinfo);
+        Button btn_changeorder = findViewById(R.id.btn_changeorder);
+        updateStatusToNotDelivery(addrText, statusIcon, btn_complete, btn_deliveryinfo, btn_changeorder);
     }
 
-    private void updateStatusToNotDelivery(TextView addrText, ImageView statusIcon, Button btn_complete, Button btn_deliveryinfo) {
+    private void updateStatusToNotDelivery(TextView addrText, ImageView statusIcon, Button btn_complete, Button btn_deliveryinfo, Button btn_changeorder) {
         addrText.setTextColor(0xFF4F4F4F);
         statusIcon.setImageDrawable(getDrawable(R.mipmap.tag_in_transit_v2));
         statusIcon.setVisibility(View.INVISIBLE);
         btn_complete.setVisibility(View.VISIBLE);
+        btn_changeorder.setVisibility(View.VISIBLE);
         btn_deliveryinfo.setVisibility(View.GONE);
     }
 
@@ -706,18 +841,115 @@ public class MapViewActivity extends AppCompatActivity
         ImageView statusIcon = findViewById(R.id.status_icon);
         Button btn_complete = findViewById(R.id.btn_complete);
         Button btn_deliveryinfo = findViewById(R.id.btn_deliveryinfo);
-        updateStatusToComplete(addrText, statusIcon, btn_complete, btn_deliveryinfo);
+        Button btn_changeorder = findViewById(R.id.btn_changeorder);
+        updateStatusToComplete(addrText, statusIcon, btn_complete, btn_deliveryinfo, btn_changeorder);
     }
 
-    private void updateStatusToComplete(TextView addrText, ImageView statusIcon, Button btn_complete, Button btn_deliveryinfo) {
+    private void updateStatusToComplete(TextView addrText, ImageView statusIcon, Button btn_complete, Button btn_deliveryinfo, Button btn_changeorder) {
         addrText.setTextColor(0xFF68c166);
         statusIcon.setVisibility(View.VISIBLE);
         statusIcon.setImageDrawable(getDrawable(R.mipmap.tag_delivered_v2));
         btn_complete.setVisibility(View.GONE);
+        btn_changeorder.setVisibility(View.GONE);
         btn_deliveryinfo.setVisibility(View.VISIBLE);
     }
 
-    private void processLitBtnClick(final TmsParcelItem item, final MapPOIItem mapPOIItem) {
+    private void processChangeOrderDialog(final TmsParcelItem item, final MapPOIItem mapPOIItem) {
+        final EditText edittext = new EditText(this);
+        edittext.setInputType(InputType.TYPE_CLASS_NUMBER);
+        final int prevOrder = mapPOIItem.getTag();
+        final int sizeofParcels = mArrayValues.size();
+        mChangeOrderDialog = new AlertDialog.Builder(this)
+                .setTitle(prevOrder +"번 순서변경")
+                .setMessage("변경되길 원하는 순서를 입력하세요.\n" + " (1 ~ " + sizeofParcels + ")")
+                .setView(edittext)
+                .setPositiveButton(R.string.dialog_title_confirm, new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialogInterface, int i) {
+                        String edittextvalue = edittext.getText().toString();
+                        if (edittextvalue.isEmpty()) {
+                            return;
+                        }
+                        int newOrder = Integer.valueOf(edittextvalue);
+                        if (prevOrder == newOrder) {
+                            Toast.makeText(MapViewActivity.this, "기존과 동일한 순서정보를 입력하셨습니다.", Toast.LENGTH_SHORT).show();
+                            return;
+                        }
+                        if (newOrder < 1 || newOrder > sizeofParcels) {
+                            Toast.makeText(MapViewActivity.this, "유효한 범위의 숫자를 입력하세요" + " (1 ~ " + sizeofParcels + ")", Toast.LENGTH_SHORT).show();
+                            return;
+                        }
+
+                        TmsParcelItem insertedNodePrev = null;
+                        TmsParcelItem insertedNodeNext;
+                        TmsParcelItem originNodePrev = null;
+                        for (TmsParcelItem parcel : mArrayValues) {
+                            if (parcel.nextParcel == item.id) {
+                                originNodePrev = parcel;
+                                break;
+                            }
+                        }
+
+                        if (prevOrder > newOrder) { // 뒷번호에서 앞번호으로  변경
+
+                            if (newOrder == 1) {
+                                TmsCourierItem courierItem = mCourierDatabaseHash.get(mSelectedCourierName);
+                                courierItem.startparcelid = item.id;
+                                mFbConnector.postCourierItemToFirebaseDatabase(mSelectedDate, courierItem);
+                            } else {
+                                insertedNodePrev = mArrayValues.get(newOrder - 2);
+                                insertedNodePrev.nextParcel = item.id;
+                            }
+                            insertedNodeNext = mArrayValues.get(newOrder - 1);
+                            if (originNodePrev != null) {
+                                if (item.nextParcel != -1) {
+                                    originNodePrev.nextParcel = item.nextParcel;
+                                } else {
+                                    originNodePrev.nextParcel = -1;
+                                }
+                            }
+                            item.nextParcel = insertedNodeNext.id;
+                        } else { // 앞번호에서 뒷번호로 변경
+                            if (prevOrder == 1) {
+                                TmsCourierItem courierItem = mCourierDatabaseHash.get(mSelectedCourierName);
+                                courierItem.startparcelid = item.nextParcel;
+                                mFbConnector.postCourierItemToFirebaseDatabase(mSelectedDate, courierItem);
+                            }
+                            if (originNodePrev != null) {
+                                if (item.nextParcel != -1) {
+                                    originNodePrev.nextParcel = item.nextParcel;
+                                } else {
+                                    originNodePrev.nextParcel = -1;
+                                }
+                            }
+                            insertedNodePrev = mArrayValues.get(newOrder - 1);
+                            item.nextParcel = insertedNodePrev.nextParcel;
+                            insertedNodePrev.nextParcel = item.id;
+                        }
+
+                        if (originNodePrev != null)
+                            mFbConnector.postParcelItemToFirebaseDatabase(mSelectedDate, originNodePrev);
+                        mFbConnector.postParcelItemToFirebaseDatabase(mSelectedDate, item);
+                        if (insertedNodePrev != null)
+                            mFbConnector.postParcelItemToFirebaseDatabase(mSelectedDate, insertedNodePrev);
+
+                        mScrollView.setVisibility(View.GONE);
+                        mTvCountInfo.setVisibility(View.GONE);
+                        getFirebaseList();
+                    }
+                })
+                .setNegativeButton(R.string.cancel, new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialogInterface, int i) {
+                        dialogInterface.cancel();
+                    }
+                });
+
+
+        mChangeOrderDialog.show();
+    }
+
+    private void processListBtnClick(final TmsParcelItem item, final MapPOIItem mapPOIItem) {
 
         Log.d(LOG_TAG, "Selected item\'s status will be chaanged to \"deliverd\"");
 
@@ -779,7 +1011,7 @@ public class MapViewActivity extends AppCompatActivity
                         mCompleteMarker.setCustomImageBitmap(bm);
                         mCompleteMarker.setCustomSelectedImageBitmap(seleted_bm);
                         mMapView.addPOIItem(mCompleteMarker);
-                        updateStatusToComplete();
+                        mArrayAdapter.notifyDataSetChanged();
                         mMapView.setMapCenterPointAndZoomLevel(
                                 MapPoint.mapPointWithGeoCoord(mCompleteMarker.getMapPoint().getMapPointGeoCoord().latitude, mCompleteMarker.getMapPoint().getMapPointGeoCoord().longitude),
                                 7,

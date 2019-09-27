@@ -404,11 +404,11 @@ public class ParcelListActivity extends AppCompatActivity implements View.OnClic
                 showCourierPicker();
                 break;
             case R.id.btn_deliveryinfo:
-                item = (TmsParcelItem)view.getTag(R.id.parcel_data);
+                item = (TmsParcelItem)view.getTag(R.id.btn_deliveryinfo);
                 goToUploadImageActivity(item, Utils.NO_NEED_RESULT);
                 break;
             case R.id.btn_complete:
-                item = (TmsParcelItem)view.getTag(R.id.parcel_data);
+                item = (TmsParcelItem)view.getTag(R.id.btn_complete);
                 processListBtnClick(item);
                 break;
         }
@@ -498,7 +498,7 @@ public class ParcelListActivity extends AppCompatActivity implements View.OnClic
                     if (parcelItem != null) {
                         mArrayValues.clear();
                         mArrayValues.add(parcelItem);
-                        while(parcelItem.nextParcel != -1) {
+                        while(parcelItem != null && parcelItem.nextParcel != -1) {
                             parcelItem = mParcelDatabaseHash.get(String.valueOf(parcelItem.nextParcel));
                             mArrayValues.add(parcelItem);
                         }
@@ -643,13 +643,14 @@ public class ParcelListActivity extends AppCompatActivity implements View.OnClic
                 TextView remark = v.findViewById(R.id.listItemTextRemark);
                 Button btn_complete = v.findViewById(R.id.btn_complete);
                 Button btn_deliveryinfo = v.findViewById(R.id.btn_deliveryinfo);
+                Button btn_changeorder = v.findViewById(R.id.btn_changeorder);
                 ImageView statusIcon = v.findViewById(R.id.status_icon);
 
                 btn_complete.setOnClickListener(ParcelListActivity.this);
-                btn_complete.setTag(R.id.parcel_data, item);
+                btn_complete.setTag(R.id.btn_complete, item);
                 btn_deliveryinfo.setOnClickListener(ParcelListActivity.this);
-                btn_deliveryinfo.setTag(R.id.parcel_data, item);
-
+                btn_deliveryinfo.setTag(R.id.btn_deliveryinfo, item);
+                btn_changeorder.setVisibility(View.GONE);
                 if (addrText != null) {
                     String addrTextValue = "";
                     if (!mTextCourierName.getText().toString().equals(getString(R.string.all_couriers))) {
@@ -669,7 +670,7 @@ public class ParcelListActivity extends AppCompatActivity implements View.OnClic
                         } else {
                             addrText.setTextColor(0xFFC12F2F);
                         }
-                        statusIcon.setVisibility(View.INVISIBLE);
+                        statusIcon.setVisibility(View.GONE);
                         btn_complete.setVisibility(View.VISIBLE);
                         btn_complete.setBackgroundColor(0xFF42A5F5);
                         btn_deliveryinfo.setVisibility(View.GONE);

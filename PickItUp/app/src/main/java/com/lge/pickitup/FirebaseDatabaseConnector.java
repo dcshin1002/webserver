@@ -111,7 +111,7 @@ public class FirebaseDatabaseConnector {
         }
     }
 
-    protected void postParcelListToFirebaseDatabase2(String pathString, ArrayList<TmsParcelItem> list) {
+    protected void postParcelListToFirebaseDatabase2(String pathString, ArrayList<TmsParcelItem> list, DatabaseReference.CompletionListener listener) {
         DatabaseReference ref = mDatabaseRef.child(PARCEL_REF_NAME);
         Map<String, Object> childUpdates = new HashMap<>();
         Map<String, Object> postValues = null;
@@ -120,7 +120,7 @@ public class FirebaseDatabaseConnector {
             postValues = item.toMap();
             childUpdates.put("/" + pathString + "/" + item.id, postValues);
         }
-        ref.updateChildren(childUpdates);
+        ref.updateChildren(childUpdates, listener);
     }
 
     protected void postParcelItemToFirebaseDatabase(String pathString, TmsParcelItem item) {
