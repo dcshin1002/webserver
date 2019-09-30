@@ -10,7 +10,6 @@ import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
-import android.graphics.Typeface;
 import android.os.Bundle;
 
 
@@ -86,6 +85,7 @@ public class MapViewActivity extends AppCompatActivity
     private static float mInitLongitude = 0;
     private TmsParcelItem mCompleteTarget;
     private MapPOIItem mCompleteMarker;
+    private MapPOIItem mSelectedMarkerToChangeOrder = null;
 
     private static Bitmap bluepin;
     private static Bitmap redpin;
@@ -299,12 +299,6 @@ public class MapViewActivity extends AppCompatActivity
         @Override
         public void notifyDataSetChanged() {
             super.notifyDataSetChanged();
-            /*likepaul block
-            mTextCourierName.setClickable(true);
-            mTextCourierDate.setClickable(true);
-            mBtnChangeView.setEnabled(true);
-            mTextCount.setText(getItemString(mArrayValues));
-            */
         }
 
         @Override
@@ -385,17 +379,6 @@ public class MapViewActivity extends AppCompatActivity
         }
     }
 
-    protected static void drawDeliveredStatus(Bitmap bitmap) {
-        Paint paint = new Paint();
-        paint.setStyle(Paint.Style.FILL);
-        paint.setColor(Color.parseColor("#5D5D5D")); // Text Color
-        paint.setTypeface(Typeface.create(Typeface.DEFAULT, Typeface.BOLD));
-        paint.setTextSize(65);
-
-        Canvas canvas = new Canvas(bitmap);
-        canvas.drawText("V", 25, 70, paint); // 63
-    }
-
     private static Bitmap getBitmapPinByParcelItem(TmsParcelItem item) {
         BitmapFactory.Options bmOptions = new BitmapFactory.Options();
         bmOptions.inScaled = false;
@@ -431,6 +414,23 @@ public class MapViewActivity extends AppCompatActivity
     protected void addMarker() {
         mMapView.removeAllPOIItems();
         int num = 1;
+
+        for (TmsParcelItem item : mArrayValues) {
+            String strLatitude = item.consigneeLatitude;
+            String strLongitude = item.consigneeLongitude;
+            MarkerItem markeritem = new MarkerItem(strLatitude, strLongitude);
+
+            ArrayList<TmsParcelItem> list_parcelitem;
+            if (mMarkerHash.containsKey(markeritem)) {
+                list_parcelitem = mMarkerHash.get(markeritem);
+            } else {
+                list_parcelitem = new ArrayList<>();
+            }
+            list_parcelitem.add(item);
+            mMarkerHash.put(markeritem, list_parcelitem);
+        }
+
+
         for (TmsParcelItem item : mArrayValues) {
             String strLatitude = item.consigneeLatitude;
             String strLongitude = item.consigneeLongitude;
@@ -461,13 +461,12 @@ public class MapViewActivity extends AppCompatActivity
             Bitmap pin = getBitmapPinByParcelItem(item);
             Bitmap seleted_pin = getBitmapSeletedPinByParcelItem(item);
             boolean isDeliverd = item.status.equals(TmsParcelItem.STATUS_DELIVERED);
-            //if (!isDeliverd &&  item.orderInRoute != -1 && !mSelectedCourierName.equals(GlobalRes.getString(R.string.all_couriers))) {
-            if (!isDeliverd &&  !mSelectedCourierName.equals(GlobalRes.getString(R.string.all_couriers))) {
+
+            if (!mSelectedCourierName.equals(GlobalRes.getString(R.string.all_couriers))) {
                 int textVal = num;
                 Paint paint = new Paint();
                 paint.setStyle(Paint.Style.FILL);
                 paint.setColor(Color.BLACK); // Text Color
-//                paint.setTypeface(Typeface.create(Typeface.DEFAULT, Typeface.BOLD));
 
                 int posX; // 1 digit
                 if (textVal < 10) {
@@ -483,8 +482,10 @@ public class MapViewActivity extends AppCompatActivity
                     posX = 3;
                     paint.setTextSize(15);
                 }
-                Canvas canvas = new Canvas(pin);
-                canvas.drawText(String.valueOf(textVal), posX, 37, paint); // 63
+                if (!isDeliverd) {
+                    Canvas canvas = new Canvas(pin);
+                    canvas.drawText(String.valueOf(textVal), posX, 37, paint); // 63
+                }
 
                 Canvas canvas2 = new Canvas(seleted_pin);
                 canvas2.drawText(String.valueOf(textVal), posX, 37, paint); // 63
@@ -496,20 +497,15 @@ public class MapViewActivity extends AppCompatActivity
                 marker.setTag(num);
             }
 
-
-
             MarkerItem markeritem = new MarkerItem(strLatitude, strLongitude);
 
             ArrayList<TmsParcelItem> list_parcelitem;
-            if (mMarkerHash.containsKey(markeritem)) {
-                list_parcelitem = mMarkerHash.get(markeritem);
-            } else {
-                list_parcelitem = new ArrayList<>();
+            list_parcelitem = mMarkerHash.get(markeritem);
+            if (list_parcelitem.size() > 1) {
+                int count = list_parcelitem.size();
+                pin = drawCountPaint(count, pin);
+                seleted_pin = drawCountPaint(count, seleted_pin);
             }
-            list_parcelitem.add(item);
-
-            mMarkerHash.put(markeritem, list_parcelitem);
-
 
             ArrayList<MapPOIItem> list_poiitem;
             if (mMapPOItemHash.containsKey(markeritem)) {
@@ -518,18 +514,29 @@ public class MapViewActivity extends AppCompatActivity
                 list_poiitem = new ArrayList<>();
             }
 
-            if (list_poiitem.size() > 1) {
-                int count = list_poiitem.size();
-                pin = drawCountPaint(count, pin);
-            }
-
             marker.setCustomImageBitmap(pin);
             marker.setCustomSelectedImageBitmap(seleted_pin);
             marker.setCustomImageAutoscale(false);
 
             list_poiitem.add(marker);
             mMapPOItemHash.put(markeritem, list_poiitem);
-            mMapView.addPOIItem(marker);
+            if (list_poiitem.size() == 1) {
+                mMapView.addPOIItem(marker);
+            } else {
+                if (!item.status.equals(TmsParcelItem.STATUS_DELIVERED)) {
+                    boolean hasNotDeliveryStatus = false;
+                    for (int i=0; i < list_poiitem.size() -1 ; i++) {
+                        TmsParcelItem parcelItem = (TmsParcelItem) list_poiitem.get(i).getUserObject();
+                        if (!parcelItem.status.equals(TmsParcelItem.STATUS_DELIVERED)) {
+                            hasNotDeliveryStatus = true;
+                            break;
+                        }
+                    }
+                    if (!hasNotDeliveryStatus) {
+                        mMapView.addPOIItem(marker);
+                    }
+                }
+            }
             num++;
         }
     }
@@ -589,8 +596,6 @@ public class MapViewActivity extends AppCompatActivity
         firebaseQuery.addListenerForSingleValueEvent(mParcelValueEventListener);
     }
 
-
-
     private ValueEventListener mParcelValueEventListener = new ValueEventListener() {
         @Override
         public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
@@ -624,6 +629,9 @@ public class MapViewActivity extends AppCompatActivity
                 }
             }
             addMarker();
+            if (mSelectedMarkerToChangeOrder != null) {
+                showInfoListview(mSelectedMarkerToChangeOrder);
+            }
         }
 
         @Override
@@ -656,15 +664,9 @@ public class MapViewActivity extends AppCompatActivity
         Log.i(LOG_TAG, String.format("Open API Key Authentication Result : code=%d, message=%s", resultCode, resultMessage));
     }
 
-    /////////////////////////////////////////////////////////////////////////////////////////////////
-    // net.daum.mf.map.api.MapView.MapViewEventListener
-
     public void onMapViewInitialized(MapView mapView) {
         Log.i(LOG_TAG, "MapView had loaded. Now, MapView APIs could be called safely");
         Log.i(LOG_TAG, String.format("onMapViewInitialized %f, %f", mInitLatitude, mInitLongitude));
-        //mMapView.setCurrentLocationTrackingMode(MapView.CurrentLocationTrackingMode.TrackingModeOnWithoutHeading);
-        //mapView.setMapCenterPointAndZoomLevel(MapPoint.mapPointWithGeoCoord(37.537229,127.005515), 7, true);
-        //mapView.setMapCenterPointAndZoomLevel(MapPoint.mapPointWithGeoCoord(mInitLatitude,mInitLongitude), 6, true);
         if (Utils.mCurrent != null) {
             mapView.setMapCenterPointAndZoomLevel(MapPoint.mapPointWithGeoCoord(Utils.mCurrent.getLatitude(), Utils.mCurrent.getLongitude()), 7, true);
         } else {
@@ -681,28 +683,11 @@ public class MapViewActivity extends AppCompatActivity
 
     @Override
     public void onMapViewDoubleTapped(MapView mapView, MapPoint mapPoint) {
-
-        MapPoint.GeoCoordinate mapPointGeo = mapPoint.getMapPointGeoCoord();
-
-        /*
-        AlertDialog.Builder alertDialog = new AlertDialog.Builder(this);
-        alertDialog.setTitle("DaumMapLibrarySample");
-        alertDialog.setMessage(String.format("Double-Tap on (%f,%f)", mapPointGeo.latitude, mapPointGeo.longitude));
-        alertDialog.setPositiveButton("OK", null);
-        alertDialog.show();
-        */
     }
 
     @Override
     public void onMapViewLongPressed(MapView mapView, MapPoint mapPoint) {
-
         MapPoint.GeoCoordinate mapPointGeo = mapPoint.getMapPointGeoCoord();
-        /*
-        AlertDialog.Builder alertDialog = new AlertDialog.Builder(this);
-        alertDialog.setTitle("DaumMapLibrarySample");
-        alertDialog.setMessage(String.format("Long-Press on (%f,%f)", mapPointGeo.latitude, mapPointGeo.longitude));
-        alertDialog.setPositiveButton("OK", null);
-        alertDialog.show();*/
     }
 
     @Override
@@ -710,6 +695,7 @@ public class MapViewActivity extends AppCompatActivity
         MapPoint.GeoCoordinate mapPointGeo = mapPoint.getMapPointGeoCoord();
         mScrollView.setVisibility(View.GONE);
         mTvCountInfo.setVisibility(View.GONE);
+        mSelectedMarkerToChangeOrder = null;
         Log.i(LOG_TAG, String.format("MapView onMapViewSingleTapped (%f,%f)", mapPointGeo.latitude, mapPointGeo.longitude));
     }
 
@@ -736,68 +722,6 @@ public class MapViewActivity extends AppCompatActivity
         Log.i(LOG_TAG, String.format("MapView onMapViewZoomLevelChanged (%d)", zoomLevel));
     }
 
-    private void showSameGeoParcelDialog(ArrayList<TmsParcelItem> sameGeoMarkerItems) {
-
-    }
-
-    private void updateInfoUI(final TmsParcelItem parcelItem, final MapPOIItem mapPOIItem){
-
-
-        mScrollView.setVisibility(View.VISIBLE);
-        mScrollView.setTag(R.id.scroll_view, mapPOIItem);
-        // likepaul block
-        //mBtnDeliveryinfo.setTag(R.id.btn_deliveryinfo, mapPOIItem.getUserObject());
-
-        if (parcelItem != null) {
-            boolean isDeliverd = parcelItem.status.equals(TmsParcelItem.STATUS_DELIVERED);
-            TextView addrText = findViewById(R.id.listAddr);
-            TextView providerText = findViewById(R.id.listItemTextProvider);
-            TextView customerText = findViewById(R.id.listItemTextCustomer);
-            TextView deliveryNote = findViewById(R.id.listItemTextDeliveryMemo);
-            TextView remark = findViewById(R.id.listItemTextRemark);
-            Button btn_complete = findViewById(R.id.btn_complete);
-            Button btn_changeorder = findViewById(R.id.btn_changeorder);
-            Button btn_deliveryinfo = findViewById(R.id.btn_deliveryinfo);
-            ImageView statusIcon = findViewById(R.id.status_icon);
-
-            btn_complete.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View view) {
-                    //processListBtnClick(parcelItem);
-                }
-            });
-
-            if (addrText != null) {
-                String addrTextValue = "";
-                int deliveryOrder = mapPOIItem.getTag();
-                //if (deliveryOrder != 0) {
-                if (deliveryOrder != -1) {
-                    addrTextValue += deliveryOrder + " : ";
-                }
-                //}
-                addrText.setText(addrTextValue + parcelItem.consigneeAddr);
-                if (isDeliverd) {
-                    updateStatusToComplete(addrText, statusIcon, btn_complete, btn_deliveryinfo, btn_changeorder);
-                } else {
-                    updateStatusToNotDelivery(addrText, statusIcon, btn_complete, btn_deliveryinfo, btn_changeorder);
-                }
-            }
-            if (providerText != null) {
-                providerText.setText("업체명" + " : " + parcelItem.consignorName);
-            }
-            if (customerText != null) {
-                customerText.setText(getString(R.string.customer) + " : " + parcelItem.consigneeName + " (" + parcelItem.consigneeContact + ")");
-            }
-            if (deliveryNote != null) {
-                deliveryNote.setText(getString(R.string.delivery_note) + " : " + parcelItem.deliveryNote);
-            }
-            if (remark != null) {
-                remark.setText(getString(R.string.remark) + " : " + parcelItem.remark);
-            }
-        }
-    }
-
-
     @Override
     public void onPOIItemSelected(MapView mapView, final MapPOIItem mapPOIItem) {
         Log.i(LOG_TAG, "onPOIItemSelected");
@@ -816,7 +740,6 @@ public class MapViewActivity extends AppCompatActivity
         MarkerItem markeritem = new MarkerItem(item.consigneeLatitude, item.consigneeLongitude);
         final ArrayList<TmsParcelItem> sameGeoMarkerItems = mMarkerHash.get(markeritem);
         final ArrayList<MapPOIItem> sameGeoPOIItems = mMapPOItemHash.get(markeritem);
-        Log.i(LOG_TAG, "sameGeoPOIItems size is " + sameGeoPOIItems.size());
         mArrayParcelListValues.clear();
         mArrayValuesOrder.clear();
         if (sameGeoMarkerItems.size() > 1) {
@@ -833,46 +756,9 @@ public class MapViewActivity extends AppCompatActivity
             mTvCountInfo.setVisibility(View.VISIBLE);
         } else {
             mArrayParcelListValues.add(item);
-            mArrayValuesOrder.add(mapPOIItem.getTag());
+            mArrayValuesOrder.add(sameGeoPOIItems.get(0).getTag());
         }
         mArrayAdapter.notifyDataSetChanged();
-    }
-
-
-    private void updateStatusToNotDelivery() {
-        TextView addrText = findViewById(R.id.listAddr);
-        ImageView statusIcon = findViewById(R.id.status_icon);
-        Button btn_complete = findViewById(R.id.btn_complete);
-        Button btn_deliveryinfo = findViewById(R.id.btn_deliveryinfo);
-        Button btn_changeorder = findViewById(R.id.btn_changeorder);
-        updateStatusToNotDelivery(addrText, statusIcon, btn_complete, btn_deliveryinfo, btn_changeorder);
-    }
-
-    private void updateStatusToNotDelivery(TextView addrText, ImageView statusIcon, Button btn_complete, Button btn_deliveryinfo, Button btn_changeorder) {
-        addrText.setTextColor(0xFF4F4F4F);
-        statusIcon.setImageDrawable(getDrawable(R.mipmap.tag_in_transit_v2));
-        statusIcon.setVisibility(View.INVISIBLE);
-        btn_complete.setVisibility(View.VISIBLE);
-        btn_changeorder.setVisibility(View.VISIBLE);
-        btn_deliveryinfo.setVisibility(View.GONE);
-    }
-
-    private void updateStatusToComplete() {
-        TextView addrText = findViewById(R.id.listAddr);
-        ImageView statusIcon = findViewById(R.id.status_icon);
-        Button btn_complete = findViewById(R.id.btn_complete);
-        Button btn_deliveryinfo = findViewById(R.id.btn_deliveryinfo);
-        Button btn_changeorder = findViewById(R.id.btn_changeorder);
-        updateStatusToComplete(addrText, statusIcon, btn_complete, btn_deliveryinfo, btn_changeorder);
-    }
-
-    private void updateStatusToComplete(TextView addrText, ImageView statusIcon, Button btn_complete, Button btn_deliveryinfo, Button btn_changeorder) {
-        addrText.setTextColor(0xFF68c166);
-        statusIcon.setVisibility(View.VISIBLE);
-        statusIcon.setImageDrawable(getDrawable(R.mipmap.tag_delivered_v2));
-        btn_complete.setVisibility(View.GONE);
-        btn_changeorder.setVisibility(View.GONE);
-        btn_deliveryinfo.setVisibility(View.VISIBLE);
     }
 
     private void processChangeOrderDialog(final TmsParcelItem item, final MapPOIItem mapPOIItem) {
@@ -948,14 +834,15 @@ public class MapViewActivity extends AppCompatActivity
                             insertedNodePrev.nextParcel = item.id;
                         }
 
+                        //write to DB
                         if (originNodePrev != null)
                             mFbConnector.postParcelItemToFirebaseDatabase(mSelectedDate, originNodePrev);
                         mFbConnector.postParcelItemToFirebaseDatabase(mSelectedDate, item);
                         if (insertedNodePrev != null)
                             mFbConnector.postParcelItemToFirebaseDatabase(mSelectedDate, insertedNodePrev);
 
-                        mScrollView.setVisibility(View.GONE);
-                        mTvCountInfo.setVisibility(View.GONE);
+
+                        mSelectedMarkerToChangeOrder = mapPOIItem;
                         getFirebaseList();
                     }
                 })
@@ -1025,18 +912,13 @@ public class MapViewActivity extends AppCompatActivity
                     String sendResult = data.getStringExtra(UploadImageActivity.EXTRA_SEND_RESULT);
                     if (TextUtils.equals(sendResult, "success")) {
                         String filePath = data.getStringExtra(UploadImageActivity.EXTRA_UPLOADED_FILE_PATH);
-                        Utils.makeComplete(mFbConnector, mCompleteTarget, mSelectedDate, filePath);
-                        mMapView.removePOIItem(mCompleteMarker);
-                        Bitmap bm = getBitmapPinByParcelItem(mCompleteTarget);
-                        Bitmap seleted_bm = getBitmapSeletedPinByParcelItem(mCompleteTarget);
-                        mCompleteMarker.setCustomImageBitmap(bm);
-                        mCompleteMarker.setCustomSelectedImageBitmap(seleted_bm);
-                        mMapView.addPOIItem(mCompleteMarker);
-                        mArrayAdapter.notifyDataSetChanged();
-                        mMapView.setMapCenterPointAndZoomLevel(
-                                MapPoint.mapPointWithGeoCoord(mCompleteMarker.getMapPoint().getMapPointGeoCoord().latitude, mCompleteMarker.getMapPoint().getMapPointGeoCoord().longitude),
-                                7,
-                                true);
+                        Utils.makeComplete(mFbConnector, mCompleteTarget, mSelectedDate, filePath, new DatabaseReference.CompletionListener() {
+                            @Override
+                            public void onComplete(@Nullable DatabaseError databaseError, @NonNull DatabaseReference databaseReference) {
+                                getFirebaseList();
+                                showInfoListview(mCompleteMarker);
+                            }
+                        });
                     }
                 }
                 break;
@@ -1047,7 +929,6 @@ public class MapViewActivity extends AppCompatActivity
     public void onCalloutBalloonOfPOIItemTouched(MapView mapView, MapPOIItem mapPOIItem) {
         Toast.makeText(this, "onCalloutBalloonOfPOIItemTouched", Toast.LENGTH_SHORT);
     }
-
 
     @Override
     public void onCalloutBalloonOfPOIItemTouched(MapView mapView, MapPOIItem mapPOIItem, MapPOIItem.CalloutBalloonButtonType calloutBalloonButtonType) {
@@ -1062,14 +943,11 @@ public class MapViewActivity extends AppCompatActivity
 
     @Override
     public void onDraggablePOIItemMoved(MapView mapView, MapPOIItem mapPOIItem, MapPoint mapPoint) {
-
     }
 
     @Override
     public void onPointerCaptureChanged(boolean hasCapture) {
-
     }
-
 
     @Override
     public void onCurrentLocationUpdate(MapView mapView, MapPoint mapPoint, float v) {

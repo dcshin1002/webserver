@@ -16,6 +16,8 @@ import android.util.Base64;
 import android.util.Log;
 import android.widget.Toast;
 
+import com.google.firebase.database.DatabaseReference;
+
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.text.SimpleDateFormat;
@@ -178,12 +180,12 @@ public class Utils {
 
     }
 
-    public static void makeComplete(FirebaseDatabaseConnector mFbConnector, TmsParcelItem item, String date, String path) {
+    public static void makeComplete(FirebaseDatabaseConnector mFbConnector, TmsParcelItem item, String date, String path, DatabaseReference.CompletionListener listener) {
         Log.d(LOG_TAG, "uploaded path = " + path);
         item.completeImage = path;
         item.status = TmsParcelItem.STATUS_DELIVERED;
         item.completeTime = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()).format(new Date());
-        mFbConnector.postParcelItemToFirebaseDatabase(date, item);
+        mFbConnector.postParcelItemToFirebaseDatabase(date, item, listener);
         //mArrayAdapter.notifyDataSetChanged();
     }
 

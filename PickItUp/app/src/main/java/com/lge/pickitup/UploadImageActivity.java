@@ -8,6 +8,7 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Matrix;
@@ -498,12 +499,27 @@ public class UploadImageActivity extends AppCompatActivity {
 
         bitmap = BitmapFactory.decodeStream(is, null, bmOptions);
         try {
-            bitmap = rotate(bitmap, mPhotoUri.getPath());
+            bitmap = rotate(bitmap, getRealPathFromURI(mPhotoUri));
         } catch (IOException e) {
             e.printStackTrace();
         }
         mIvPreviewImage.setImageBitmap(bitmap);
         mIvPreviewImage.setTag(R.id.ivImagePreview, IMGVIEW_CAPTURED);
+    }
+
+    private String getRealPathFromURI(Uri contentURI) {
+        String result;
+        Cursor cursor = getContentResolver().query(contentURI, null, null, null, null);
+        if (cursor == null) {
+            // Source is Dropbox or other similar local file path
+            result = contentURI.getPath();
+        } else {
+            cursor.moveToFirst();
+            int idx = cursor.getColumnIndex(MediaStore.Images.ImageColumns.DATA);
+            result = cursor.getString(idx);
+            cursor.close();
+        }
+        return result;
     }
 
     public int exifOrientationToDegrees(int exifOrientation) {

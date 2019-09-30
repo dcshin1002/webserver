@@ -178,7 +178,7 @@ public class ParcelListActivity extends AppCompatActivity implements View.OnClic
 
                     if (TextUtils.equals(sendResult, "success")) {
                         String filePath = data.getStringExtra(UploadImageActivity.EXTRA_UPLOADED_FILE_PATH);
-                        Utils.makeComplete(mFbConnector, mCompleteTarget, mTextCourierDate.getText().toString(), filePath);
+                        Utils.makeComplete(mFbConnector, mCompleteTarget, mTextCourierDate.getText().toString(), filePath, null);
                     } else {
 
                     }
