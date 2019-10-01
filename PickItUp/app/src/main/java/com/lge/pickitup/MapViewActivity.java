@@ -357,7 +357,11 @@ public class MapViewActivity extends AppCompatActivity
                         }
                         statusIcon.setVisibility(View.INVISIBLE);
                         btn_complete.setVisibility(View.VISIBLE);
-                        btn_changeorder.setVisibility(View.VISIBLE);
+                        if (mSelectedCourierName.equals(getString(R.string.all_couriers))) {
+                            btn_changeorder.setVisibility(View.INVISIBLE);
+                        } else {
+                            btn_changeorder.setVisibility(View.VISIBLE);
+                        }
                         btn_complete.setBackgroundColor(0xFF42A5F5);
                         btn_deliveryinfo.setVisibility(View.GONE);
                     }
@@ -631,6 +635,7 @@ public class MapViewActivity extends AppCompatActivity
             addMarker();
             if (mSelectedMarkerToChangeOrder != null) {
                 showInfoListview(mSelectedMarkerToChangeOrder);
+                mSelectedMarkerToChangeOrder = null;
             }
         }
 
@@ -695,7 +700,6 @@ public class MapViewActivity extends AppCompatActivity
         MapPoint.GeoCoordinate mapPointGeo = mapPoint.getMapPointGeoCoord();
         mScrollView.setVisibility(View.GONE);
         mTvCountInfo.setVisibility(View.GONE);
-        mSelectedMarkerToChangeOrder = null;
         Log.i(LOG_TAG, String.format("MapView onMapViewSingleTapped (%f,%f)", mapPointGeo.latitude, mapPointGeo.longitude));
     }
 
@@ -742,22 +746,25 @@ public class MapViewActivity extends AppCompatActivity
         final ArrayList<MapPOIItem> sameGeoPOIItems = mMapPOItemHash.get(markeritem);
         mArrayParcelListValues.clear();
         mArrayValuesOrder.clear();
-        if (sameGeoMarkerItems.size() > 1) {
-            int deliveryed_count = 0;
-            for (MapPOIItem poiItem : sameGeoPOIItems) {
-                TmsParcelItem parcelItem = (TmsParcelItem)poiItem.getUserObject();
-                if (parcelItem.status.equals(TmsParcelItem.STATUS_DELIVERED)) {
-                    deliveryed_count++;
+        if (sameGeoMarkerItems != null ) {
+            if (sameGeoMarkerItems.size() > 1) {
+                int deliveryed_count = 0;
+                for (MapPOIItem poiItem : sameGeoPOIItems) {
+                    TmsParcelItem parcelItem = (TmsParcelItem)poiItem.getUserObject();
+                    if (parcelItem.status.equals(TmsParcelItem.STATUS_DELIVERED)) {
+                        deliveryed_count++;
+                    }
+                    mArrayParcelListValues.add(parcelItem);
+                    mArrayValuesOrder.add(poiItem.getTag());
                 }
-                mArrayParcelListValues.add(parcelItem);
-                mArrayValuesOrder.add(poiItem.getTag());
+                mTvCountInfo.setText("선택된 주문 총 " + mArrayParcelListValues.size()  + "개 중 " + deliveryed_count + "개 배송완료" );
+                mTvCountInfo.setVisibility(View.VISIBLE);
+            } else {
+                mArrayParcelListValues.add(item);
+                mArrayValuesOrder.add(sameGeoPOIItems.get(0).getTag());
             }
-            mTvCountInfo.setText("선택된 주문 총 " + mArrayParcelListValues.size()  + "개 중 " + deliveryed_count + "개 배송완료" );
-            mTvCountInfo.setVisibility(View.VISIBLE);
-        } else {
-            mArrayParcelListValues.add(item);
-            mArrayValuesOrder.add(sameGeoPOIItems.get(0).getTag());
         }
+
         mArrayAdapter.notifyDataSetChanged();
     }
 
@@ -785,63 +792,57 @@ public class MapViewActivity extends AppCompatActivity
                         if (newOrder < 1 || newOrder > sizeofParcels) {
                             Toast.makeText(MapViewActivity.this, "유효한 범위의 숫자를 입력하세요" + " (1 ~ " + sizeofParcels + ")", Toast.LENGTH_SHORT).show();
                             return;
+
                         }
 
-                        TmsParcelItem insertedNodePrev = null;
-                        TmsParcelItem insertedNodeNext;
                         TmsParcelItem originNodePrev = null;
+                        TmsParcelItem newOrderNodePrev = null;
+                        TmsParcelItem newOrderItem = mArrayValues.get(newOrder -1);
                         for (TmsParcelItem parcel : mArrayValues) {
                             if (parcel.nextParcel == item.id) {
                                 originNodePrev = parcel;
                                 break;
                             }
                         }
+                        for (TmsParcelItem parcel : mArrayValues) {
+                            if (parcel.nextParcel == newOrderItem.id) {
+                                newOrderNodePrev = parcel;
+                                break;
+                            }
+                        }
+                        if (originNodePrev != null) {
+                            originNodePrev.nextParcel = newOrderItem.id;
+                        } else {
+                            TmsCourierItem courierItem = mCourierDatabaseHash.get(mSelectedCourierName);
+                            courierItem.startparcelid = newOrderItem.id;
+                            mFbConnector.postCourierItemToFirebaseDatabase(mSelectedDate, courierItem);
+                        }
 
-                        if (prevOrder > newOrder) { // 뒷번호에서 앞번호으로  변경
-
-                            if (newOrder == 1) {
+                        if (item.nextParcel == newOrderItem.id) {
+                            item.nextParcel = newOrderItem.nextParcel;
+                            newOrderItem.nextParcel = item.id;
+                        } else {
+                            int temp = item.nextParcel;
+                            item.nextParcel = newOrderItem.nextParcel;
+                            newOrderItem.nextParcel = temp;
+                            if (newOrderNodePrev != null) {
+                                newOrderNodePrev.nextParcel = item.id; //
+                            } else {
                                 TmsCourierItem courierItem = mCourierDatabaseHash.get(mSelectedCourierName);
                                 courierItem.startparcelid = item.id;
                                 mFbConnector.postCourierItemToFirebaseDatabase(mSelectedDate, courierItem);
-                            } else {
-                                insertedNodePrev = mArrayValues.get(newOrder - 2);
-                                insertedNodePrev.nextParcel = item.id;
                             }
-                            insertedNodeNext = mArrayValues.get(newOrder - 1);
-                            if (originNodePrev != null) {
-                                if (item.nextParcel != -1) {
-                                    originNodePrev.nextParcel = item.nextParcel;
-                                } else {
-                                    originNodePrev.nextParcel = -1;
-                                }
-                            }
-                            item.nextParcel = insertedNodeNext.id;
-                        } else { // 앞번호에서 뒷번호로 변경
-                            if (prevOrder == 1) {
-                                TmsCourierItem courierItem = mCourierDatabaseHash.get(mSelectedCourierName);
-                                courierItem.startparcelid = item.nextParcel;
-                                mFbConnector.postCourierItemToFirebaseDatabase(mSelectedDate, courierItem);
-                            }
-                            if (originNodePrev != null) {
-                                if (item.nextParcel != -1) {
-                                    originNodePrev.nextParcel = item.nextParcel;
-                                } else {
-                                    originNodePrev.nextParcel = -1;
-                                }
-                            }
-                            insertedNodePrev = mArrayValues.get(newOrder - 1);
-                            item.nextParcel = insertedNodePrev.nextParcel;
-                            insertedNodePrev.nextParcel = item.id;
                         }
 
-                        //write to DB
+                        ArrayList<TmsParcelItem> postitems = new ArrayList<>();
+                        if (newOrderNodePrev != null)
+                            postitems.add(newOrderNodePrev);
                         if (originNodePrev != null)
-                            mFbConnector.postParcelItemToFirebaseDatabase(mSelectedDate, originNodePrev);
-                        mFbConnector.postParcelItemToFirebaseDatabase(mSelectedDate, item);
-                        if (insertedNodePrev != null)
-                            mFbConnector.postParcelItemToFirebaseDatabase(mSelectedDate, insertedNodePrev);
+                            postitems.add(originNodePrev);
+                        postitems.add(newOrderItem);
+                        postitems.add(item);
 
-
+                        mFbConnector.postParcelListToFirebaseDatabase2(mSelectedDate, postitems, null);
                         mSelectedMarkerToChangeOrder = mapPOIItem;
                         getFirebaseList();
                     }
