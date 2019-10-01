@@ -574,7 +574,7 @@ public class ParcelListActivity extends AppCompatActivity implements View.OnClic
         int numComplted = 0;
 
         for (TmsParcelItem item : items) {
-            if (item.status.equals(TmsParcelItem.STATUS_DELIVERED))
+            if (item != null && item.status.equals(TmsParcelItem.STATUS_DELIVERED))
                 numComplted++;
         }
 
