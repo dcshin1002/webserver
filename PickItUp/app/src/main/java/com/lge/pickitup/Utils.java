@@ -85,7 +85,6 @@ public class Utils {
 
             mCurrent = location;
             Log.i(LOG_TAG, "current(mNetworkLocationListener) : " + mCurrent.getLatitude() + "/" + mCurrent.getLongitude());
-            Toast.makeText(mContext, "current(mNetworkLocationListener)", Toast.LENGTH_SHORT).show();
         }
 
         @Override

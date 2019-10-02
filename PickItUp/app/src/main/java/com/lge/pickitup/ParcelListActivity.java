@@ -424,6 +424,16 @@ public class ParcelListActivity extends AppCompatActivity implements View.OnClic
 
     }
     private void processChangeOrderDialog( final TmsParcelItem item, final int prevOrder) {
+
+        final String selectedCourierName = mTextCourierName.getText().toString();
+        final String selectedDate = mTextCourierDate.getText().toString();
+
+        TmsCourierItem courierItem = mCourierDatabaseHash.get(selectedCourierName);
+        if (courierItem.startparcelid == -1) {
+            Toast.makeText(ParcelListActivity.this, getString(R.string.need_to_upload_bylastRelease), Toast.LENGTH_LONG).show();
+            return;
+        }
+
         final EditText edittext = new EditText(this);
         edittext.setInputType(InputType.TYPE_CLASS_NUMBER);
         final int sizeofParcels = mArrayValues.size();
@@ -435,6 +445,8 @@ public class ParcelListActivity extends AppCompatActivity implements View.OnClic
                     @Override
                     public void onClick(DialogInterface dialogInterface, int i) {
                         String edittextvalue = edittext.getText().toString();
+
+
                         if (edittextvalue.isEmpty()) {
                             return;
                         }
@@ -448,8 +460,8 @@ public class ParcelListActivity extends AppCompatActivity implements View.OnClic
                             Toast.makeText(ParcelListActivity.this, "유효한 범위의 숫자를 입력하세요" + " (1 ~ " + sizeofParcels + ")", Toast.LENGTH_SHORT).show();
                             return;
                         }
-                        String selectedCourierName = mTextCourierName.getText().toString();
-                        String selectedDate = mTextCourierDate.getText().toString();
+
+
                         DatabaseReference.CompletionListener listener = new DatabaseReference.CompletionListener() {
                             @Override
                             public void onComplete(@Nullable DatabaseError databaseError, @NonNull DatabaseReference databaseReference) {

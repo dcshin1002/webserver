@@ -115,5 +115,6 @@
     <string name="alert_message_start_distribution">%1$s 물류 분배 및 최적경로 탐색이 시작되었습니다.</string>
     <string name="alert_message_running_clustering">%1$s 물류 분배 및 최적경로 탐색이 진행 중입니다. 잠시후에 다시 시도해 주세요</string>
     <string name="assign_is_completed">권역 할당 완료</string>
-    <string name="cannot_know_mylocation">현재 위치를 알수 없어 카카오맵을 실행할 수 없습니다.</string>
+    <string name="cannot_know_mylocation">현재 위치를 알수 없어 카카오맵을 실행할 수 없습니다. GPS 설정을 확인해 주세요.</string>
+    <string name="need_to_upload_bylastRelease">배송순서를 변경할수 없습니다.\n관리자가 최신버전에서 다시 배송정보를 업로드해야 합니다."</string>
 </resources>

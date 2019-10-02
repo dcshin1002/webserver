@@ -692,7 +692,11 @@ public class MapViewActivity extends AppCompatActivity
         if (Utils.mCurrent != null) {
             mapView.setMapCenterPointAndZoomLevel(MapPoint.mapPointWithGeoCoord(Utils.mCurrent.getLatitude(), Utils.mCurrent.getLongitude()), 7, true);
         } else {
-            mapView.setMapCenterPointAndZoomLevel(MapPoint.mapPointWithGeoCoord(mInitLatitude,mInitLongitude), 7, true);
+            if (mInitLatitude== 0 || mInitLongitude==0) {
+                mapView.setMapCenterPointAndZoomLevel(MapPoint.mapPointWithGeoCoord(37.560128,126.995802), 9, true);
+            } else {
+                mapView.setMapCenterPointAndZoomLevel(MapPoint.mapPointWithGeoCoord(mInitLatitude,mInitLongitude), 7, true);
+            }
         }
 
     }
@@ -785,6 +789,13 @@ public class MapViewActivity extends AppCompatActivity
     }
 
     private void processChangeOrderDialog(final TmsParcelItem item, final MapPOIItem mapPOIItem) {
+
+        TmsCourierItem courierItem = mCourierDatabaseHash.get(mSelectedCourierName);
+        if (courierItem.startparcelid == -1) {
+            Toast.makeText(MapViewActivity.this, getString(R.string.need_to_upload_bylastRelease), Toast.LENGTH_LONG).show();
+            return;
+        }
+
         final EditText edittext = new EditText(this);
         edittext.setInputType(InputType.TYPE_CLASS_NUMBER);
         final int prevOrder = mapPOIItem.getTag();
@@ -810,6 +821,7 @@ public class MapViewActivity extends AppCompatActivity
                             Toast.makeText(MapViewActivity.this, "유효한 범위의 숫자를 입력하세요" + " (1 ~ " + sizeofParcels + ")", Toast.LENGTH_SHORT).show();
                             return;
                         }
+
                         DatabaseReference.CompletionListener listener = new DatabaseReference.CompletionListener() {
                             @Override
                             public void onComplete(@Nullable DatabaseError databaseError, @NonNull DatabaseReference databaseReference) {
@@ -893,6 +905,7 @@ public class MapViewActivity extends AppCompatActivity
                                 showInfoListview(mCompleteMarker);
                             }
                         });
+                        mMapView.setMapCenterPointAndZoomLevel(MapPoint.mapPointWithGeoCoord(Double.valueOf(mCompleteTarget.consigneeLatitude),Double.valueOf(mCompleteTarget.consigneeLongitude)), 7, true);
                     }
                 }
                 break;
