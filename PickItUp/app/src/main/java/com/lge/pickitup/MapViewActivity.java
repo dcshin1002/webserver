@@ -50,7 +50,6 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 
-
 public class MapViewActivity extends AppCompatActivity
         implements MapView.OpenAPIKeyAuthenticationResultListener, MapView.MapViewEventListener, MapView.POIItemEventListener, View.OnClickListener, MapView.CurrentLocationEventListener {
 
@@ -415,6 +414,27 @@ public class MapViewActivity extends AppCompatActivity
         return bmp;
     }
 
+    private void addMarkerHash(TmsParcelItem item) {
+        String strLatitude = item.consigneeLatitude;
+        String strLongitude = item.consigneeLongitude;
+        if (strLatitude.isEmpty())
+            strLatitude = "0";
+
+        if (strLongitude.isEmpty())
+            strLongitude = "0";
+
+        MarkerItem markeritem = new MarkerItem(strLatitude, strLongitude);
+
+        ArrayList<TmsParcelItem> list_parcelitem;
+        if (mMarkerHash.containsKey(markeritem)) {
+            list_parcelitem = mMarkerHash.get(markeritem);
+        } else {
+            list_parcelitem = new ArrayList<>();
+        }
+        list_parcelitem.add(item);
+        mMarkerHash.put(markeritem, list_parcelitem);
+    }
+
     protected void addMarker() {
         mMapView.removeAllPOIItems();
         int num = 1;
@@ -422,36 +442,24 @@ public class MapViewActivity extends AppCompatActivity
         for (TmsParcelItem item : mArrayValues) {
             String strLatitude = item.consigneeLatitude;
             String strLongitude = item.consigneeLongitude;
-            MarkerItem markeritem = new MarkerItem(strLatitude, strLongitude);
 
-            ArrayList<TmsParcelItem> list_parcelitem;
-            if (mMarkerHash.containsKey(markeritem)) {
-                list_parcelitem = mMarkerHash.get(markeritem);
-            } else {
-                list_parcelitem = new ArrayList<>();
-            }
-            list_parcelitem.add(item);
-            mMarkerHash.put(markeritem, list_parcelitem);
-        }
-
-
-        for (TmsParcelItem item : mArrayValues) {
-            String strLatitude = item.consigneeLatitude;
-            String strLongitude = item.consigneeLongitude;
-            if (mInitLatitude == 0 || mInitLongitude == 0) {
-                mInitLatitude = Float.valueOf(item.consigneeLatitude);
-                mInitLongitude = Float.valueOf(item.consigneeLongitude);
-            }
             Log.i(LOG_TAG, "addr = " + item.consigneeAddr);
             Log.i(LOG_TAG, "lat = " + item.consigneeLatitude);
             Log.i(LOG_TAG, "lon = " + item.consigneeLongitude);
             Log.i(LOG_TAG, "status = " + item.status);
             Log.i(LOG_TAG, "orderInRoute = " + item.orderInRoute);
 
-            if (strLatitude == null || strLatitude.length() == 0
-                    || strLongitude == null || strLongitude.length() == 0) {
-                continue;
+            if (strLatitude.isEmpty())
+                strLatitude = "0";
+
+            if (strLongitude.isEmpty())
+                strLongitude = "0";
+
+            if ((mInitLatitude == 0 || mInitLongitude == 0) && !(strLatitude.equals("0") || strLongitude.equals("0"))) {
+                mInitLatitude = Float.valueOf(item.consigneeLatitude);
+                mInitLongitude = Float.valueOf(item.consigneeLongitude);
             }
+
             MapPOIItem marker = new MapPOIItem();
 
             marker.setItemName(item.consigneeAddr);
@@ -615,6 +623,7 @@ public class MapViewActivity extends AppCompatActivity
                 mParcelDatabaseHash.put(key, value);
                 mArrayKeys.add(key);
                 mArrayValues.add(value);
+                addMarkerHash(value);
             }
 
             String courierName = mSelectedCourierName;
@@ -625,9 +634,11 @@ public class MapViewActivity extends AppCompatActivity
                     if (parcelItem != null) {
                         mArrayValues.clear();
                         mArrayValues.add(parcelItem);
+                        makeToastToInformWrongAddress(parcelItem, mArrayValues.size());
                         while(parcelItem.nextParcel != -1) {
                             parcelItem = mParcelDatabaseHash.get(String.valueOf(parcelItem.nextParcel));
                             mArrayValues.add(parcelItem);
+                            makeToastToInformWrongAddress(parcelItem, mArrayValues.size());
                         }
                     }
                 }
@@ -644,6 +655,12 @@ public class MapViewActivity extends AppCompatActivity
             Log.w(LOG_TAG, "getParcelListFromFirebaseDatabase, ValueEventListener.onCancelled", databaseError.toException());
         }
     };
+
+    private void makeToastToInformWrongAddress(TmsParcelItem item, int order) {
+        if (item.consigneeLatitude.isEmpty() || item.consigneeLatitude.equals("0")
+                || item.consigneeLongitude.isEmpty() || item.consigneeLongitude.equals("0"))
+            Toast.makeText(MapViewActivity.this, order + "번: " + item.consigneeName +"고객건은 잘못된 주소이므로 지도에 표시되지 않습니다.", Toast.LENGTH_SHORT).show();
+    }
 
     private void addCourierMarker(TmsCourierItem courierItem) {
         if (!Utils.isAdminAuth()) {
@@ -779,6 +796,7 @@ public class MapViewActivity extends AppCompatActivity
                 .setPositiveButton(R.string.dialog_title_confirm, new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialogInterface, int i) {
+
                         String edittextvalue = edittext.getText().toString();
                         if (edittextvalue.isEmpty()) {
                             return;
@@ -840,15 +858,22 @@ public class MapViewActivity extends AppCompatActivity
                             insertedNodePrev.nextParcel = item.id;
                         }
 
-                        //write to DB
-                        if (originNodePrev != null)
-                            mFbConnector.postParcelItemToFirebaseDatabase(mSelectedDate, originNodePrev);
-                        mFbConnector.postParcelItemToFirebaseDatabase(mSelectedDate, item);
-                        if (insertedNodePrev != null)
-                            mFbConnector.postParcelItemToFirebaseDatabase(mSelectedDate, insertedNodePrev);
+                        ArrayList<TmsParcelItem> list_parcelitem = new ArrayList<>();
 
-                        mSelectedMarkerToChangeOrder = mapPOIItem;
-                        getFirebaseList();
+                        if (originNodePrev != null)
+                            list_parcelitem.add(originNodePrev);
+
+                        list_parcelitem.add(item);
+
+                        if (insertedNodePrev != null)
+                            list_parcelitem.add(insertedNodePrev);
+                        mFbConnector.postParcelListToFirebaseDatabase2(mSelectedDate, list_parcelitem, new DatabaseReference.CompletionListener() {
+                            @Override
+                            public void onComplete(@Nullable DatabaseError databaseError, @NonNull DatabaseReference databaseReference) {
+                                mSelectedMarkerToChangeOrder = mapPOIItem;
+                                getFirebaseList();
+                            }
+                        });
                     }
                 })
                 .setNegativeButton(R.string.cancel, new DialogInterface.OnClickListener() {

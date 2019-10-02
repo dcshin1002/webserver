@@ -633,7 +633,7 @@ public class ParcelListActivity extends AppCompatActivity implements View.OnClic
 
             final TmsParcelItem item = getItem(position);
             boolean isDeliverd = item.status.equals(TmsParcelItem.STATUS_DELIVERED);
-            boolean isValidAddress = !(item.consigneeLatitude.equals("0") || item.consigneeLongitude.equals("0"));
+            boolean isValidAddress = !(item.consigneeLatitude.equals("0") || item.consigneeLongitude.equals("0") || item.consigneeLatitude.isEmpty() || item.consigneeLongitude.isEmpty());
 
             if (item != null) {
                 TextView addrText = v.findViewById(R.id.listAddr);
@@ -688,6 +688,7 @@ public class ParcelListActivity extends AppCompatActivity implements View.OnClic
                 if (remark != null) {
                     remark.setText(getString(R.string.remark) + " : " + item.remark);
                 }
+
             }
             return v;
         }
