@@ -355,6 +355,63 @@ public class FirebaseDatabaseConnector {
         return nearIdx;
     }
 
+    public void proceedChangeOrder(TmsParcelItem item, int prevOrder, int newOrder, String selectedCourierName, String selectedDate, DatabaseReference.CompletionListener listener, HashMap<String, TmsCourierItem> courierDatabaseHash) {
+        TmsParcelItem insertedNodePrev = null;
+        TmsParcelItem insertedNodeNext;
+        TmsParcelItem originNodePrev = null;
+        for (TmsParcelItem parcel : mArrayValues) {
+            if (parcel.nextParcel == item.id) {
+                originNodePrev = parcel;
+                break;
+            }
+        }
+        if (prevOrder > newOrder) { // 뒷번호에서 앞번호으로  변경
+
+            if (newOrder == 1) {
+                TmsCourierItem courierItem = courierDatabaseHash.get(selectedCourierName);
+                courierItem.startparcelid = item.id;
+                postCourierItemToFirebaseDatabase(selectedDate, courierItem);
+            } else {
+                insertedNodePrev = mArrayValues.get(newOrder - 2);
+                insertedNodePrev.nextParcel = item.id;
+            }
+            insertedNodeNext = mArrayValues.get(newOrder - 1);
+            if (originNodePrev != null) {
+                if (item.nextParcel != -1) {
+                    originNodePrev.nextParcel = item.nextParcel;
+                } else {
+                    originNodePrev.nextParcel = -1;
+                }
+            }
+            item.nextParcel = insertedNodeNext.id;
+        } else { // 앞번호에서 뒷번호로 변경
+            if (prevOrder == 1) {
+                TmsCourierItem courierItem = courierDatabaseHash.get(selectedCourierName);
+                courierItem.startparcelid = item.nextParcel;
+                postCourierItemToFirebaseDatabase(selectedDate, courierItem);
+            }
+            if (originNodePrev != null) {
+                if (item.nextParcel != -1) {
+                    originNodePrev.nextParcel = item.nextParcel;
+                } else {
+                    originNodePrev.nextParcel = -1;
+                }
+            }
+            insertedNodePrev = mArrayValues.get(newOrder - 1);
+            item.nextParcel = insertedNodePrev.nextParcel;
+            insertedNodePrev.nextParcel = item.id;
+        }
+        ArrayList<TmsParcelItem> list_parcelitem = new ArrayList<>();
+        if (originNodePrev != null)
+            list_parcelitem.add(originNodePrev);
+
+        list_parcelitem.add(item);
+
+        if (insertedNodePrev != null)
+            list_parcelitem.add(insertedNodePrev);
+        postParcelListToFirebaseDatabase2(selectedDate, list_parcelitem, listener);
+    }
+
     private String getNumString(ArrayList<TmsParcelItem> items) {
         int numTotal = items.size();
         int numComplted = 0;

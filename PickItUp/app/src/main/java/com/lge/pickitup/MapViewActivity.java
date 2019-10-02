@@ -361,7 +361,7 @@ public class MapViewActivity extends AppCompatActivity
                         } else {
                             btn_changeorder.setVisibility(View.VISIBLE);
                         }
-                    btn_complete.setBackgroundColor(0xFF42A5F5);
+                        btn_complete.setBackgroundColor(0xFF42A5F5);
                         btn_deliveryinfo.setVisibility(View.GONE);
                     }
                 }
@@ -791,7 +791,7 @@ public class MapViewActivity extends AppCompatActivity
         final int sizeofParcels = mArrayValues.size();
         mChangeOrderDialog = new AlertDialog.Builder(this)
                 .setTitle(prevOrder +"번 순서변경")
-                .setMessage("변경되길 원하는 순서를 입력하세요.\n" + " (1 ~ " + sizeofParcels + ")")
+                .setMessage(item.consigneeName + ": " + item.consigneeAddr + "\n\n변경되길 원하는 순서를 입력하세요.\n" + " (1 ~ " + sizeofParcels + ")")
                 .setView(edittext)
                 .setPositiveButton(R.string.dialog_title_confirm, new DialogInterface.OnClickListener() {
                     @Override
@@ -810,70 +810,14 @@ public class MapViewActivity extends AppCompatActivity
                             Toast.makeText(MapViewActivity.this, "유효한 범위의 숫자를 입력하세요" + " (1 ~ " + sizeofParcels + ")", Toast.LENGTH_SHORT).show();
                             return;
                         }
-
-                        TmsParcelItem insertedNodePrev = null;
-                        TmsParcelItem insertedNodeNext;
-                        TmsParcelItem originNodePrev = null;
-                        for (TmsParcelItem parcel : mArrayValues) {
-                            if (parcel.nextParcel == item.id) {
-                                originNodePrev = parcel;
-                                break;
-                            }
-                        }
-
-                        if (prevOrder > newOrder) { // 뒷번호에서 앞번호으로  변경
-
-                            if (newOrder == 1) {
-                                TmsCourierItem courierItem = mCourierDatabaseHash.get(mSelectedCourierName);
-                                courierItem.startparcelid = item.id;
-                                mFbConnector.postCourierItemToFirebaseDatabase(mSelectedDate, courierItem);
-                            } else {
-                                insertedNodePrev = mArrayValues.get(newOrder - 2);
-                                insertedNodePrev.nextParcel = item.id;
-                            }
-                            insertedNodeNext = mArrayValues.get(newOrder - 1);
-                            if (originNodePrev != null) {
-                                if (item.nextParcel != -1) {
-                                    originNodePrev.nextParcel = item.nextParcel;
-                                } else {
-                                    originNodePrev.nextParcel = -1;
-                                }
-                            }
-                            item.nextParcel = insertedNodeNext.id;
-                        } else { // 앞번호에서 뒷번호로 변경
-                            if (prevOrder == 1) {
-                                TmsCourierItem courierItem = mCourierDatabaseHash.get(mSelectedCourierName);
-                                courierItem.startparcelid = item.nextParcel;
-                                mFbConnector.postCourierItemToFirebaseDatabase(mSelectedDate, courierItem);
-                            }
-                            if (originNodePrev != null) {
-                                if (item.nextParcel != -1) {
-                                    originNodePrev.nextParcel = item.nextParcel;
-                                } else {
-                                    originNodePrev.nextParcel = -1;
-                                }
-                            }
-                            insertedNodePrev = mArrayValues.get(newOrder - 1);
-                            item.nextParcel = insertedNodePrev.nextParcel;
-                            insertedNodePrev.nextParcel = item.id;
-                        }
-
-                        ArrayList<TmsParcelItem> list_parcelitem = new ArrayList<>();
-
-                        if (originNodePrev != null)
-                            list_parcelitem.add(originNodePrev);
-
-                        list_parcelitem.add(item);
-
-                        if (insertedNodePrev != null)
-                            list_parcelitem.add(insertedNodePrev);
-                        mFbConnector.postParcelListToFirebaseDatabase2(mSelectedDate, list_parcelitem, new DatabaseReference.CompletionListener() {
+                        DatabaseReference.CompletionListener listener = new DatabaseReference.CompletionListener() {
                             @Override
                             public void onComplete(@Nullable DatabaseError databaseError, @NonNull DatabaseReference databaseReference) {
                                 mSelectedMarkerToChangeOrder = mapPOIItem;
                                 getFirebaseList();
                             }
-                        });
+                        };
+                        mFbConnector.proceedChangeOrder(item, prevOrder, newOrder, mSelectedCourierName, mSelectedDate, listener, mCourierDatabaseHash);
                     }
                 })
                 .setNegativeButton(R.string.cancel, new DialogInterface.OnClickListener() {

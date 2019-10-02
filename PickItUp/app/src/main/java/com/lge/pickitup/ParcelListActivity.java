@@ -8,6 +8,7 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
+import android.text.InputType;
 import android.text.TextUtils;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -18,6 +19,7 @@ import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.DatePicker;
+import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.TextView;
@@ -37,6 +39,8 @@ import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.Query;
 import com.google.firebase.database.ValueEventListener;
+
+import net.daum.mf.map.api.MapPOIItem;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -411,9 +415,65 @@ public class ParcelListActivity extends AppCompatActivity implements View.OnClic
                 item = (TmsParcelItem)view.getTag(R.id.btn_complete);
                 processListBtnClick(item);
                 break;
+            case R.id.btn_changeorder:
+                item = (TmsParcelItem)view.getTag(R.id.btn_changeorder);
+                int prevOrder = (int)view.getTag(R.id.status_icon);
+                processChangeOrderDialog(item, prevOrder);
+                break;
         }
 
     }
+    private void processChangeOrderDialog( final TmsParcelItem item, final int prevOrder) {
+        final EditText edittext = new EditText(this);
+        edittext.setInputType(InputType.TYPE_CLASS_NUMBER);
+        final int sizeofParcels = mArrayValues.size();
+        AlertDialog.Builder changeOrderDialog = new AlertDialog.Builder(this)
+                .setTitle(prevOrder +"번 순서변경")
+                .setMessage(item.consigneeName + ": " + item.consigneeAddr + "\n\n변경되길 원하는 순서를 입력하세요.\n" + " (1 ~ " + sizeofParcels + ")")
+                .setView(edittext)
+                .setPositiveButton(R.string.dialog_title_confirm, new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialogInterface, int i) {
+                        String edittextvalue = edittext.getText().toString();
+                        if (edittextvalue.isEmpty()) {
+                            return;
+                        }
+                        final int newOrder = Integer.valueOf(edittextvalue);
+
+                        if (prevOrder == newOrder) {
+                            Toast.makeText(ParcelListActivity.this, "기존과 동일한 순서정보를 입력하셨습니다.", Toast.LENGTH_SHORT).show();
+                            return;
+                        }
+                        if (newOrder < 1 || newOrder > sizeofParcels) {
+                            Toast.makeText(ParcelListActivity.this, "유효한 범위의 숫자를 입력하세요" + " (1 ~ " + sizeofParcels + ")", Toast.LENGTH_SHORT).show();
+                            return;
+                        }
+                        String selectedCourierName = mTextCourierName.getText().toString();
+                        String selectedDate = mTextCourierDate.getText().toString();
+                        DatabaseReference.CompletionListener listener = new DatabaseReference.CompletionListener() {
+                            @Override
+                            public void onComplete(@Nullable DatabaseError databaseError, @NonNull DatabaseReference databaseReference) {
+                                getFirebaseList();
+                                Toast.makeText(ParcelListActivity.this, item.consigneeName +": " + item.consigneeAddr + "\n\n" + newOrder + "번으로 변경완료되었습니다.", Toast.LENGTH_SHORT).show();
+                            }
+                        };
+                        mFbConnector.proceedChangeOrder(item, prevOrder, newOrder, selectedCourierName, selectedDate, listener, mCourierDatabaseHash);
+
+
+                    }
+                })
+                .setNegativeButton(R.string.cancel, new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialogInterface, int i) {
+                        dialogInterface.cancel();
+                    }
+                });
+        changeOrderDialog.show();
+    }
+
+
+
+
 
     private void resetCourierText() {
         mTextCourierName.setText(getString(R.string.default_courier_name));
@@ -650,7 +710,9 @@ public class ParcelListActivity extends AppCompatActivity implements View.OnClic
                 btn_complete.setTag(R.id.btn_complete, item);
                 btn_deliveryinfo.setOnClickListener(ParcelListActivity.this);
                 btn_deliveryinfo.setTag(R.id.btn_deliveryinfo, item);
-                btn_changeorder.setVisibility(View.GONE);
+                btn_changeorder.setOnClickListener(ParcelListActivity.this);
+                btn_changeorder.setTag(R.id.btn_changeorder, item);
+                btn_changeorder.setTag(R.id.status_icon, position+1);
                 if (addrText != null) {
                     String addrTextValue = "";
                     if (!mTextCourierName.getText().toString().equals(getString(R.string.all_couriers))) {
@@ -662,6 +724,7 @@ public class ParcelListActivity extends AppCompatActivity implements View.OnClic
                         statusIcon.setVisibility(View.VISIBLE);
                         statusIcon.setImageDrawable(getDrawable(R.mipmap.tag_delivered_v2));
                         btn_complete.setVisibility(View.GONE);
+                        btn_changeorder.setVisibility(View.GONE);
                         btn_deliveryinfo.setVisibility(View.VISIBLE);
                         btn_deliveryinfo.setBackgroundColor(0xFF68C166);
                     } else {
@@ -673,6 +736,11 @@ public class ParcelListActivity extends AppCompatActivity implements View.OnClic
                         statusIcon.setVisibility(View.GONE);
                         btn_complete.setVisibility(View.VISIBLE);
                         btn_complete.setBackgroundColor(0xFF42A5F5);
+                        if (mTextCourierName.getText().toString().equals(getString(R.string.all_couriers))) {
+                            btn_changeorder.setVisibility(View.INVISIBLE);
+                        } else {
+                            btn_changeorder.setVisibility(View.VISIBLE);
+                        }
                         btn_deliveryinfo.setVisibility(View.GONE);
                     }
                 }
