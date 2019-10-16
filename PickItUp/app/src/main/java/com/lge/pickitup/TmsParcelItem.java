@@ -13,6 +13,7 @@ import java.util.Map;
 public class TmsParcelItem implements Comparable<TmsParcelItem>, Parcelable {
     public static final String STATUS_COLLECTED = "collected";    // Submitted to courier service initially
     public static final String STATUS_GEOCODED = "geocoded";      // Converted to geocode from address facade
+    public static final String STATUS_ASSIGNED = "assigned";      // Courier is assigned
     public static final String STATUS_DELIVERED = "delivered";    // Delivered
 
     public static final String UNSET = "";
@@ -44,6 +45,19 @@ public class TmsParcelItem implements Comparable<TmsParcelItem>, Parcelable {
     public static final String KEY_STATUS = "status";
     public static final String KEY_COMPLETE_MSG_IMG = "completeImage";
     public static final String KEY_COMPLETE_TIME = "completeTime";
+
+    public String getStatusStringByCurrentStatus() {
+        switch (this.status) {
+            case STATUS_GEOCODED :
+                return "등록완료";
+            case STATUS_ASSIGNED :
+                return "기사배정완료";
+            case STATUS_DELIVERED :
+                return "배송완료";
+            default :
+                return "이상상태";
+        }
+    }
 
     public static final Parcelable.Creator<TmsParcelItem> CREATOR = new Creator<TmsParcelItem>() {
         @Override

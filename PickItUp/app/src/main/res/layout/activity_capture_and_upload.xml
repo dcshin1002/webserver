@@ -70,9 +70,10 @@
         android:layout_marginTop="10dp"
         android:textSize="18dp"
         android:layout_below="@id/etMessageContent"
-        android:layout_alignLeft="@id/etMessageContent"
-        android:layout_alignRight="@id/etMessageContent"
         android:visibility="gone" />
+        <!--android:layout_alignLeft="@id/etMessageContent"
+        android:layout_alignRight="@id/etMessageContent" -->
+
 
     <Button
         android:id="@+id/btnFinishActivity"
@@ -81,8 +82,8 @@
         android:padding="5dp"
         android:layout_marginTop="10dp"
         android:layout_below="@id/tvDeliveryTime"
-        android:layout_alignLeft="@id/tvDeliveryTime"
-        android:layout_alignRight="@id/tvDeliveryTime"
+        android:layout_alignLeft="@id/etMessageContent"
+        android:layout_alignRight="@id/etMessageContent"
         android:background="#42A5F5"
         android:textColor="#FFFFFF"
         android:visibility="gone"

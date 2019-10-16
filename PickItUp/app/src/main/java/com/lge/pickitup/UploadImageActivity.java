@@ -142,7 +142,12 @@ public class UploadImageActivity extends AppCompatActivity {
             if (isShowInfoAction()) {
                 showCompleteImage();
                 setShowDeliveryInfoUI();
-                mIvPreviewImage.setImageDrawable(getResources().getDrawable(R.drawable.img_downloading, UploadImageActivity.this.getTheme()));
+                if (mSelectedParcelItem.status.equals(TmsParcelItem.STATUS_DELIVERED)) {
+                    mIvPreviewImage.setImageDrawable(getResources().getDrawable(R.drawable.img_downloading, UploadImageActivity.this.getTheme()));
+                } else {
+                    mIvPreviewImage.setVisibility(View.INVISIBLE);
+                }
+
 
             } else {
                 mIvPreviewImage.setImageDrawable(getResources().getDrawable(R.drawable.capture_image_icon, UploadImageActivity.this.getTheme()));
@@ -150,6 +155,24 @@ public class UploadImageActivity extends AppCompatActivity {
             }
         }
     }
+    private void setParcelInfoText() {
+
+        StringBuilder ret = new StringBuilder();
+        ret.append("배송상태").append(": ").append(mSelectedParcelItem.getStatusStringByCurrentStatus()).append(("\n"));
+        if (mSelectedParcelItem.status.equals(TmsParcelItem.STATUS_DELIVERED)) {
+            ret.append("배송완료시간: ").append(": ").append(mSelectedParcelItem.completeTime).append(("\n"));;
+        }
+        ret.append("고객명").append(": ").append(mSelectedParcelItem.consigneeName).append(" (").append(mSelectedParcelItem.consigneeContact).append(")").append(("\n"));;
+        ret.append("고객주소").append(": ").append(mSelectedParcelItem.consigneeAddr).append(("\n"));;
+        ret.append("배송메모").append(": ").append(mSelectedParcelItem.deliveryNote).append(("\n"));;
+        ret.append("특이사항").append(": ").append(mSelectedParcelItem.remark).append(("\n"));;
+        ret.append("업체명").append(": ").append(mSelectedParcelItem.consignorName).append(("\n"));;
+        ret.append("배송기사").append(": ").append(mSelectedParcelItem.courierName).append(("\n"));;
+        ret.append("지역코드").append(": ").append(mSelectedParcelItem.regionalCode).append(("\n"));;
+        mTvDeliveryTime.append(ret);
+        return;
+    }
+
     private void setShowDeliveryInfoUI() {
         mEtMessageContent.setVisibility(View.GONE);
         mBtnCapture.setVisibility(View.GONE);
@@ -157,7 +180,8 @@ public class UploadImageActivity extends AppCompatActivity {
         mBtnSendMsg.setVisibility(View.GONE);
 
         mTvDeliveryTime.setVisibility(View.VISIBLE);
-        mTvDeliveryTime.setText("배송완료 시간:  " + mSelectedParcelItem.completeTime);
+        setParcelInfoText();
+
         mBtnFinishActivity.setVisibility(View.VISIBLE);
     }
 
