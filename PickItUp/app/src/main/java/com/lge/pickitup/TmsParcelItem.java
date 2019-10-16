@@ -228,4 +228,9 @@ public class TmsParcelItem implements Comparable<TmsParcelItem>, Parcelable {
         parcel.writeString(completeImage);
         parcel.writeString(completeTime);
     }
+
+    public String getDesc() {
+        // TODO : currently parcel description is same as address
+        return this.consigneeAddr + "(" + this.consigneeContact + ")";
+    }
 }

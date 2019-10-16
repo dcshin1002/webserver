@@ -184,31 +184,76 @@
         android:layout_below="@id/btn_relative_layout"
         android:layout_marginTop="2dp"/>
 
-    <TextView
-        android:id="@+id/show_item_num"
+    <RelativeLayout
+        android:id="@+id/info_relative_layout"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_below="@id/divider"
-        android:layout_marginTop="2dp"
-        android:background="#EFEFEF"
-        android:paddingLeft="14dp"
-        android:paddingTop="10dp"
-        android:paddingBottom="10dp"
-        android:shadowColor="#AFAFAF"
-        android:shadowDx="1.0"
-        android:shadowDy="1.0"
-        android:shadowRadius="1.0"
-        android:text="0/0개 배송 완료됨"
-        android:textAlignment="viewEnd"
-        android:textColor="#6F6F6F"
-        android:paddingRight="10dp"
-        android:textSize="14dp" />
+        android:padding="5dp"
+        android:layout_below="@id/divider">
+
+        <TextView
+            android:id="@+id/filter_text"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="2dp"
+            android:layout_alignParentStart="true"
+            android:background="#EFEFEF"
+            android:paddingLeft="14dp"
+            android:paddingTop="10dp"
+            android:paddingBottom="10dp"
+            android:shadowColor="#AFAFAF"
+            android:shadowDx="1.0"
+            android:shadowDy="1.0"
+            android:shadowRadius="1.0"
+            android:text="주소검색"
+            android:textSize="14dp"
+            android:textAlignment="viewStart"
+            android:textColor="#6F6F6F" />
+
+        <EditText
+            android:id="@+id/filter_edittext"
+            android:layout_width="180dp"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="2dp"
+            android:layout_toRightOf="@id/filter_text"
+            android:background="#EFEFEF"
+            android:paddingLeft="5dp"
+            android:paddingTop="10dp"
+            android:paddingBottom="10dp"
+            android:ems="10"
+            android:inputType="textPersonName"
+            android:text=""
+            android:textSize="14dp"
+            android:textColor="#37474F"
+            android:textStyle="bold"/>
+
+        <TextView
+            android:id="@+id/show_item_num"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="2dp"
+            android:layout_toRightOf="@id/filter_edittext"
+            android:background="#EFEFEF"
+            android:paddingLeft="14dp"
+            android:paddingTop="10dp"
+            android:paddingBottom="10dp"
+            android:shadowColor="#AFAFAF"
+            android:shadowDx="1.0"
+            android:shadowDy="1.0"
+            android:shadowRadius="1.0"
+            android:text="0/0개 배송 완료됨"
+            android:textAlignment="viewEnd"
+            android:textColor="#6F6F6F"
+            android:paddingRight="10dp"
+            android:textSize="14dp" />
+
+    </RelativeLayout>
 
     <ScrollView
         android:id="@+id/scroll_view"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:layout_below="@id/show_item_num"
+        android:layout_below="@id/info_relative_layout"
         android:layout_marginTop="5dp"
         android:fillViewport="true"
         tools:layout_editor_absoluteX="8dp"
@@ -217,8 +262,10 @@
         <ListView
             android:id="@+id/db_list_view"
             android:layout_width="match_parent"
-            android:layout_height="match_parent"></ListView>
+            android:layout_height="match_parent"
+            android:textFilterEnabled="true"></ListView>
 
     </ScrollView>
+
 
 </RelativeLayout>

@@ -8,8 +8,10 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
+import android.text.Editable;
 import android.text.InputType;
 import android.text.TextUtils;
+import android.text.TextWatcher;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
@@ -17,9 +19,12 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
+import android.widget.BaseAdapter;
 import android.widget.Button;
 import android.widget.DatePicker;
 import android.widget.EditText;
+import android.widget.Filter;
+import android.widget.Filterable;
 import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.TextView;
@@ -42,6 +47,7 @@ import com.google.firebase.database.ValueEventListener;
 
 import net.daum.mf.map.api.MapPOIItem;
 
+import java.lang.reflect.Array;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -72,14 +78,100 @@ public class ParcelListActivity extends AppCompatActivity implements View.OnClic
     private TextView mTextCourierName;
     private TextView mTextCourierDate;
     private TextView mTextCount;
+    private ListView mListView;
+    private EditText mEditTextFilter;
     private Button mBtnResetdb;
     private Button mBtnChangeView;
+    ValueEventListener mParcelListEventListener = new ValueEventListener() {
+        @Override
+        public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+            mParcelDatabaseHash.clear();
+            mArrayKeys.clear();
+            mArrayValues.clear();
+            boolean isRouted = true;
+
+            Log.d(LOG_TAG, "getParcelListFromFirebaseDatabase : size " + dataSnapshot.getChildrenCount());
+            for (DataSnapshot postSnapshot : dataSnapshot.getChildren()) {
+                String key = postSnapshot.getKey();
+                TmsParcelItem value = postSnapshot.getValue(TmsParcelItem.class);
+
+                if (value.orderInRoute == -1) {
+                    isRouted = false;
+                }
+                value.orderInRoute = -1;
+                mParcelDatabaseHash.put(key, value);
+                mArrayKeys.add(key);
+                mArrayValues.add(value);
+                Log.d(LOG_TAG, "mArrayValues size = " + mArrayValues.size());
+            }
+
+            String courierName = mTextCourierName.getText().toString();
+            if (!courierName.equals(R.string.all_couriers) ) {
+                TmsCourierItem courierItem = mCourierDatabaseHash.get(courierName);
+                if(courierItem != null) {
+                    TmsParcelItem parcelItem = mParcelDatabaseHash.get(String.valueOf(courierItem.startparcelid));
+                    if (parcelItem != null) {
+                        mArrayValues.clear();
+                        mArrayValues.add(parcelItem);
+                        while(parcelItem != null && parcelItem.nextParcel != -1) {
+                            parcelItem = mParcelDatabaseHash.get(String.valueOf(parcelItem.nextParcel));
+                            mArrayValues.add(parcelItem);
+                        }
+                    }
+                }
+            }
+
+            if (mArrayAdapter != null) {
+                mArrayAdapter.notifyDataSetChanged();
+            }
+        }
+        @Override
+        public void onCancelled(@NonNull DatabaseError databaseError) {
+        }
+    };
     private DatePickerDialog mDatePickerDialog;
     private AlertDialog.Builder mCourierPickerDialog;
     private AlertDialog.Builder mDeliveryCompleteDialog;
     private SimpleDateFormat mSdf;
     private View.OnTouchListener mTouchListner;
     private String mOldDateStr;
+    private DatabaseReference.CompletionListener mParcelListRemove = new DatabaseReference.CompletionListener() {
+        @Override
+        public void onComplete(@Nullable DatabaseError databaseError, @NonNull DatabaseReference databaseReference) {
+            String selectedDate = mTextCourierDate.getText().toString();
+            Log.i(LOG_TAG, "mParcelListRemove is called");
+            Toast.makeText(ParcelListActivity.this, selectedDate + " 날짜의 정보가 초기화 되었습니다. csv 파일을 다시 올려주세요",Toast.LENGTH_LONG).show();
+        }
+    };
+    private ValueEventListener mCourierValueEventListener = new ValueEventListener() {
+        @Override
+        public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+            mCourierDatabaseHash.clear();
+            mCourierArrayValues.clear();
+            Log.d(LOG_TAG, "mapview CourierList size : " + dataSnapshot.getChildrenCount());
+            for (DataSnapshot postSnapshot : dataSnapshot.getChildren()) {
+                TmsCourierItem item = postSnapshot.getValue(TmsCourierItem.class);
+                mCourierDatabaseHash.put(item.name, item);
+                mCourierArrayValues.add(item);
+            }
+            String courierName = mTextCourierName.getText().toString();
+            String selectedDate = mTextCourierDate.getText().toString();
+            DatabaseReference databaseRef = FirebaseDatabase.getInstance().getReference();
+
+            if (courierName.equals(getString(R.string.all_couriers))) {
+                Query firebaseQuery = databaseRef.child(FirebaseDatabaseConnector.PARCEL_REF_NAME).child(selectedDate).orderByChild(TmsParcelItem.KEY_ID);
+                firebaseQuery.addValueEventListener(mParcelListEventListener);
+            } else {
+                Query firebaseQuery = databaseRef.child(FirebaseDatabaseConnector.PARCEL_REF_NAME).child(selectedDate).orderByChild(TmsParcelItem.KEY_COURIER_NAME).equalTo(courierName);
+                firebaseQuery.addValueEventListener(mParcelListEventListener);
+            }
+        }
+
+        @Override
+        public void onCancelled(@NonNull DatabaseError databaseError) {
+
+        }
+    };
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -249,7 +341,6 @@ public class ParcelListActivity extends AppCompatActivity implements View.OnClic
         }
     }
 
-
     private void initResources() {
         mTvAccountName = findViewById(R.id.conn_account_name);
         mIvConnStatus = findViewById(R.id.conn_image);
@@ -313,17 +404,38 @@ public class ParcelListActivity extends AppCompatActivity implements View.OnClic
 
         mTextCount = findViewById(R.id.show_item_num);
 
-        mArrayAdapter = new TmsItemAdapter(this, R.layout.parcel_listview_row, mArrayValues);
-        ListView listView = findViewById(R.id.db_list_view);
-        listView.setAdapter(mArrayAdapter);
+        mArrayAdapter = new TmsItemAdapter(mArrayValues);
+        mListView = findViewById(R.id.db_list_view);
+        mListView.setAdapter(mArrayAdapter);
 
-        listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+        mListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> adapterView, View view, int position, long id) {
                 TmsParcelItem item = (TmsParcelItem) adapterView.getItemAtPosition(position);
                 goToUploadImageActivity(item, Utils.NO_NEED_RESULT);
             }
         });
+
+        mEditTextFilter = (EditText) findViewById(R.id.filter_edittext);
+        mEditTextFilter.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void afterTextChanged(Editable edit) {
+                String filterText = edit.toString() ;
+                if (filterText.length() > 0) {
+                    mListView.setFilterText(filterText) ;
+                } else {
+                    mListView.clearTextFilter();
+                }
+            }
+
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+            }
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+            }
+        }) ;
 
         mDatePickerDialog = new DatePickerDialog(this, new DatePickerDialog.OnDateSetListener() {
             @Override
@@ -344,15 +456,6 @@ public class ParcelListActivity extends AppCompatActivity implements View.OnClic
     private boolean isCourierNameHasDefaultText() {
         return mTextCourierName.getText().equals(getString(R.string.all_couriers));
     }
-
-    private DatabaseReference.CompletionListener mParcelListRemove = new DatabaseReference.CompletionListener() {
-        @Override
-        public void onComplete(@Nullable DatabaseError databaseError, @NonNull DatabaseReference databaseReference) {
-            String selectedDate = mTextCourierDate.getText().toString();
-            Log.i(LOG_TAG, "mParcelListRemove is called");
-            Toast.makeText(ParcelListActivity.this, selectedDate + " 날짜의 정보가 초기화 되었습니다. csv 파일을 다시 올려주세요",Toast.LENGTH_LONG).show();
-        }
-    };
 
     @Override
     public void onClick(View view) {
@@ -412,6 +515,7 @@ public class ParcelListActivity extends AppCompatActivity implements View.OnClic
         }
 
     }
+
     private void processChangeOrderDialog( final TmsParcelItem item, final int prevOrder) {
 
         final String selectedCourierName = mTextCourierName.getText().toString();
@@ -472,10 +576,6 @@ public class ParcelListActivity extends AppCompatActivity implements View.OnClic
         changeOrderDialog.show();
     }
 
-
-
-
-
     private void resetCourierText() {
         mTextCourierName.setText(getString(R.string.default_courier_name));
     }
@@ -528,88 +628,11 @@ public class ParcelListActivity extends AppCompatActivity implements View.OnClic
         String[] result = strArrayList.toArray(new String[strArrayList.size()]);
         return result;
     }
-    ValueEventListener mParcelListEventListener = new ValueEventListener() {
-        @Override
-        public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-            mParcelDatabaseHash.clear();
-            mArrayKeys.clear();
-            mArrayValues.clear();
-            boolean isRouted = true;
-
-            Log.d(LOG_TAG, "getParcelListFromFirebaseDatabase : size " + dataSnapshot.getChildrenCount());
-            for (DataSnapshot postSnapshot : dataSnapshot.getChildren()) {
-                String key = postSnapshot.getKey();
-                TmsParcelItem value = postSnapshot.getValue(TmsParcelItem.class);
-
-                if (value.orderInRoute == -1) {
-                    isRouted = false;
-                }
-                value.orderInRoute = -1;
-                mParcelDatabaseHash.put(key, value);
-                mArrayKeys.add(key);
-                mArrayValues.add(value);
-                Log.d(LOG_TAG, "mArrayValues size = " + mArrayValues.size());
-            }
-
-            String courierName = mTextCourierName.getText().toString();
-            if (!courierName.equals(R.string.all_couriers) ) {
-                TmsCourierItem courierItem = mCourierDatabaseHash.get(courierName);
-                if(courierItem != null) {
-                    TmsParcelItem parcelItem = mParcelDatabaseHash.get(String.valueOf(courierItem.startparcelid));
-                    if (parcelItem != null) {
-                        mArrayValues.clear();
-                        mArrayValues.add(parcelItem);
-                        while(parcelItem != null && parcelItem.nextParcel != -1) {
-                            parcelItem = mParcelDatabaseHash.get(String.valueOf(parcelItem.nextParcel));
-                            mArrayValues.add(parcelItem);
-                        }
-                    }
-                }
-            }
-
-            if (mArrayAdapter != null) {
-                mArrayAdapter.notifyDataSetChanged();
-            }
-        }
-        @Override
-        public void onCancelled(@NonNull DatabaseError databaseError) {
-        }
-    };
 
     private void getFirebaseList() {
         String selectedDate = mTextCourierDate.getText().toString();
         mFbConnector.getCourierListFromFirebaseDatabaseWithListener(selectedDate, mCourierValueEventListener);
     }
-
-    private ValueEventListener mCourierValueEventListener = new ValueEventListener() {
-        @Override
-        public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-            mCourierDatabaseHash.clear();
-            mCourierArrayValues.clear();
-            Log.d(LOG_TAG, "mapview CourierList size : " + dataSnapshot.getChildrenCount());
-            for (DataSnapshot postSnapshot : dataSnapshot.getChildren()) {
-                TmsCourierItem item = postSnapshot.getValue(TmsCourierItem.class);
-                mCourierDatabaseHash.put(item.name, item);
-                mCourierArrayValues.add(item);
-            }
-            String courierName = mTextCourierName.getText().toString();
-            String selectedDate = mTextCourierDate.getText().toString();
-            DatabaseReference databaseRef = FirebaseDatabase.getInstance().getReference();
-
-            if (courierName.equals(getString(R.string.all_couriers))) {
-                Query firebaseQuery = databaseRef.child(FirebaseDatabaseConnector.PARCEL_REF_NAME).child(selectedDate).orderByChild(TmsParcelItem.KEY_ID);
-                firebaseQuery.addValueEventListener(mParcelListEventListener);
-            } else {
-                Query firebaseQuery = databaseRef.child(FirebaseDatabaseConnector.PARCEL_REF_NAME).child(selectedDate).orderByChild(TmsParcelItem.KEY_COURIER_NAME).equalTo(courierName);
-                firebaseQuery.addValueEventListener(mParcelListEventListener);
-            }
-        }
-
-        @Override
-        public void onCancelled(@NonNull DatabaseError databaseError) {
-
-        }
-    };
 
     private void refreshList(String courierName) {
         getFirebaseList();
@@ -668,10 +691,39 @@ public class ParcelListActivity extends AppCompatActivity implements View.OnClic
         mDeliveryCompleteDialog.show();
     }
 
-    protected class TmsItemAdapter extends ArrayAdapter<TmsParcelItem> {
+    protected class TmsItemAdapter extends BaseAdapter implements Filterable {
+        ArrayList<TmsParcelItem> totalItemList = new ArrayList<TmsParcelItem>();
+        ArrayList<TmsParcelItem> filteredItemList = totalItemList;
 
-        public TmsItemAdapter(Context context, int resource, List<TmsParcelItem> list) {
-            super(context, resource, list);
+        Filter listFilter;
+
+        public TmsItemAdapter(ArrayList<TmsParcelItem> list) {
+            totalItemList = list;
+            filteredItemList = list;
+        }
+
+        @Override
+        public Filter getFilter() {
+            if (listFilter == null) {
+                listFilter = new TmsItemFilter() ;
+            }
+
+            return listFilter ;
+        }
+
+        @Override
+        public int getCount() {
+            return filteredItemList.size() ;
+        }
+
+        @Override
+        public long getItemId(int position) {
+            return position ;
+        }
+
+        @Override
+        public Object getItem(int position) {
+            return filteredItemList.get(position) ;
         }
 
         @Override
@@ -692,7 +744,8 @@ public class ParcelListActivity extends AppCompatActivity implements View.OnClic
                 v = inflater.inflate(R.layout.parcel_listview_row, null);
             }
 
-            final TmsParcelItem item = getItem(position);
+//            final TmsParcelItem item = getItem(position);
+            final TmsParcelItem item = (TmsParcelItem) getItem(position);
             boolean isDeliverd = item.status.equals(TmsParcelItem.STATUS_DELIVERED);
             boolean isValidAddress = !(item.consigneeLatitude.equals("0") || item.consigneeLongitude.equals("0") || item.consigneeLatitude.isEmpty() || item.consigneeLongitude.isEmpty());
 
@@ -762,6 +815,44 @@ public class ParcelListActivity extends AppCompatActivity implements View.OnClic
             }
             return v;
         }
+
+        private class TmsItemFilter extends Filter {
+            @Override
+            protected FilterResults performFiltering(CharSequence constraint) {
+                FilterResults results = new FilterResults() ;
+
+                if (constraint == null || constraint.length() == 0) {
+                    results.values = totalItemList ;
+                    results.count = totalItemList.size() ;
+                } else {
+                    ArrayList<TmsParcelItem> itemList = new ArrayList<TmsParcelItem>() ;
+
+                    for (TmsParcelItem item : totalItemList) {
+                        if (item.getDesc().toUpperCase().contains(constraint.toString().toUpperCase())) {
+                            itemList.add(item) ;
+                        }
+                    }
+
+                    results.values = itemList ;
+                    results.count = itemList.size() ;
+                }
+                return results;
+            }
+
+            @Override
+            protected void publishResults(CharSequence constraint, FilterResults results) {
+                // update listview by filtered data list.
+                filteredItemList = (ArrayList<TmsParcelItem>) results.values ;
+
+                // notify
+                if (results.count > 0) {
+                    notifyDataSetChanged() ;
+                } else {
+                    notifyDataSetInvalidated() ;
+                }
+            }
+        }
+
     }
 }
 

@@ -4,6 +4,7 @@ import android.content.Context;
 import android.text.TextUtils;
 import android.util.Log;
 import android.widget.ArrayAdapter;
+import android.widget.BaseAdapter;
 
 import androidx.annotation.NonNull;
 
@@ -33,7 +34,7 @@ public class FirebaseDatabaseConnector {
     private HashMap<String, TmsCourierItem> mCourierHash;
     private ArrayList<String> mArrayKeys;
     private ArrayList<TmsParcelItem> mArrayValues;
-    private ArrayAdapter<TmsParcelItem> mListAdapter;
+    private BaseAdapter mListAdapter;
     private ArrayList<String> mSectorList;
     private ArrayList<TmsCourierItem> mCourierArrayValues;
 
@@ -87,7 +88,7 @@ public class FirebaseDatabaseConnector {
         }
     }
 
-    protected void setListAdapter(ArrayAdapter<TmsParcelItem> listAdapter) {
+    protected void setListAdapter(BaseAdapter listAdapter) {
         if (listAdapter != null) {
             this.mListAdapter = listAdapter;
         } else {
