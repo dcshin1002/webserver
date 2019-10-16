@@ -437,6 +437,9 @@ public class MapViewActivity extends AppCompatActivity
 
     protected void addMarker() {
         mMapView.removeAllPOIItems();
+        if (Utils.isAdminAuth()) {
+            addCourierMarker();
+        }
         int num = 1;
 
         for (TmsParcelItem item : mArrayValues) {
@@ -581,9 +584,6 @@ public class MapViewActivity extends AppCompatActivity
                 TmsCourierItem item = postSnapshot.getValue(TmsCourierItem.class);
                 mCourierDatabaseHash.put(item.name, item);
                 mCourierArrayValues.add(item);
-                if (Utils.isAdminAuth()) {
-                    addCourierMarker(item);
-                }
             }
             if (mSelectedCourierName != null) {
                 getParcelListFromFirebaseDatabase(mSelectedDate, TmsParcelItem.KEY_COURIER_NAME, mSelectedCourierName);
@@ -660,6 +660,12 @@ public class MapViewActivity extends AppCompatActivity
         if (item.consigneeLatitude.isEmpty() || item.consigneeLatitude.equals("0")
                 || item.consigneeLongitude.isEmpty() || item.consigneeLongitude.equals("0"))
             Toast.makeText(MapViewActivity.this, order + "번: " + item.consigneeName +"고객건은 잘못된 주소이므로 지도에 표시되지 않습니다.", Toast.LENGTH_SHORT).show();
+    }
+
+    private void addCourierMarker() {
+        for (TmsCourierItem courierItem : mCourierArrayValues) {
+            addCourierMarker(courierItem);
+        }
     }
 
     private void addCourierMarker(TmsCourierItem courierItem) {
