@@ -162,22 +162,23 @@ public class UploadImageActivity extends AppCompatActivity {
     }
 
     private void showCompleteImage() {
-        // if (mSelectedParcelItem.completeImage is != ""
-        StorageReference ref = mStorageRef.child(mSelectedParcelItem.completeImage);
-        Log.i(LOG_TAG, "showCompleteImage refpath is " + ref);
-        ref.getBytes(ONE_MEGABYTE).addOnSuccessListener(new OnSuccessListener<byte[]>() {
-            @Override
-            public void onSuccess(byte[] bytes) {
-                Log.d(LOG_TAG, "onSeuccess to download data : length = " + bytes.length);
-                Bitmap bm = BitmapFactory.decodeByteArray(bytes, 0, bytes.length);
-                mIvPreviewImage.setImageBitmap(bm);
-            }
-        }).addOnFailureListener(new OnFailureListener() {
-            @Override
-            public void onFailure(@NonNull Exception e) {
-                e.printStackTrace();
-            }
-        });
+        if (!mSelectedParcelItem.completeImage.isEmpty()) {
+            StorageReference ref = mStorageRef.child(mSelectedParcelItem.completeImage);
+            Log.i(LOG_TAG, "showCompleteImage refpath is " + ref);
+            ref.getBytes(ONE_MEGABYTE).addOnSuccessListener(new OnSuccessListener<byte[]>() {
+                @Override
+                public void onSuccess(byte[] bytes) {
+                    Log.d(LOG_TAG, "onSeuccess to download data : length = " + bytes.length);
+                    Bitmap bm = BitmapFactory.decodeByteArray(bytes, 0, bytes.length);
+                    mIvPreviewImage.setImageBitmap(bm);
+                }
+            }).addOnFailureListener(new OnFailureListener() {
+                @Override
+                public void onFailure(@NonNull Exception e) {
+                    e.printStackTrace();
+                }
+            });
+        }
     }
 
     private boolean isMakeDeliveredAction() {

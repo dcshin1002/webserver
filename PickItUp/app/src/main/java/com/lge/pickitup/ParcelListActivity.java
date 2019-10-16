@@ -321,18 +321,7 @@ public class ParcelListActivity extends AppCompatActivity implements View.OnClic
             @Override
             public void onItemClick(AdapterView<?> adapterView, View view, int position, long id) {
                 TmsParcelItem item = (TmsParcelItem) adapterView.getItemAtPosition(position);
-                String LatitudeStr = item.consigneeLatitude;
-                String LongitudeStr = item.consigneeLongitude;
-
-                Log.d(LOG_TAG, "Address = " + item.consigneeAddr + ", Id = " + item.id);
-                Log.d(LOG_TAG, "lat = " + LatitudeStr + ", long = " + LongitudeStr);
-
-                // Daum API 에서 위경도 받아오지 못한 항목 선택 시 직접 입력 안내 toast 실행
-                if (TextUtils.isEmpty(LatitudeStr) || TextUtils.isEmpty(LongitudeStr)) {
-                    Toast.makeText(ParcelListActivity.this, R.string.need_manual_input, Toast.LENGTH_SHORT).show();
-                    return;
-                }
-                Utils.startKakaoMapActivity(ParcelListActivity.this, Double.valueOf(LatitudeStr), Double.valueOf(LongitudeStr));
+                goToUploadImageActivity(item, Utils.NO_NEED_RESULT);
             }
         });
 
@@ -720,8 +709,9 @@ public class ParcelListActivity extends AppCompatActivity implements View.OnClic
 
                 btn_complete.setOnClickListener(ParcelListActivity.this);
                 btn_complete.setTag(R.id.btn_complete, item);
-                btn_deliveryinfo.setOnClickListener(ParcelListActivity.this);
-                btn_deliveryinfo.setTag(R.id.btn_deliveryinfo, item);
+                //btn_deliveryinfo.setOnClickListener(ParcelListActivity.this);
+                //btn_deliveryinfo.setTag(R.id.btn_deliveryinfo, item);
+                btn_deliveryinfo.setVisibility(View.GONE);
                 btn_changeorder.setOnClickListener(ParcelListActivity.this);
                 btn_changeorder.setTag(R.id.btn_changeorder, item);
                 btn_changeorder.setTag(R.id.status_icon, position+1);
@@ -737,8 +727,8 @@ public class ParcelListActivity extends AppCompatActivity implements View.OnClic
                         statusIcon.setImageDrawable(getDrawable(R.mipmap.tag_delivered_v2));
                         btn_complete.setVisibility(View.GONE);
                         btn_changeorder.setVisibility(View.GONE);
-                        btn_deliveryinfo.setVisibility(View.VISIBLE);
-                        btn_deliveryinfo.setBackgroundColor(0xFF68C166);
+                        //btn_deliveryinfo.setVisibility(View.VISIBLE);
+                        //btn_deliveryinfo.setBackgroundColor(0xFF68C166);
                     } else {
                         if (isValidAddress) {
                             addrText.setTextColor(0xFF4F4F4F);
@@ -753,7 +743,7 @@ public class ParcelListActivity extends AppCompatActivity implements View.OnClic
                         } else {
                             btn_changeorder.setVisibility(View.VISIBLE);
                         }
-                        btn_deliveryinfo.setVisibility(View.GONE);
+                        //btn_deliveryinfo.setVisibility(View.GONE);
                     }
                 }
                 if (providerText != null) {
