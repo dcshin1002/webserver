@@ -129,6 +129,26 @@ public class CreateAccountActivity extends AppCompatActivity {
         ArrayAdapter<CharSequence> adapter = ArrayAdapter.createFromResource(this, R.array.usertypelist, android.R.layout.simple_spinner_item);
         adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         mSpinner.setAdapter(adapter);
+        mSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+
+                if (parent.getSelectedItem().toString().equals(getResources().getStringArray(R.array.usertypelist)[0])) {
+                    //on select consignor
+                    mTvDisplayname.setText("업체명");
+
+                } else if (parent.getSelectedItem().toString().equals(getResources().getStringArray(R.array.usertypelist)[1])) {
+                    // on select courier
+                    mTvDisplayname.setText("배송기사 이름");
+                }
+
+            }
+
+            @Override
+            public void onNothingSelected(AdapterView<?> parent) {
+
+            }
+        });
     }
 
     @Override
