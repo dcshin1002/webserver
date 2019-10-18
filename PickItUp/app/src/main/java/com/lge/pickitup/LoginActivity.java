@@ -25,6 +25,12 @@ import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseAuthInvalidCredentialsException;
 import com.google.firebase.auth.FirebaseAuthInvalidUserException;
 import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.Query;
+import com.google.firebase.database.ValueEventListener;
 
 import java.util.Arrays;
 
@@ -48,6 +54,7 @@ public class LoginActivity extends AppCompatActivity {
     private EditText mEditTextPassword;
     private Button mBtnSignIn;
     private Button mBtnCreateAccount;
+    private DatabaseReference mDatabaseRef;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -59,6 +66,8 @@ public class LoginActivity extends AppCompatActivity {
 
         // Initialize required resources
         initResources();
+
+        mDatabaseRef = FirebaseDatabase.getInstance().getReference();
 
         // Here, thisActivity is the current activity
         if (ContextCompat.checkSelfPermission(this,Manifest.permission.READ_EXTERNAL_STORAGE)  != PackageManager.PERMISSION_GRANTED
@@ -76,26 +85,48 @@ public class LoginActivity extends AppCompatActivity {
         } else {
             Utils.initLocation(this);
         }
+        Query firebaseQuery;
+        firebaseQuery = mDatabaseRef.child(FirebaseDatabaseConnector.USER_REF_NAME).orderByChild(Utils.KEY_USERTYPE);
+        firebaseQuery.addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                Utils.ARR_ADMIN_UIDS.clear();
+                Utils.ARR_CONSIGNOR_UIDS.clear();
+                Utils.ARR_COURIER_UIDS.clear();
+                for (DataSnapshot snapshot : dataSnapshot.getChildren()) {
+                    String key = snapshot.getKey();
+                    String value = snapshot.child(Utils.KEY_USERTYPE).getValue().toString();
 
-        //Get FirebaseAuth instance
+                    if (value.equals(Utils.usertype_admin)) {
+                        Utils.ARR_ADMIN_UIDS.add(key);
+                    } else if (value.equals(Utils.usertype_consignor)) {
+                        Utils.ARR_CONSIGNOR_UIDS.add(key);
+                    } else if (value.equals(Utils.usertype_courier)) {
+                        Utils.ARR_COURIER_UIDS.add(key);
+                    }
+                }
+                mAuth.addAuthStateListener(mAuthListener);
+            }
+            @Override
+            public void onCancelled(@NonNull DatabaseError databaseError) {
+            }
+        });
+
         mAuth = FirebaseAuth.getInstance();
-        //Make AuthStateListener to know oAuth's auth state
         mAuthListener = new FirebaseAuth.AuthStateListener() {
             @Override
             public void onAuthStateChanged(@NonNull FirebaseAuth firebaseAuth) {
                 FirebaseUser user = firebaseAuth.getCurrentUser();
 
                 if (user != null) {
-                    // User is signed in
                     Log.d(LOG_TAG, "onAuthStateChanged:signed_in:" + user.getUid());
+
                     Utils.mCurrentUserId = user.getUid();
-                    // Before leave here, clear fields for next use.
+                    Utils.mCurrentUserName = user.getDisplayName();
                     mEditTextEmail.setText("");
                     mEditTextPassword.setText("");
 
-                    // Go to MainMenuActivity
-
-                    if (Arrays.asList(Utils.ADMIN_UIDS).contains(user.getUid())) {
+                    if (Utils.isAdminAuth() || Utils.isConsignorAuth()) {
                         startActivity(new Intent(LoginActivity.this, MainMenuActivity.class));
                     } else {
                         Intent intent_service = new Intent(LoginActivity.this, CourierLocationUploadService.class);
@@ -108,16 +139,12 @@ public class LoginActivity extends AppCompatActivity {
                         intent.putExtra(Utils.KEY_DB_DATE, Utils.getTodayDateStr());
                         startActivity(intent);
                     }
-
-
                     finish();
                 } else {
-                    // User is signed out
                     Log.d(LOG_TAG, "onAuthStateChanged:signed_out");
                 }
             }
         };
-
 
     }
 
@@ -193,7 +220,8 @@ public class LoginActivity extends AppCompatActivity {
     public void onStart() {
         super.onStart();
         //register AuthStateListener
-        mAuth.addAuthStateListener(mAuthListener);
+
+
     }
 
     @Override

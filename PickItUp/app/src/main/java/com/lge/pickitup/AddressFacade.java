@@ -3,6 +3,7 @@ package com.lge.pickitup;
 import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.Intent;
+import android.icu.util.UniversalTimeScale;
 import android.os.AsyncTask;
 import android.util.Log;
 
@@ -14,6 +15,7 @@ import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
+import com.google.firebase.storage.internal.Util;
 import com.opencsv.CSVReader;
 
 import org.json.JSONArray;
@@ -173,9 +175,11 @@ public class AddressFacade {
     }
 
     void addRecordToParcelList(List<TmsParcelItem> list, String dateRecord, String[] record) {
-        TmsParcelItem item = new TmsParcelItem(dateRecord, record);
-        item.sectorId = Integer.valueOf(mCourierHash.get(item.courierName).id);
 
+        TmsParcelItem item = new TmsParcelItem(dateRecord, record);
+        if (mCourierHash.size() > 0) {
+            item.sectorId = Integer.valueOf(mCourierHash.get(item.courierName).id);
+        }
         list.add(item);
     }
 
@@ -184,24 +188,26 @@ public class AddressFacade {
             TmsParcelItem item = mParcelList.get(i);
             item.id = startIdx + i + 1;
 
-            TmsParcelItem lastItemInHash = mPreviousParcelItemInSector.get(item.sectorId);
-            if (lastItemInHash != null) {
-                lastItemInHash.nextParcel = item.id;
-            } else {
-                if (mCourierHash.get(item.courierName).startparcelid == -1) {
-                    mCourierHash.get(item.courierName).startparcelid = item.id;
+            if (Utils.isAdminAuth()) {
+                TmsParcelItem lastItemInHash = mPreviousParcelItemInSector.get(item.sectorId);
+                if (lastItemInHash != null) {
+                    lastItemInHash.nextParcel = item.id;
                 } else {
-                    TmsParcelItem tailItem = mLastParcelItemInSectorOnDB.get(item.courierName);
-                    tailItem.nextParcel = item.id;
+                    if (mCourierHash.get(item.courierName).startparcelid == -1) {
+                        mCourierHash.get(item.courierName).startparcelid = item.id;
+                    } else {
+                        TmsParcelItem tailItem = mLastParcelItemInSectorOnDB.get(item.courierName);
+                        tailItem.nextParcel = item.id;
 
-                    DatabaseReference ref = FirebaseDatabase.getInstance().getReference().child(mFbConnector.PARCEL_REF_NAME);
-                    Map<String, Object> childUpdates = new HashMap<>();
-                    childUpdates.put("/" + mDateStr + "/" + tailItem.id, tailItem.toMap());
-                    ref.updateChildren(childUpdates);
+                        DatabaseReference ref = FirebaseDatabase.getInstance().getReference().child(mFbConnector.PARCEL_REF_NAME);
+                        Map<String, Object> childUpdates = new HashMap<>();
+                        childUpdates.put("/" + mDateStr + "/" + tailItem.id, tailItem.toMap());
+                        ref.updateChildren(childUpdates);
+                    }
+
                 }
-
+                mPreviousParcelItemInSector.put(item.sectorId, item);
             }
-            mPreviousParcelItemInSector.put(item.sectorId, item);
         }
     }
 
@@ -251,15 +257,13 @@ public class AddressFacade {
         protected void onPostExecute(String o) {
             super.onPostExecute(o);
             asyncDialog.dismiss();
-            initParcelId(startIdx);
-            List<TmsCourierItem> couriers = buildTmsCouriers();
 
-            for (TmsCourierItem item : couriers) {
-                Log.d(LOG_TAG, "id-" + item.id + ", name-" + item.name);
+            if (Utils.isAdminAuth()){
+                List<TmsCourierItem> couriers = buildTmsCouriers();
+                mFbConnector.postCourierListToFirbaseDatabase(mDateStr, (ArrayList<TmsCourierItem>) couriers);
+                mFbConnector.postJobStatusFromFirebaseDatabase(mDateStr);
             }
-
-            mFbConnector.postCourierListToFirbaseDatabase(mDateStr, (ArrayList<TmsCourierItem>) couriers);
-            mFbConnector.postJobStatusFromFirebaseDatabase(mDateStr);
+            initParcelId(startIdx);
             mFbConnector.postParcelListToFirebaseDatabase2(mDateStr, (ArrayList<TmsParcelItem>) mParcelList, new DatabaseReference.CompletionListener() {
                 @Override
                 public void onComplete(@Nullable DatabaseError databaseError, @NonNull DatabaseReference databaseReference) {
@@ -323,7 +327,11 @@ public class AddressFacade {
                 // Record coverted loc, lat to TmsParcelItem
                 item.consigneeLatitude = latitude_y;
                 item.consigneeLongitude = longitude_x;
-                item.setStatus(TmsParcelItem.STATUS_GEOCODED);
+                if (item.courierName.isEmpty()) {
+                    item.setStatus(TmsParcelItem.STATUS_COLLECTED);
+                } else {
+                    item.setStatus(TmsParcelItem.STATUS_ASSIGNED);
+                }
 
                 bufferedReader.close();
                 httpURLConnection.disconnect();

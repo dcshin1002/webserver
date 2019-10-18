@@ -2,6 +2,7 @@
     <string name="app_name">Beyond Logis</string>
     <string name="login_actvity_title">로그인</string>
     <string name="login_guide_title">사용을 위해서는 먼저 로그인해주세요</string>
+    <string name="user_type_title">사용자 타입</string>
     <string name="user_account_title">이메일 계정</string>
     <string name="user_account_hint">등록된 이메일 계정</string>
     <string name="password_title">비밀번호</string>
@@ -15,7 +16,7 @@
     <string name="create_account_password_hint">6자리이상, 한글 미포함</string>
     <string name="password_confirm_title">비밀번호 확인</string>
     <string name="password_confirm_hint">비밀번호 재입력</string>
-    <string name="display_name_title">표시할 이름</string>
+    <string name="display_name_title">이름/업체명</string>
     <string name="display_name_hint">홍길동</string>
     <string name="mobile_contact_title">휴대전화</string>
     <string name="mobile_contact_hint">010-1234-5678</string>

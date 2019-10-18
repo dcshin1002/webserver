@@ -38,6 +38,31 @@
         android:layout_centerHorizontal="true"
         android:padding="15dp"
         android:background="#33000000">
+        <TextView
+            android:id="@+id/titleUserType"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:padding="10dp"
+            android:layout_marginTop="8dp"
+            android:layout_marginLeft="15dp"
+            android:text="@string/user_type_title"
+            android:textSize="14dp"
+            android:textColor="#545454" />
+
+        <Spinner
+            android:id="@+id/spinnerUserType"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_toRightOf="@id/titleUserType"
+            android:layout_marginLeft="7dp"
+            android:layout_alignBaseline="@id/titleUserType"
+            android:ems="10"
+            android:background="#80FAF6F6"
+            android:hint="@string/create_account_user_account_hint"
+            android:inputType="textEmailAddress"
+            android:padding="10dp"
+            android:textSize="14dp"
+            android:textColor="#454545"/>
 
         <TextView
             android:id="@+id/titleEmail"
@@ -46,6 +71,8 @@
             android:padding="10dp"
             android:layout_marginTop="8dp"
             android:layout_marginLeft="15dp"
+            android:layout_below="@id/titleUserType"
+            android:layout_alignEnd="@id/titleUserType"
             android:text="@string/user_account_title"
             android:textSize="14dp"
             android:textColor="#545454" />
@@ -57,6 +84,7 @@
             android:layout_toRightOf="@id/titleEmail"
             android:layout_marginLeft="7dp"
             android:layout_alignBaseline="@id/titleEmail"
+            android:layout_below="@id/spinnerUserType"
             android:ems="10"
             android:background="#80FAF6F6"
             android:hint="@string/create_account_user_account_hint"
@@ -83,7 +111,6 @@
             android:layout_height="wrap_content"
             android:layout_toRightOf="@id/titlePassword"
             android:layout_alignBaseline="@id/titlePassword"
-            android:layout_alignEnd="@id/editEmail"
             android:layout_alignStart="@id/editEmail"
             android:background="#80FAF6F6"
             android:ems="10"

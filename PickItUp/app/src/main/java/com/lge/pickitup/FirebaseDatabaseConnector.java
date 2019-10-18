@@ -22,6 +22,7 @@ import java.util.HashSet;
 import java.util.Map;
 
 public class FirebaseDatabaseConnector {
+    public static final String USER_REF_NAME = "user_list";
     public static final String PARCEL_REF_NAME = "parcel_list";
     public static final String COURIER_REF_NAME = "courier_list";
     public static final String REGISTERED_COURIER_REF_NAME = "registered_courier";
