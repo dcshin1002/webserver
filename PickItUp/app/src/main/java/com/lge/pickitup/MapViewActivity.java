@@ -408,7 +408,11 @@ public class MapViewActivity extends AppCompatActivity
         BitmapFactory.Options bmOptions = new BitmapFactory.Options();
         bmOptions.inScaled = false;
         int pinSeletedResourceId;
-        pinSeletedResourceId = (int) mSelectedMarkerList.get((Integer.valueOf(item.sectorId) - 1)%10);
+        if (item.sectorId == -1) {
+            pinSeletedResourceId = (int) mSelectedMarkerList.get(0);
+        } else {
+            pinSeletedResourceId = (int) mSelectedMarkerList.get((Integer.valueOf(item.sectorId) - 1)%10);
+        }
 
         Bitmap bmp = BitmapFactory.decodeResource(GlobalRes, pinSeletedResourceId, bmOptions).copy(Bitmap.Config.ARGB_8888, true);
         return bmp;
@@ -600,10 +604,14 @@ public class MapViewActivity extends AppCompatActivity
         DatabaseReference mDatabaseRef;
         Query firebaseQuery;
         mDatabaseRef = FirebaseDatabase.getInstance().getReference();
-        if (select.equals(getString(R.string.all_couriers))) {
-            firebaseQuery = mDatabaseRef.child(mFbConnector.PARCEL_REF_NAME).child(pathString).orderByChild(orderBy);
+        if (Utils.isConsignorAuth()) {
+            firebaseQuery = mDatabaseRef.child(mFbConnector.PARCEL_REF_NAME).child(pathString).orderByChild(TmsParcelItem.KEY_CONSIGNOR_NAME).equalTo(Utils.mCurrentUserName);
         } else {
-            firebaseQuery = mDatabaseRef.child(mFbConnector.PARCEL_REF_NAME).child(pathString).orderByChild(orderBy).equalTo(select);
+            if (select.equals(getString(R.string.all_couriers))) {
+                firebaseQuery = mDatabaseRef.child(mFbConnector.PARCEL_REF_NAME).child(pathString).orderByChild(orderBy);
+            } else {
+                firebaseQuery = mDatabaseRef.child(mFbConnector.PARCEL_REF_NAME).child(pathString).orderByChild(orderBy).equalTo(select);
+            }
         }
         firebaseQuery.addListenerForSingleValueEvent(mParcelValueEventListener);
     }

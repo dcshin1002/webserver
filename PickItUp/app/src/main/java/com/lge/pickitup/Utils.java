@@ -21,6 +21,7 @@ import com.google.firebase.database.DatabaseReference;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
@@ -36,11 +37,14 @@ public class Utils {
     static final String SELECTED_ITEM = "selected_item";
     static final String SELECTED_DATE = "selected_date";
     static final String SERVER_URL = "https://tmsproto-py.herokuapp.com";
-    static final String[] ADMIN_UIDS = {
-            "NCtx9UD1qSO4HAk1lhDma0eYhSq1",
-            "eXVbCp7Ne1ZeeqPpxCygUA63NPu2",
-            "dderYymfToWcCk9pwBqQgw0yuAv1",
-    };
+    static final String KEY_USERTYPE = "usertype";
+    static final String usertype_admin = "admin";
+    static final String usertype_courier = "courier";
+    static final String usertype_consignor = "consignor";
+
+    static final ArrayList<String> ARR_ADMIN_UIDS = new ArrayList<>();
+    static final ArrayList<String> ARR_CONSIGNOR_UIDS = new ArrayList<>();
+    static final ArrayList<String> ARR_COURIER_UIDS = new ArrayList<>();
 
     public static final int NO_NEED_RESULT = 0;
     public static final int SEND_COMPLETED_MESSAGE = 1;
@@ -103,6 +107,7 @@ public class Utils {
         }
     };
     static String mCurrentUserId;
+    static String mCurrentUserName;
 
     public static String getKeyHash(final Context context) {
         PackageManager pm = context.getPackageManager();
@@ -189,7 +194,28 @@ public class Utils {
     }
 
     public static boolean isAdminAuth() {
-        return (Arrays.asList(Utils.ADMIN_UIDS).contains(mCurrentUserId));
+        return ARR_ADMIN_UIDS.contains(mCurrentUserId);
+    }
+
+    public static boolean isConsignorAuth() {
+        return ARR_CONSIGNOR_UIDS.contains(mCurrentUserId);
+    }
+
+    public static boolean isCourierAuth() {
+        return ARR_COURIER_UIDS.contains(mCurrentUserId);
+    }
+
+
+    public static boolean checkConsignorItem(TmsParcelItem item) {
+        if (isConsignorAuth()) {
+            if (mCurrentUserName.equals(item.consignorName)) {
+                return true;
+            } else {
+                return false;
+            }
+        } else {
+            return true;
+        }
     }
 
     @SuppressLint("MissingPermission")

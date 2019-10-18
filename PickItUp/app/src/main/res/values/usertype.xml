@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string-array name="usertypelist">
+        <item name="consignor">화주</item>
+        <item name="courier">배송기사</item>
+    </string-array>
+</resources>

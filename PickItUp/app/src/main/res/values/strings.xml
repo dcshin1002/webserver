@@ -2,6 +2,7 @@
     <string name="app_name">Beyond Logis</string>
     <string name="login_actvity_title">로그인</string>
     <string name="login_guide_title">사용을 위해서는 먼저 로그인해주세요</string>
+    <string name="user_type_title">사용자 타입</string>
     <string name="user_account_title">이메일 계정</string>
     <string name="user_account_hint">등록된 이메일 계정</string>
     <string name="password_title">비밀번호</string>

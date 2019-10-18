@@ -9,9 +9,13 @@ import android.text.TextUtils;
 import android.util.Log;
 import android.util.Patterns;
 import android.view.View;
+import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.Spinner;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -26,8 +30,13 @@ import com.google.firebase.auth.FirebaseAuthUserCollisionException;
 import com.google.firebase.auth.FirebaseAuthWeakPasswordException;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.auth.UserProfileChangeRequest;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.Query;
 
 import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -50,6 +59,7 @@ public class CreateAccountActivity extends AppCompatActivity {
     private TextView mTvDisplayname;
     private TextView mTvPhoneNum;
 
+    private Spinner mSpinner;
     private EditText mEtAccount;
     private EditText mEtPassword;
     private EditText mEtPasswordConfirm;
@@ -115,6 +125,10 @@ public class CreateAccountActivity extends AppCompatActivity {
         });
 
         mAlertErrDialogBuilder = new AlertDialog.Builder(CreateAccountActivity.this);
+        mSpinner = (Spinner) findViewById(R.id.spinnerUserType);
+        ArrayAdapter<CharSequence> adapter = ArrayAdapter.createFromResource(this, R.array.usertypelist, android.R.layout.simple_spinner_item);
+        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        mSpinner.setAdapter(adapter);
     }
 
     @Override
@@ -207,6 +221,8 @@ public class CreateAccountActivity extends AppCompatActivity {
 
         showProgressDialog();
 
+        final String usertype = mSpinner.getSelectedItem().toString();
+
         final UserProfileChangeRequest pofileReq = new UserProfileChangeRequest.Builder()
                 .setDisplayName(mEtDisplayName.getText().toString()).build();
 
@@ -216,6 +232,7 @@ public class CreateAccountActivity extends AppCompatActivity {
                     public void onComplete(@NonNull Task<AuthResult> task) {
                         Log.d(LOG_TAG, "createUserWithEmail:onComplete:" + task.isSuccessful());
 
+
                         hideProgressDialog();
 
                         // If sign in fails, display a message to the user. If sign in succeeds
@@ -224,8 +241,9 @@ public class CreateAccountActivity extends AppCompatActivity {
                         if (task.isSuccessful()) {
                             FirebaseUser user = mAuth.getCurrentUser();
                             user.updateProfile(pofileReq);
+                            setUserToDatabase(usertype, user.getUid());
                             Log.d(LOG_TAG, "update user profile = " + user.getDisplayName());
-                            if (Arrays.asList(Utils.ADMIN_UIDS).contains(user.getUid())) {
+                            if (Utils.isAdminAuth() || Utils.isConsignorAuth()) {
                                 startActivity(new Intent(CreateAccountActivity.this, MainMenuActivity.class));
                             } else {
                                 Intent intent_service = new Intent(CreateAccountActivity.this, CourierLocationUploadService.class);
@@ -260,6 +278,20 @@ public class CreateAccountActivity extends AppCompatActivity {
 
                     }
                 });
+    }
+
+    private void setUserToDatabase(String usertype, String uid) {
+        String dbusertype = "";
+        if (usertype.equals(getResources().getStringArray(R.array.usertypelist)[0])) {
+            dbusertype = Utils.usertype_consignor;
+        } else if (usertype.equals(getResources().getStringArray(R.array.usertypelist)[1])) {
+            dbusertype = Utils.usertype_courier;
+        }
+
+        DatabaseReference databaseRef = FirebaseDatabase.getInstance().getReference().child(FirebaseDatabaseConnector.USER_REF_NAME);
+        Map<String, Object> value = new HashMap<>();
+        value.put(Utils.KEY_USERTYPE, dbusertype);
+        databaseRef.child(uid).updateChildren(value);
     }
 
     private boolean isValidPassword(String target) {

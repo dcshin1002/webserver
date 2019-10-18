@@ -48,7 +48,7 @@ public class TmsParcelItem implements Comparable<TmsParcelItem>, Parcelable {
 
     public String getStatusStringByCurrentStatus() {
         switch (this.status) {
-            case STATUS_GEOCODED :
+            case STATUS_COLLECTED :
                 return "등록완료";
             case STATUS_ASSIGNED :
                 return "기사배정완료";
@@ -144,9 +144,15 @@ public class TmsParcelItem implements Comparable<TmsParcelItem>, Parcelable {
         this.consigneeContact = record[5];
         this.remark = record[6];
         this.deliveryNote = record[7];
-        this.regionalCode = record[8];
-        this.zipCode = record[9];
-        this.courierName = record[10];
+        if (Utils.isAdminAuth()) {
+            this.regionalCode = record[8];
+            this.zipCode = record[9];
+            this.courierName = record[10];
+        } else if (Utils.isConsignorAuth()){
+            this.regionalCode = "";
+            this.zipCode = "";
+            this.courierName = "";
+        }
     }
 
     void setStatus(String newStatus) {
