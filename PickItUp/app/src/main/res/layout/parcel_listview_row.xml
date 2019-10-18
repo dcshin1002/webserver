@@ -1,11 +1,25 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:background="@android:color/white"
     android:orientation="horizontal"
     android:padding="2dp">
+
+    <LinearLayout
+        android:descendantFocusability="blocksDescendants"
+        android:layout_width="30dp"
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
+
+        <CheckBox
+            android:id="@+id/listItemCheck"
+            android:layout_width="25dp"
+            android:layout_height="wrap_content"
+            android:paddingTop="20dp" />
+
+    </LinearLayout>
 
     <LinearLayout
         android:id="@+id/sub_rel_layout"
@@ -118,4 +132,5 @@
             android:layout_gravity="top"
             android:visibility="gone" />
     </LinearLayout>
+
 </LinearLayout>

@@ -55,75 +55,48 @@
         android:layout_width="20dp"
         android:layout_height="35dp"
         android:layout_below="@id/title_layer"
-        android:layout_marginTop="10dp"
+        android:layout_marginTop="8dp"
         android:layout_marginLeft="10dp"
         android:scaleType="fitCenter"
         app:srcCompat="@mipmap/activity_tracking_add_v2_tracking_account_number" />
 
     <TextView
-        android:id="@+id/text_courier_title"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:paddingTop="5dp"
-        android:paddingLeft="5dp"
-        android:paddingRight="5dp"
-        android:paddingBottom="5dp"
-        android:text="@string/courier_name_title"
-        android:textSize="16dp"
-        android:textColor="#37474F"
-        android:layout_toRightOf="@id/courier_icn"
-        android:layout_alignBottom="@id/courier_icn"/>
-
-    <TextView
         android:id="@+id/text_courier_name"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_alignBaseline="@id/text_courier_title"
-        android:layout_toRightOf="@id/text_courier_title"
-        android:paddingLeft="14dp"
-        android:paddingRight="14dp"
-        android:text="@string/all_couriers"
-        android:textSize="16dp"
+        android:layout_marginLeft="5dp"
+        android:layout_alignBottom="@id/courier_icn"
+        android:layout_toRightOf="@id/courier_icn"
+        android:paddingLeft="10dp"
+        android:paddingRight="10dp"
         android:paddingTop="8dp"
         android:paddingBottom="8dp"
+        android:text="@string/all_couriers"
+        android:textSize="16dp"
         android:background="@drawable/active_border"
         android:textColor="#FFFFFF"
-        android:clickable="false"
-        />
+        android:clickable="false" />
 
     <ImageView
         android:id="@+id/date_icon"
         android:layout_width="20dp"
         android:layout_height="35dp"
+        android:layout_marginTop="8dp"
+        android:layout_marginLeft="25dp"
         app:srcCompat="@mipmap/activity_tracking_add_v2_tracking_ship_date"
-        android:layout_below="@id/courier_icn"
-        android:layout_marginTop="15dp"
-        android:layout_alignLeft="@id/courier_icn"
+        android:layout_toRightOf="@id/text_courier_name"
+        android:layout_alignBottom="@id/courier_icn"
         android:scaleType="centerInside"/>
-
-    <TextView
-        android:id="@+id/text_date_title"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-
-        android:layout_toRightOf="@id/date_icon"
-        android:padding="5dp"
-        android:text="@string/courier_date_title"
-        android:textColor="#37474F"
-        android:layout_alignBottom="@id/date_icon"
-
-        android:layout_alignBaseline="@id/date_icon"
-        android:textSize="16dp" />
 
     <TextView
         android:id="@+id/text_courier_date"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_alignBaseline="@id/text_date_title"
-        android:layout_toRightOf="@id/text_date_title"
-        android:layout_alignStart="@id/text_courier_name"
-        android:paddingLeft="14dp"
-        android:paddingRight="14dp"
+        android:layout_marginLeft="5dp"
+        android:layout_alignBottom="@id/courier_icn"
+        android:layout_toRightOf="@id/date_icon"
+        android:paddingLeft="10dp"
+        android:paddingRight="10dp"
         android:paddingTop="8dp"
         android:paddingBottom="8dp"
         android:text="@string/default_courier_date"
@@ -142,37 +115,45 @@
         android:paddingLeft="20dp"
         android:paddingRight="20dp"
         android:layout_centerHorizontal="true"
-        android:layout_below="@id/text_date_title">
+        android:layout_below="@id/text_courier_date">
         <Button
             android:id="@+id/btn_resetdb"
-            android:layout_width="120dp"
-            android:layout_height="40dp"
+            android:layout_width="100dp"
+            android:layout_height="30dp"
             android:layout_weight="1"
             android:background="#42A5F5"
             android:layout_alignParentStart="true"
             android:text="초기화"
             android:textColor="#FFFFFF"
-            android:textSize="16dp"
+            android:textSize="15dp"
             android:visibility="invisible" />
 
-        <View
-            android:id="@+id/dummy_view"
-            android:layout_width="50dp"
-            android:layout_height="40dp"
-            android:layout_toRightOf="@id/btn_resetdb"/>
-
+        <Button
+            android:id="@+id/btn_assign"
+            android:layout_width="100dp"
+            android:layout_height="30dp"
+            android:layout_marginLeft="10dp"
+            android:layout_toRightOf="@id/btn_resetdb"
+            android:layout_weight="1"
+            android:background="#42A5F5"
+            android:text="배송할당"
+            android:textColor="#FFFFFF"
+            android:enabled="false"
+            android:textSize="15dp"
+            android:visibility="invisible" />
 
         <Button
             android:id="@+id/btn_change_view"
-            android:layout_width="120dp"
-            android:layout_height="40dp"
-            android:layout_toRightOf="@id/dummy_view"
+            android:layout_width="100dp"
+            android:layout_height="30dp"
+            android:layout_marginLeft="10dp"
+            android:layout_toRightOf="@id/btn_assign"
             android:layout_weight="1"
             android:background="#42A5F5"
             android:text="@string/change_parcel_view"
             android:textColor="#FFFFFF"
             android:enabled="false"
-            android:textSize="16dp" />
+            android:textSize="15dp" />
 
     </RelativeLayout>
 
@@ -191,14 +172,25 @@
         android:padding="5dp"
         android:layout_below="@id/divider">
 
+        <CheckBox
+            android:id="@+id/all_parcels_checkbox"
+            android:layout_width="25dp"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="2dp"
+            android:layout_alignParentStart="true"
+            android:paddingTop="19dp"
+            android:background="#EFEFEF"
+            android:textColor="#6F6F6F"
+            android:visibility="invisible" />
+
         <TextView
             android:id="@+id/filter_text"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="2dp"
-            android:layout_alignParentStart="true"
+            android:layout_toRightOf="@id/all_parcels_checkbox"
             android:background="#EFEFEF"
-            android:paddingLeft="14dp"
+            android:paddingLeft="10dp"
             android:paddingTop="10dp"
             android:paddingBottom="10dp"
             android:shadowColor="#AFAFAF"
@@ -212,7 +204,7 @@
 
         <EditText
             android:id="@+id/filter_edittext"
-            android:layout_width="180dp"
+            android:layout_width="160dp"
             android:layout_height="wrap_content"
             android:layout_marginTop="2dp"
             android:layout_toRightOf="@id/filter_text"
@@ -263,7 +255,8 @@
             android:id="@+id/db_list_view"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:textFilterEnabled="true"></ListView>
+            android:textFilterEnabled="true"
+            android:choiceMode="multipleChoice"></ListView>
 
     </ScrollView>
 

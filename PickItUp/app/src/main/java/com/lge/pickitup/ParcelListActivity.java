@@ -13,14 +13,16 @@ import android.text.InputType;
 import android.text.TextUtils;
 import android.text.TextWatcher;
 import android.util.Log;
+import android.util.SparseBooleanArray;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
-import android.widget.ArrayAdapter;
 import android.widget.BaseAdapter;
 import android.widget.Button;
+import android.widget.CheckBox;
+import android.widget.CompoundButton;
 import android.widget.DatePicker;
 import android.widget.EditText;
 import android.widget.Filter;
@@ -45,15 +47,11 @@ import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.Query;
 import com.google.firebase.database.ValueEventListener;
 
-import net.daum.mf.map.api.MapPOIItem;
-
-import java.lang.reflect.Array;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Calendar;
-import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 
 public class ParcelListActivity extends AppCompatActivity implements View.OnClickListener {
@@ -72,8 +70,8 @@ public class ParcelListActivity extends AppCompatActivity implements View.OnClic
     private ImageView mIvConnStatus;
     private HashMap<String, TmsParcelItem> mParcelDatabaseHash = new HashMap<>();
     private HashMap<String, TmsCourierItem> mCourierDatabaseHash = new HashMap<>();
-    private ArrayList<String> mArrayKeys = new ArrayList<String>();
-    private ArrayList<TmsParcelItem> mArrayValues = new ArrayList<TmsParcelItem>();
+    private ArrayList<String> mParcelArrayKeys = new ArrayList<String>();
+    private ArrayList<TmsParcelItem> mParcelArrayValues = new ArrayList<TmsParcelItem>();
     private ArrayList<TmsCourierItem> mCourierArrayValues = new ArrayList<TmsCourierItem>();
     private TextView mTextCourierName;
     private TextView mTextCourierDate;
@@ -81,13 +79,14 @@ public class ParcelListActivity extends AppCompatActivity implements View.OnClic
     private ListView mListView;
     private EditText mEditTextFilter;
     private Button mBtnResetdb;
+    private Button mBtnAssign;
     private Button mBtnChangeView;
     ValueEventListener mParcelListEventListener = new ValueEventListener() {
         @Override
         public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
             mParcelDatabaseHash.clear();
-            mArrayKeys.clear();
-            mArrayValues.clear();
+            mParcelArrayKeys.clear();
+            mParcelArrayValues.clear();
             boolean isRouted = true;
 
             Log.d(LOG_TAG, "getParcelListFromFirebaseDatabase : size " + dataSnapshot.getChildrenCount());
@@ -100,9 +99,9 @@ public class ParcelListActivity extends AppCompatActivity implements View.OnClic
                 }
                 value.orderInRoute = -1;
                 mParcelDatabaseHash.put(key, value);
-                mArrayKeys.add(key);
-                mArrayValues.add(value);
-                Log.d(LOG_TAG, "mArrayValues size = " + mArrayValues.size());
+                mParcelArrayKeys.add(key);
+                mParcelArrayValues.add(value);
+                Log.d(LOG_TAG, "mParcelArrayValues size = " + mParcelArrayValues.size());
             }
 
             String courierName = mTextCourierName.getText().toString();
@@ -111,11 +110,11 @@ public class ParcelListActivity extends AppCompatActivity implements View.OnClic
                 if(courierItem != null) {
                     TmsParcelItem parcelItem = mParcelDatabaseHash.get(String.valueOf(courierItem.startparcelid));
                     if (parcelItem != null) {
-                        mArrayValues.clear();
-                        mArrayValues.add(parcelItem);
+                        mParcelArrayValues.clear();
+                        mParcelArrayValues.add(parcelItem);
                         while(parcelItem != null && parcelItem.nextParcel != -1) {
                             parcelItem = mParcelDatabaseHash.get(String.valueOf(parcelItem.nextParcel));
-                            mArrayValues.add(parcelItem);
+                            mParcelArrayValues.add(parcelItem);
                         }
                     }
                 }
@@ -229,8 +228,8 @@ public class ParcelListActivity extends AppCompatActivity implements View.OnClic
         mFbConnector = new FirebaseDatabaseConnector(this);
         mFbConnector.setParcelHash(this.mParcelDatabaseHash);
         mFbConnector.setCourierHash(this.mCourierDatabaseHash);
-        mFbConnector.setParcelKeyArray(this.mArrayKeys);
-        mFbConnector.setParcelValueArray(this.mArrayValues);
+        mFbConnector.setParcelKeyArray(this.mParcelArrayKeys);
+        mFbConnector.setParcelValueArray(this.mParcelArrayValues);
         mFbConnector.setListAdapter(this.mArrayAdapter);
         mFbConnector.setCourierValueArray(this.mCourierArrayValues);
 
@@ -374,6 +373,7 @@ public class ParcelListActivity extends AppCompatActivity implements View.OnClic
 
 
         mBtnChangeView = findViewById(R.id.btn_change_view);
+        mBtnAssign = findViewById(R.id.btn_assign);
         mBtnResetdb = findViewById(R.id.btn_resetdb);
         mTouchListner = new View.OnTouchListener() {
             @Override
@@ -388,15 +388,18 @@ public class ParcelListActivity extends AppCompatActivity implements View.OnClic
         };
 
         mBtnChangeView.setOnTouchListener(mTouchListner);
+        mBtnAssign.setOnTouchListener(mTouchListner);
         mBtnResetdb.setOnTouchListener(mTouchListner);
 
         mBtnChangeView.setOnClickListener(this);
+        mBtnAssign.setOnClickListener(this);
         mBtnResetdb.setOnClickListener(this);
         mTextCourierDate.setOnClickListener(this);
 
         if (Utils.isAdminAuth()) {
             mTextCourierName.setOnClickListener(this);
             mBtnResetdb.setVisibility(View.VISIBLE);
+            mBtnAssign.setVisibility(View.VISIBLE);
         }
 
 
@@ -404,7 +407,7 @@ public class ParcelListActivity extends AppCompatActivity implements View.OnClic
 
         mTextCount = findViewById(R.id.show_item_num);
 
-        mArrayAdapter = new TmsItemAdapter(mArrayValues);
+        mArrayAdapter = new TmsItemAdapter(mParcelArrayValues);
         mListView = findViewById(R.id.db_list_view);
         mListView.setAdapter(mArrayAdapter);
 
@@ -462,7 +465,6 @@ public class ParcelListActivity extends AppCompatActivity implements View.OnClic
         TmsParcelItem item;
         switch (view.getId()) {
             case R.id.btn_resetdb:
-
                 AlertDialog.Builder resetDBAlert = new AlertDialog.Builder(ParcelListActivity.this);
                 final String selectedDate = mTextCourierDate.getText().toString();
                 resetDBAlert.setTitle(getText(R.string.reset_db_title))
@@ -483,6 +485,24 @@ public class ParcelListActivity extends AppCompatActivity implements View.OnClic
                                 dialogInterface.dismiss();
                             }
                         }).show();
+                break;
+
+            case R.id.btn_assign:
+                // select courier from picker dialog
+                showCourierPicker();
+
+                SparseBooleanArray checkedItems = mListView.getCheckedItemPositions();
+                int count = mArrayAdapter.getCount() ;
+
+                for (int i = count-1; i >= 0; i--) {
+                    if (checkedItems.get(i)) {
+                        // TODO: do assign items to selected courier
+                    }
+                }
+                mListView.clearChoices() ;
+                if (mArrayAdapter != null) {
+                    mArrayAdapter.notifyDataSetChanged();
+                }
                 break;
 
             case R.id.btn_change_view:
@@ -529,7 +549,7 @@ public class ParcelListActivity extends AppCompatActivity implements View.OnClic
 
         final EditText edittext = new EditText(this);
         edittext.setInputType(InputType.TYPE_CLASS_NUMBER);
-        final int sizeofParcels = mArrayValues.size();
+        final int sizeofParcels = mParcelArrayValues.size();
         AlertDialog.Builder changeOrderDialog = new AlertDialog.Builder(this)
                 .setTitle(prevOrder +"번 순서변경")
                 .setMessage(item.consigneeName + ": " + item.consigneeAddr + "\n\n변경되길 원하는 순서를 입력하세요.\n" + " (1 ~ " + sizeofParcels + ")")
@@ -694,7 +714,7 @@ public class ParcelListActivity extends AppCompatActivity implements View.OnClic
     protected class TmsItemAdapter extends BaseAdapter implements Filterable {
         ArrayList<TmsParcelItem> totalItemList = new ArrayList<TmsParcelItem>();
         ArrayList<TmsParcelItem> filteredItemList = totalItemList;
-
+        HashSet<View> inflatedItems = new HashSet<>();
         Filter listFilter;
 
         public TmsItemAdapter(ArrayList<TmsParcelItem> list) {
@@ -723,7 +743,7 @@ public class ParcelListActivity extends AppCompatActivity implements View.OnClic
 
         @Override
         public Object getItem(int position) {
-            return filteredItemList.get(position) ;
+            return filteredItemList.get(position);
         }
 
         @Override
@@ -732,33 +752,45 @@ public class ParcelListActivity extends AppCompatActivity implements View.OnClic
             mTextCourierName.setClickable(true);
             mTextCourierDate.setClickable(true);
             mBtnChangeView.setEnabled(true);
-            mTextCount.setText(getItemString(mArrayValues));
+            mTextCount.setText(getItemString(mParcelArrayValues));
         }
 
         @Override
         public View getView(int position, View convertView, ViewGroup parent) {
-            View v = convertView;
-
-            if (v == null) {
-                LayoutInflater inflater = (LayoutInflater) getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-                v = inflater.inflate(R.layout.parcel_listview_row, null);
-            }
-
-//            final TmsParcelItem item = getItem(position);
             final TmsParcelItem item = (TmsParcelItem) getItem(position);
             boolean isDeliverd = item.status.equals(TmsParcelItem.STATUS_DELIVERED);
             boolean isValidAddress = !(item.consigneeLatitude.equals("0") || item.consigneeLongitude.equals("0") || item.consigneeLatitude.isEmpty() || item.consigneeLongitude.isEmpty());
 
+            if (convertView == null) {
+                LayoutInflater inflater = (LayoutInflater) getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+                convertView = inflater.inflate(R.layout.parcel_listview_row, null);
+
+                if ( inflatedItems.isEmpty() || !inflatedItems.contains(convertView) ) {
+                    CheckBox cb = convertView.findViewById(R.id.listItemCheck);
+                    cb.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+                        @Override
+                        public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                            item.setChecked(isChecked);
+                        }
+                    });
+
+                    inflatedItems.add(convertView);
+                }
+            }
+
             if (item != null) {
-                TextView addrText = v.findViewById(R.id.listAddr);
-                TextView providerText = v.findViewById(R.id.listItemTextProvider);
-                TextView customerText = v.findViewById(R.id.listItemTextCustomer);
-                TextView deliveryNote = v.findViewById(R.id.listItemTextDeliveryMemo);
-                TextView remark = v.findViewById(R.id.listItemTextRemark);
-                Button btn_complete = v.findViewById(R.id.btn_complete);
-                Button btn_deliveryinfo = v.findViewById(R.id.btn_deliveryinfo);
-                Button btn_changeorder = v.findViewById(R.id.btn_changeorder);
-                ImageView statusIcon = v.findViewById(R.id.status_icon);
+                TextView addrText = convertView.findViewById(R.id.listAddr);
+                TextView providerText = convertView.findViewById(R.id.listItemTextProvider);
+                TextView customerText = convertView.findViewById(R.id.listItemTextCustomer);
+                TextView deliveryNote = convertView.findViewById(R.id.listItemTextDeliveryMemo);
+                TextView remark = convertView.findViewById(R.id.listItemTextRemark);
+                Button btn_complete = convertView.findViewById(R.id.btn_complete);
+                Button btn_deliveryinfo = convertView.findViewById(R.id.btn_deliveryinfo);
+                Button btn_changeorder = convertView.findViewById(R.id.btn_changeorder);
+                ImageView statusIcon = convertView.findViewById(R.id.status_icon);
+
+                CheckBox checkBox = convertView.findViewById(R.id.listItemCheck);
+                checkBox.setChecked(item.getChecked());
 
                 btn_complete.setOnClickListener(ParcelListActivity.this);
                 btn_complete.setTag(R.id.btn_complete, item);
@@ -813,7 +845,7 @@ public class ParcelListActivity extends AppCompatActivity implements View.OnClic
                 }
 
             }
-            return v;
+            return convertView;
         }
 
         private class TmsItemFilter extends Filter {

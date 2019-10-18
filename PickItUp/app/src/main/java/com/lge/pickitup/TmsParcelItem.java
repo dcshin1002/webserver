@@ -97,6 +97,7 @@ public class TmsParcelItem implements Comparable<TmsParcelItem>, Parcelable {
     };
 
     public int id = -1;
+    public boolean checked = false;
 
     // Information about Consignor (Sender)
     public String trackingNum;
@@ -232,5 +233,13 @@ public class TmsParcelItem implements Comparable<TmsParcelItem>, Parcelable {
     public String getDesc() {
         // TODO : currently parcel description is same as address
         return this.consigneeAddr + "(" + this.consigneeContact + ")";
+    }
+
+    public void setChecked(boolean isChecked) {
+        this.checked = isChecked;
+    }
+
+    public boolean getChecked() {
+        return this.checked;
     }
 }
