@@ -714,7 +714,6 @@ public class ParcelListActivity extends AppCompatActivity implements View.OnClic
     protected class TmsItemAdapter extends BaseAdapter implements Filterable {
         ArrayList<TmsParcelItem> totalItemList = new ArrayList<TmsParcelItem>();
         ArrayList<TmsParcelItem> filteredItemList = totalItemList;
-        HashSet<View> inflatedItems = new HashSet<>();
         Filter listFilter;
 
         public TmsItemAdapter(ArrayList<TmsParcelItem> list) {
@@ -755,8 +754,13 @@ public class ParcelListActivity extends AppCompatActivity implements View.OnClic
             mTextCount.setText(getItemString(mParcelArrayValues));
         }
 
+        public class ViewHolder {
+            public CheckBox checkBox;
+        }
+
         @Override
         public View getView(int position, View convertView, ViewGroup parent) {
+            ViewHolder holder = null;
             final TmsParcelItem item = (TmsParcelItem) getItem(position);
             boolean isDeliverd = item.status.equals(TmsParcelItem.STATUS_DELIVERED);
             boolean isValidAddress = !(item.consigneeLatitude.equals("0") || item.consigneeLongitude.equals("0") || item.consigneeLatitude.isEmpty() || item.consigneeLongitude.isEmpty());
@@ -764,18 +768,11 @@ public class ParcelListActivity extends AppCompatActivity implements View.OnClic
             if (convertView == null) {
                 LayoutInflater inflater = (LayoutInflater) getSystemService(Context.LAYOUT_INFLATER_SERVICE);
                 convertView = inflater.inflate(R.layout.parcel_listview_row, null);
-
-                if ( inflatedItems.isEmpty() || !inflatedItems.contains(convertView) ) {
-                    CheckBox cb = convertView.findViewById(R.id.listItemCheck);
-                    cb.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
-                        @Override
-                        public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-                            item.setChecked(isChecked);
-                        }
-                    });
-
-                    inflatedItems.add(convertView);
-                }
+                holder = new ViewHolder();
+                holder.checkBox = (CheckBox) convertView.findViewById(R.id.listItemCheck);
+                convertView.setTag(holder);
+            } else {
+                holder = (ViewHolder) convertView.getTag();
             }
 
             if (item != null) {
@@ -789,8 +786,18 @@ public class ParcelListActivity extends AppCompatActivity implements View.OnClic
                 Button btn_changeorder = convertView.findViewById(R.id.btn_changeorder);
                 ImageView statusIcon = convertView.findViewById(R.id.status_icon);
 
-                CheckBox checkBox = convertView.findViewById(R.id.listItemCheck);
-                checkBox.setChecked(item.getChecked());
+                holder.checkBox.setTag(String.valueOf(position));   // to properly track the actual position
+                holder.checkBox.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener(){
+                    @Override
+                    public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                        if (buttonView.isPressed()) {
+                            int pos = Integer.parseInt(buttonView.getTag().toString());
+                            TmsParcelItem item = (TmsParcelItem) getItem(pos);
+                            item.setChecked(isChecked);
+                        }
+                    }
+                });
+                holder.checkBox.setChecked(item.getChecked());
 
                 btn_complete.setOnClickListener(ParcelListActivity.this);
                 btn_complete.setTag(R.id.btn_complete, item);
