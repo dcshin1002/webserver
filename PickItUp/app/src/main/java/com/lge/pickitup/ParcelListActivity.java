@@ -77,6 +77,7 @@ public class ParcelListActivity extends AppCompatActivity implements View.OnClic
     private TextView mTextCourierDate;
     private TextView mTextCount;
     private ListView mListView;
+    private CheckBox mAllCheckbox;
     private EditText mEditTextFilter;
     private Button mBtnResetdb;
     private Button mBtnAssign;
@@ -371,6 +372,26 @@ public class ParcelListActivity extends AppCompatActivity implements View.OnClic
         mTextCourierName = findViewById(R.id.text_courier_name);
         mTextCourierDate = findViewById(R.id.text_courier_date);
 
+        mAllCheckbox = findViewById(R.id.all_parcels_checkbox);
+        mAllCheckbox.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(CompoundButton compoundButton, boolean checked) {
+                if (compoundButton.isPressed()) {
+                    SparseBooleanArray checkedItems = mListView.getCheckedItemPositions();
+                    int count = mArrayAdapter.getCount();
+
+                    for (int i = count - 1; i >= 0; i--) {
+                        TmsParcelItem item = (TmsParcelItem) mArrayAdapter.getItem(i);
+                        item.setChecked(checked);
+                    }
+                }
+                // TODO: toggle "all checked" if there is any unchecked in list
+
+                if (mArrayAdapter != null) {
+                    mArrayAdapter.notifyDataSetChanged();
+                }
+            }
+        });
 
         mBtnChangeView = findViewById(R.id.btn_change_view);
         mBtnAssign = findViewById(R.id.btn_assign);
@@ -790,11 +811,9 @@ public class ParcelListActivity extends AppCompatActivity implements View.OnClic
                 holder.checkBox.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener(){
                     @Override
                     public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-                        if (buttonView.isPressed()) {
-                            int pos = Integer.parseInt(buttonView.getTag().toString());
-                            TmsParcelItem item = (TmsParcelItem) getItem(pos);
-                            item.setChecked(isChecked);
-                        }
+                        int pos = Integer.parseInt(buttonView.getTag().toString());
+                        TmsParcelItem item = (TmsParcelItem) getItem(pos);
+                        item.setChecked(isChecked);
                     }
                 });
                 holder.checkBox.setChecked(item.getChecked());
