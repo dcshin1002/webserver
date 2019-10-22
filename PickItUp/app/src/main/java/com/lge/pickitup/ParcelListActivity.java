@@ -692,20 +692,15 @@ public class ParcelListActivity extends AppCompatActivity implements View.OnClic
     }
 
     public void assignParcelItemToCourier(ArrayList<TmsParcelItem> items, String couriername) {
+        String date = mTextCourierDate.getText().toString();
+        HashSet<TmsCourierItem> couriers = new HashSet<>();
         for (TmsParcelItem item : items) {
-            assignParcelItemToCourier(item, couriername);
+            couriers.add(mCourierDatabaseHash.get(item.courierName));
         }
+        //AssignParcelsUtil assignUtil = new AssignParcelsUtil(date, items, couriers, mCourierDatabaseHash.get(couriername));
+        //assignUtil.assignCourier();
     }
 
-    public void assignParcelItemToCourier(TmsParcelItem item, String couriername) {
-        if (!item.consigneeName.isEmpty()) {
-            // this parcel is already assigned
-
-        }
-
-        item.courierName = couriername;
-
-    }
 
 
     private ArrayList<TmsParcelItem> getCheckedParcelItems(){
