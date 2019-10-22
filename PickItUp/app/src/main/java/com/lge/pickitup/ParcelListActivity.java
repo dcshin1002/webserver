@@ -652,7 +652,8 @@ public class ParcelListActivity extends AppCompatActivity implements View.OnClic
     }
 
     private void showAssignCourierPicker() {
-        final String[] items = Utils.makeCourierUserList();
+        ArrayList<String> arr_couriers = Utils.makeCourierUserList();
+        final String[] items = arr_couriers.toArray(new String[arr_couriers.size()]);
         mCourierPickerDialog = new AlertDialog.Builder(this);
         mCourierPickerDialog.setTitle(getString(R.string.courier_sel_dialog_title));
         int defaultIdx = 0;

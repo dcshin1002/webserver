@@ -385,14 +385,14 @@ public class Utils {
     }
 
 
-    public static String[] makeCourierUserList() {
+    public static ArrayList<String> makeCourierUserList() {
         ArrayList<String> courierlist = new ArrayList<>();
         for (String username : mUserList.keySet()) {
             if (mUserList.get(username).equals(usertype_courier)) {
                 courierlist.add(username);
             }
         }
-        return courierlist.toArray(new String[courierlist.size()]);
+        return courierlist;
     }
 
 

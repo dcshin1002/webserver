@@ -30,6 +30,7 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.lang.reflect.Array;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -70,7 +71,7 @@ public class AddressFacade {
         public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
             mCourierHash.clear();
             int maxCourierIdInDB = 0;
-            Log.d(LOG_TAG, "getCourierListFromFirebaseDatabase : size " + dataSnapshot.getChildrenCount());
+            Log.d(LOG_TAG, "likepaul getCourierListFromFirebaseDatabase : size " + dataSnapshot.getChildrenCount());
             for (DataSnapshot postSnapshot : dataSnapshot.getChildren()) {
                 String key = postSnapshot.getKey();
                 TmsCourierItem value = postSnapshot.getValue(TmsCourierItem.class);
@@ -79,6 +80,16 @@ public class AddressFacade {
                 if (id > maxCourierIdInDB)
                     maxCourierIdInDB = id;
             }
+
+            ArrayList<String> courierList = Utils.makeCourierUserList();
+            Log.d(LOG_TAG, "likepaul mCourierHash.size()" + mCourierHash.size());
+            for (String courier : courierList) {
+                if (!mCourierHash.containsKey(courier)) {
+                    TmsCourierItem item = new TmsCourierItem(++maxCourierIdInDB, courier);
+                    mCourierHash.put(courier, item);
+                }
+            }
+            Log.d(LOG_TAG, "likepaul mCourierHash.size()" + mCourierHash.size());
             initFile(mFileName, maxCourierIdInDB);
         }
         @Override

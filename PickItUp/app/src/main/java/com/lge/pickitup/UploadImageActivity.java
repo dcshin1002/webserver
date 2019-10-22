@@ -355,7 +355,8 @@ public class UploadImageActivity extends AppCompatActivity {
         mTvChooseCourier.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                    final String[] items = Utils.makeCourierUserList();
+                    ArrayList<String> arr_couriers = Utils.makeCourierUserList();
+                    final String[] items = arr_couriers.toArray(new String[arr_couriers.size()]);
                     AlertDialog.Builder courierDialog = new AlertDialog.Builder(UploadImageActivity.this);
                     courierDialog.setTitle(getString(R.string.courier_sel_dialog_title));
 

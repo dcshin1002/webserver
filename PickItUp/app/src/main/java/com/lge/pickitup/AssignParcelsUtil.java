@@ -52,8 +52,10 @@ public class AssignParcelsUtil {
             prev = iter.next();
             // head element is checked
             while (iter.hasNext() && parcelsToRemove.contains(prev)) {
-                TmsCourierItem courier = mCourierItems.get(prev.courierName);
-                courier.startparcelid = prev.nextParcel;
+                if (!prev.courierName.isEmpty()) {
+                    TmsCourierItem courier = mCourierItems.get(prev.courierName);
+                    courier.startparcelid = prev.nextParcel;
+                }
                 prev.courierName = "";
                 prev.sectorId = -1;
                 prev.nextParcel = -1;
@@ -103,12 +105,17 @@ public class AssignParcelsUtil {
         }
 
         LinkedList<TmsParcelItem> listItems = mParcelItems.get(courierName);
-        if (!listItems.isEmpty()) {
+        if (listItems != null) {
             listItems.getLast().nextParcel = parcelsToAttach.getFirst().id;
             TmsCourierItem courier = mCourierItems.get(listItems.getLast().courierName);
             if (courier != null) {
                 courier.endparcelid = parcelsToAttach.getLast().id;
             }
+        } else {
+            listItems = new LinkedList<>();
+            TmsCourierItem courier = mCourierItems.get(courierName);
+            courier.startparcelid = parcelsToAttach.getFirst().id;
+            courier.endparcelid = parcelsToAttach.getLast().id;
         }
         listItems.addAll(parcelsToAttach);
     }
