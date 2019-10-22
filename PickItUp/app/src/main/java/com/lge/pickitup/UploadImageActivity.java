@@ -49,7 +49,9 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 
 public class UploadImageActivity extends AppCompatActivity {
     static final String EXTRA_SEND_RESULT = "send_result";
@@ -73,9 +75,11 @@ public class UploadImageActivity extends AppCompatActivity {
     private Button mBtnPickImgFromGallery;
     private Button mBtnSendMsg;
     private Button mBtnFinishActivity;
+    private Button mBtnAssignCourier;
     private ImageView mIvPreviewImage;
     private EditText mEtMessageContent;
     private TextView mTvDeliveryTime;
+    private TextView mTvChooseCourier;
     private FirebaseStorage mStorage;
     private StorageReference mStorageRef;
     private FirebaseAuth mAuth;
@@ -294,6 +298,8 @@ public class UploadImageActivity extends AppCompatActivity {
         mEtMessageContent = findViewById(R.id.etMessageContent);
         mBtnFinishActivity = findViewById(R.id.btnFinishActivity);
         mTvDeliveryTime = findViewById(R.id.tvDeliveryTime);
+        mTvChooseCourier = findViewById(R.id.tv_choosecourier);
+        mBtnAssignCourier = findViewById(R.id.btn_assign_courier);
 
         mEtMessageContent.setText("고객(" + mSelectedParcelItem.consigneeName + ")님께서 배송요청하신 물품이 배송완료되었습니다.");
         mIvPreviewImage.setOnClickListener(new View.OnClickListener() {
@@ -345,10 +351,80 @@ public class UploadImageActivity extends AppCompatActivity {
             }
         });
 
+        mTvChooseCourier.setTag(0); // set default index of courierDialog to 0
+        mTvChooseCourier.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                    final String[] items = Utils.makeCourierUserList();
+                    AlertDialog.Builder courierDialog = new AlertDialog.Builder(UploadImageActivity.this);
+                    courierDialog.setTitle(getString(R.string.courier_sel_dialog_title));
+
+                    int defaultIdx = (int)mTvChooseCourier.getTag();
+                    final List selectedItems = new ArrayList<>();
+                    selectedItems.add(defaultIdx);
+
+                    courierDialog.setSingleChoiceItems(items, defaultIdx, new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialogInterface, int pos) {
+                            selectedItems.clear();
+                            selectedItems.add(pos);
+                        }
+                    }).setPositiveButton(R.string.yes, new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialogInterface, int pos) {
+                            Log.d(LOG_TAG, "Select button is pressed");
+                            if (!selectedItems.isEmpty()) {
+                                int index = (int) selectedItems.get(0);
+                                mTvChooseCourier.setText(items[index]);
+                                mTvChooseCourier.setTag(index); // set selected index to mTvChooseCourier's tag
+                            }
+                        }
+                    }).setNegativeButton(R.string.cancel, new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialogInterface, int pos) {
+                            Log.d(LOG_TAG, "Cancel button is pressed");
+                            dialogInterface.cancel();
+                        }
+                    });
+                    courierDialog.show();
+                }
+        });
+
         mBtnFinishActivity.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 finish();
+            }
+        });
+
+        mBtnAssignCourier.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                final String selectedCourier =  mTvChooseCourier.getText().toString();
+                AlertDialog.Builder askAssignDialog = new AlertDialog.Builder(UploadImageActivity.this);
+                askAssignDialog.setTitle("배송기사 배정");
+                askAssignDialog.setMessage("해당 배송건을 " + selectedCourier + " 기사에게 배정하시겠습니까?");
+                askAssignDialog.setPositiveButton("확인", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialogInterface, int i) {
+                        String prevAssignCourier = mSelectedParcelItem.courierName;
+                        if (prevAssignCourier.isEmpty()){
+                            // courier is not assigned yet.
+                            Utils.assignCourier(mSelectedParcelItem, mSelectedDate, selectedCourier);
+                        } else {
+                            Utils.assignCourier(mSelectedParcelItem, mSelectedDate, prevAssignCourier, selectedCourier);
+                        }
+
+                    }
+                });
+                askAssignDialog.setNegativeButton(R.string.cancel, new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialogInterface, int i) {
+                        dialogInterface.cancel();
+                    }
+                });
+                askAssignDialog.show();
+
             }
         });
     }

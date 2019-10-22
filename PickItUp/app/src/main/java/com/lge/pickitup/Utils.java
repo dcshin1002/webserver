@@ -1,8 +1,10 @@
 package com.lge.pickitup;
 
 import android.annotation.SuppressLint;
+import android.app.AlertDialog;
 import android.content.ActivityNotFoundException;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
@@ -16,16 +18,24 @@ import android.util.Base64;
 import android.util.Log;
 import android.widget.Toast;
 
+import androidx.annotation.NonNull;
+
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.Query;
+import com.google.firebase.database.ValueEventListener;
 
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 
 public class Utils {
 
@@ -38,6 +48,7 @@ public class Utils {
     static final String SELECTED_DATE = "selected_date";
     static final String SERVER_URL = "https://tmsproto-py.herokuapp.com";
     static final String KEY_USERTYPE = "usertype";
+    static final String KEY_USERNAME = "username";
     static final String usertype_admin = "admin";
     static final String usertype_courier = "courier";
     static final String usertype_consignor = "consignor";
@@ -54,6 +65,7 @@ public class Utils {
     static Location mCurrent;
     static LocationManager mLocationMgr;
     static Context mContext;
+    static HashMap<String, String> mUserList = new HashMap<>();
     private static int BIAS_HOUR = 7;
     private static final LocationListener mGPSLocationListener = new LocationListener() {
         @Override
@@ -216,6 +228,169 @@ public class Utils {
         } else {
             return true;
         }
+    }
+
+    public static void assignCourier(ArrayList<TmsParcelItem> items, String date, String courierName) {
+        for (TmsParcelItem item : items) {
+            assignCourier(item, date, courierName);
+        }
+    }
+    public static TmsParcelItem getEndParcelPrevItem(TmsParcelItem parcelItem, String date, String prevCourierName) {
+        TmsParcelItem retParcel = null;
+
+
+        return retParcel;
+    }
+
+
+    public static void assignCourier(final TmsParcelItem parcelItem, final String date, final String prevCourierName, final String newCourierName) {
+        final DatabaseReference ref = FirebaseDatabase.getInstance().getReference();
+        Query query = ref.child(FirebaseDatabaseConnector.COURIER_REF_NAME).
+                child(date).orderByChild(TmsCourierItem.KEY_NAME).equalTo(prevCourierName);
+        query.addListenerForSingleValueEvent(
+            new ValueEventListener() {
+                @Override
+                public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                    TmsCourierItem courieritem = null;
+                    for (DataSnapshot postSnapshot : dataSnapshot.getChildren()) {
+                        if (postSnapshot.getValue(TmsCourierItem.class).name.equals(prevCourierName)) {
+                            courieritem = postSnapshot.getValue(TmsCourierItem.class);
+                        };
+                    }
+                    if (courieritem != null) {
+                        if (courieritem.startparcelid == parcelItem.id) {
+                            courieritem.startparcelid = parcelItem.nextParcel;
+                            assignCourier(parcelItem, date, newCourierName);
+                        } else if (courieritem.endparcelid == parcelItem.id) {
+                            DatabaseReference ref = FirebaseDatabase.getInstance().getReference();
+                            Query query = ref.child(FirebaseDatabaseConnector.PARCEL_REF_NAME).
+                                    child(date).orderByChild(TmsParcelItem.KEY_COURIER_NAME).equalTo(prevCourierName);
+                            query.addValueEventListener(new ValueEventListener() {
+                                @Override
+                                public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                                    for (DataSnapshot postSnapshot : dataSnapshot.getChildren()) {
+                                        TmsParcelItem item = postSnapshot.getValue(TmsParcelItem.class);
+                                        if (item.nextParcel == parcelItem.id ) {
+                                            item.nextParcel = -1;
+                                        }
+                                    }
+                                }
+
+                                @Override
+                                public void onCancelled(@NonNull DatabaseError databaseError) {
+
+                                }
+                            });
+                            courieritem.endparcelid = getEndParcelPrevItem(parcelItem, date, prevCourierName).id;
+
+                        } else {
+                            // parcelitem.prev.nextparcelid = parcelitem.nextparcelid;
+
+
+                        }
+                    }
+
+                }
+                @Override
+                public void onCancelled(@NonNull DatabaseError databaseError) {}
+            });
+
+    }
+
+    public static void assignCourier(final TmsParcelItem parcelItem, final String date, final String courierName) {
+        final DatabaseReference ref = FirebaseDatabase.getInstance().getReference();
+        Query query = ref.child(FirebaseDatabaseConnector.COURIER_REF_NAME).
+                child(date).orderByChild(TmsCourierItem.KEY_SECTOR_ID);
+        query.addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                int sectorid = 0;
+                int lastSectorIdOnCourierItem = 0;
+                int prevEndParcelId = -1;
+                TmsCourierItem selectedCourierItem = null;
+                for (DataSnapshot postSnapshot : dataSnapshot.getChildren()) {
+                    TmsCourierItem value = postSnapshot.getValue(TmsCourierItem.class);
+                    lastSectorIdOnCourierItem = value.sectorid;
+                    if (value.name.equals(courierName)) {
+                        selectedCourierItem = value;
+                        sectorid = value.sectorid;
+                        prevEndParcelId = value.endparcelid;
+                    }
+                }
+                if (sectorid == 0) {
+                    // there is no courier item of selected courier name, so need to make new courier item on DB.
+                    TmsCourierItem courierItem;
+                    if (lastSectorIdOnCourierItem == 0) {
+                        // No Courier item on DB
+                        sectorid = 1;
+                    } else {
+                        sectorid = lastSectorIdOnCourierItem+1;
+                    }
+                    courierItem = new TmsCourierItem(sectorid, courierName);
+                    courierItem.startparcelid = courierItem.endparcelid = parcelItem.id;
+                    postCourierItem(date, courierItem);
+                } else {
+                    // update tail parcel item's next parcel to new parcel item
+                    Query query = ref.child(FirebaseDatabaseConnector.PARCEL_REF_NAME).child(date).orderByChild(TmsParcelItem.KEY_ID).equalTo(prevEndParcelId);
+                    query.addValueEventListener(new ValueEventListener() {
+                        @Override
+                        public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                            for (DataSnapshot snapshot : dataSnapshot.getChildren()) {
+                                TmsParcelItem value = snapshot.getValue(TmsParcelItem.class);
+                                value.nextParcel = parcelItem.id;
+                                postParcelItem(date, value);
+                            }
+                        }
+
+                        @Override
+                        public void onCancelled(@NonNull DatabaseError databaseError) {
+                        }
+                    });
+                    selectedCourierItem.endparcelid = parcelItem.id;
+                    postCourierItem(date, selectedCourierItem);
+                }
+                parcelItem.nextParcel = -1;
+                parcelItem.courierName = courierName;
+                parcelItem.sectorId = sectorid;
+                parcelItem.status = TmsParcelItem.STATUS_ASSIGNED;
+                postParcelItem(date, parcelItem);
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError databaseError) {
+            }
+        });
+    }
+
+
+
+    private static void postParcelItem(String date, TmsParcelItem item) {
+        DatabaseReference ref = FirebaseDatabase.getInstance().getReference().child(FirebaseDatabaseConnector.PARCEL_REF_NAME);
+        Map<String, Object> childUpdates = new HashMap<>();
+        Map<String, Object> postValues = null;
+        postValues = item.toMap();
+        childUpdates.put("/" + date + "/" + item.id, postValues);
+        ref.updateChildren(childUpdates);
+    }
+
+    private static void postCourierItem(String date, TmsCourierItem item) {
+        DatabaseReference ref = FirebaseDatabase.getInstance().getReference().child(FirebaseDatabaseConnector.COURIER_REF_NAME);
+        Map<String, Object> childUpdates = new HashMap<>();
+        Map<String, Object> postValues = null;
+        postValues = item.toMap();
+        childUpdates.put("/" + date + "/" + item.id, postValues);
+        ref.updateChildren(childUpdates);
+    }
+
+
+    public static String[] makeCourierUserList() {
+        ArrayList<String> courierlist = new ArrayList<>();
+        for (String username : mUserList.keySet()) {
+            if (mUserList.get(username).equals(usertype_courier)) {
+                courierlist.add(username);
+            }
+        }
+        return courierlist.toArray(new String[courierlist.size()]);
     }
 
     @SuppressLint("MissingPermission")

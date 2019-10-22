@@ -101,7 +101,7 @@ public class TmsParcelItem implements Comparable<TmsParcelItem>, Parcelable {
 
     // Information about Consignor (Sender)
     public String trackingNum;
-    public String consignorName;
+    public String consignorName = UNSET;
     public String consignorContact = UNSET;
     public String packageType;
     public String date;
@@ -116,11 +116,11 @@ public class TmsParcelItem implements Comparable<TmsParcelItem>, Parcelable {
     // Delivery note (memo)
     public String remark;
     public String deliveryNote;
-    public String regionalCode;
+    public String regionalCode = UNSET;
     public String zipCode;
 
     // Information about courier (driver or individual to transfer)
-    public String courierName;
+    public String courierName = UNSET;;
     public String courierContact;
 
     // Information to process parcel
@@ -145,7 +145,7 @@ public class TmsParcelItem implements Comparable<TmsParcelItem>, Parcelable {
         this.consigneeContact = record[5];
         this.remark = record[6];
         this.deliveryNote = record[7];
-        if (Utils.isAdminAuth()) {
+        if (Utils.isAdminAuth() && record.length > 8) {
             this.regionalCode = record[8];
             this.zipCode = record[9];
             this.courierName = record[10];

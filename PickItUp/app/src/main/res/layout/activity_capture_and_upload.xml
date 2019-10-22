@@ -62,6 +62,8 @@
         android:background="#42A5F5"
         android:textColor="#FFFFFF"
         android:text="@string/send_message_with_image" />
+
+
     <TextView
         android:id="@+id/tvDeliveryTime"
         android:layout_width="wrap_content"
@@ -74,14 +76,44 @@
         <!--android:layout_alignLeft="@id/etMessageContent"
         android:layout_alignRight="@id/etMessageContent" -->
 
+    <LinearLayout
+        android:id="@+id/layout_assigncourier"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignLeft="@id/etMessageContent"
+        android:layout_alignRight="@id/etMessageContent"
+        android:layout_below="@id/tvDeliveryTime"
 
+        >
+        <TextView
+            android:id="@+id/tv_choosecourier"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:padding="5dp"            android:textSize="16dp"
+            android:layout_marginTop="10dp"
+            android:textColor="#000000"
+            android:text="배송기사 선택" />
+
+        <Button
+            android:id="@+id/btn_assign_courier"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:padding="5dp"
+            android:layout_marginTop="10dp"
+            android:background="#42A5F5"
+            android:textColor="#FFFFFF"
+            android:layout_weight="1"
+            android:text="배송기사 할당" />
+
+    </LinearLayout>
     <Button
         android:id="@+id/btnFinishActivity"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:padding="5dp"
         android:layout_marginTop="10dp"
-        android:layout_below="@id/tvDeliveryTime"
+        android:layout_below="@id/layout_assigncourier"
         android:layout_alignLeft="@id/etMessageContent"
         android:layout_alignRight="@id/etMessageContent"
         android:background="#42A5F5"

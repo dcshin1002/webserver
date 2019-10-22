@@ -261,8 +261,7 @@ public class CreateAccountActivity extends AppCompatActivity {
                         if (task.isSuccessful()) {
                             FirebaseUser user = mAuth.getCurrentUser();
                             user.updateProfile(pofileReq);
-                            setUserToDatabase(usertype, user.getUid());
-                            Log.d(LOG_TAG, "update user profile = " + user.getDisplayName());
+                            setUserToDatabase(usertype, user.getUid(), mEtDisplayName.getText().toString());
                             if (Utils.isAdminAuth() || Utils.isConsignorAuth()) {
                                 startActivity(new Intent(CreateAccountActivity.this, MainMenuActivity.class));
                             } else {
@@ -300,17 +299,17 @@ public class CreateAccountActivity extends AppCompatActivity {
                 });
     }
 
-    private void setUserToDatabase(String usertype, String uid) {
+    private void setUserToDatabase(String usertype, String uid, String username) {
         String dbusertype = "";
         if (usertype.equals(getResources().getStringArray(R.array.usertypelist)[0])) {
             dbusertype = Utils.usertype_consignor;
         } else if (usertype.equals(getResources().getStringArray(R.array.usertypelist)[1])) {
             dbusertype = Utils.usertype_courier;
         }
-
         DatabaseReference databaseRef = FirebaseDatabase.getInstance().getReference().child(FirebaseDatabaseConnector.USER_REF_NAME);
         Map<String, Object> value = new HashMap<>();
         value.put(Utils.KEY_USERTYPE, dbusertype);
+        value.put(Utils.KEY_USERNAME, username);
         databaseRef.child(uid).updateChildren(value);
     }
 

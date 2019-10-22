@@ -357,11 +357,11 @@ public class FirebaseDatabaseConnector {
         return nearIdx;
     }
 
-    public void proceedChangeOrder(TmsParcelItem item, int prevOrder, int newOrder, String selectedCourierName, String selectedDate, DatabaseReference.CompletionListener listener, HashMap<String, TmsCourierItem> courierDatabaseHash) {
+    public void proceedChangeOrder(ArrayList<TmsParcelItem> arrayParcelList, TmsParcelItem item, int prevOrder, int newOrder, String selectedCourierName, String selectedDate, DatabaseReference.CompletionListener listener, HashMap<String, TmsCourierItem> courierDatabaseHash) {
         TmsParcelItem insertedNodePrev = null;
         TmsParcelItem insertedNodeNext;
         TmsParcelItem originNodePrev = null;
-        for (TmsParcelItem parcel : mArrayValues) {
+        for (TmsParcelItem parcel : arrayParcelList) {
             if (parcel.nextParcel == item.id) {
                 originNodePrev = parcel;
                 break;
@@ -369,15 +369,21 @@ public class FirebaseDatabaseConnector {
         }
         if (prevOrder > newOrder) { // 뒷번호에서 앞번호으로  변경
 
-            if (newOrder == 1) {
+            if (prevOrder == arrayParcelList.size()) {
+                TmsCourierItem courierItem = courierDatabaseHash.get(selectedCourierName);
+                courierItem.endparcelid = originNodePrev.id;
+                postCourierItemToFirebaseDatabase(selectedDate, courierItem);
+            }
+
+           if (newOrder == 1) {
                 TmsCourierItem courierItem = courierDatabaseHash.get(selectedCourierName);
                 courierItem.startparcelid = item.id;
                 postCourierItemToFirebaseDatabase(selectedDate, courierItem);
             } else {
-                insertedNodePrev = mArrayValues.get(newOrder - 2);
+                insertedNodePrev = arrayParcelList.get(newOrder - 2);
                 insertedNodePrev.nextParcel = item.id;
             }
-            insertedNodeNext = mArrayValues.get(newOrder - 1);
+            insertedNodeNext = arrayParcelList.get(newOrder - 1);
             if (originNodePrev != null) {
                 if (item.nextParcel != -1) {
                     originNodePrev.nextParcel = item.nextParcel;
@@ -392,6 +398,11 @@ public class FirebaseDatabaseConnector {
                 courierItem.startparcelid = item.nextParcel;
                 postCourierItemToFirebaseDatabase(selectedDate, courierItem);
             }
+            if (newOrder == arrayParcelList.size()){
+                TmsCourierItem courierItem = courierDatabaseHash.get(selectedCourierName);
+                courierItem.endparcelid = item.id;
+                postCourierItemToFirebaseDatabase(selectedDate, courierItem);
+            }
             if (originNodePrev != null) {
                 if (item.nextParcel != -1) {
                     originNodePrev.nextParcel = item.nextParcel;
@@ -399,10 +410,12 @@ public class FirebaseDatabaseConnector {
                     originNodePrev.nextParcel = -1;
                 }
             }
-            insertedNodePrev = mArrayValues.get(newOrder - 1);
+            insertedNodePrev = arrayParcelList.get(newOrder - 1);
             item.nextParcel = insertedNodePrev.nextParcel;
             insertedNodePrev.nextParcel = item.id;
         }
+
+
         ArrayList<TmsParcelItem> list_parcelitem = new ArrayList<>();
         if (originNodePrev != null)
             list_parcelitem.add(originNodePrev);

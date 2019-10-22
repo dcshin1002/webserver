@@ -138,7 +138,6 @@
             android:background="#42A5F5"
             android:text="배송할당"
             android:textColor="#FFFFFF"
-            android:enabled="false"
             android:textSize="15dp"
             android:visibility="invisible" />
 

@@ -51,7 +51,6 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 
 public class ParcelListActivity extends AppCompatActivity implements View.OnClickListener {
@@ -157,14 +156,17 @@ public class ParcelListActivity extends AppCompatActivity implements View.OnClic
             String courierName = mTextCourierName.getText().toString();
             String selectedDate = mTextCourierDate.getText().toString();
             DatabaseReference databaseRef = FirebaseDatabase.getInstance().getReference();
-
-            if (courierName.equals(getString(R.string.all_couriers))) {
-                Query firebaseQuery = databaseRef.child(FirebaseDatabaseConnector.PARCEL_REF_NAME).child(selectedDate).orderByChild(TmsParcelItem.KEY_ID);
-                firebaseQuery.addValueEventListener(mParcelListEventListener);
+            Query firebaseQuery;
+            if (Utils.isConsignorAuth()) {
+                firebaseQuery = databaseRef.child(FirebaseDatabaseConnector.PARCEL_REF_NAME).child(selectedDate).orderByChild(TmsParcelItem.KEY_CONSIGNOR_NAME).equalTo(Utils.mCurrentUserName);
             } else {
-                Query firebaseQuery = databaseRef.child(FirebaseDatabaseConnector.PARCEL_REF_NAME).child(selectedDate).orderByChild(TmsParcelItem.KEY_COURIER_NAME).equalTo(courierName);
-                firebaseQuery.addValueEventListener(mParcelListEventListener);
+                if (courierName.equals(getString(R.string.all_couriers))) {
+                    firebaseQuery = databaseRef.child(FirebaseDatabaseConnector.PARCEL_REF_NAME).child(selectedDate).orderByChild(TmsParcelItem.KEY_ID);
+                } else {
+                    firebaseQuery = databaseRef.child(FirebaseDatabaseConnector.PARCEL_REF_NAME).child(selectedDate).orderByChild(TmsParcelItem.KEY_COURIER_NAME).equalTo(courierName);
+                }
             }
+            firebaseQuery.addValueEventListener(mParcelListEventListener);
         }
 
         @Override
@@ -225,6 +227,7 @@ public class ParcelListActivity extends AppCompatActivity implements View.OnClic
 
         mTextCourierDate.setText(dateStr);
         mTextCourierName.setText(courierStr);
+        mTextCourierName.setTag(0);
 
         mFbConnector = new FirebaseDatabaseConnector(this);
         mFbConnector.setParcelHash(this.mParcelDatabaseHash);
@@ -510,20 +513,8 @@ public class ParcelListActivity extends AppCompatActivity implements View.OnClic
 
             case R.id.btn_assign:
                 // select courier from picker dialog
-                showCourierPicker();
+                showAssignCourierPicker();
 
-                SparseBooleanArray checkedItems = mListView.getCheckedItemPositions();
-                int count = mArrayAdapter.getCount() ;
-
-                for (int i = count-1; i >= 0; i--) {
-                    if (checkedItems.get(i)) {
-                        // TODO: do assign items to selected courier
-                    }
-                }
-                mListView.clearChoices() ;
-                if (mArrayAdapter != null) {
-                    mArrayAdapter.notifyDataSetChanged();
-                }
                 break;
 
             case R.id.btn_change_view:
@@ -538,7 +529,7 @@ public class ParcelListActivity extends AppCompatActivity implements View.OnClic
                 break;
 
             case R.id.text_courier_name:
-                showCourierPicker();
+                showSelectCourierPicker();
                 break;
             case R.id.btn_deliveryinfo:
                 item = (TmsParcelItem)view.getTag(R.id.btn_deliveryinfo);
@@ -556,6 +547,7 @@ public class ParcelListActivity extends AppCompatActivity implements View.OnClic
         }
 
     }
+
 
     private void processChangeOrderDialog( final TmsParcelItem item, final int prevOrder) {
 
@@ -603,7 +595,7 @@ public class ParcelListActivity extends AppCompatActivity implements View.OnClic
                                 Toast.makeText(ParcelListActivity.this, item.consigneeName +": " + item.consigneeAddr + "\n\n" + newOrder + "번으로 변경완료되었습니다.", Toast.LENGTH_SHORT).show();
                             }
                         };
-                        mFbConnector.proceedChangeOrder(item, prevOrder, newOrder, selectedCourierName, selectedDate, listener, mCourierDatabaseHash);
+                        mFbConnector.proceedChangeOrder(mParcelArrayValues, item, prevOrder, newOrder, selectedCourierName, selectedDate, listener, mCourierDatabaseHash);
 
 
                     }
@@ -621,8 +613,43 @@ public class ParcelListActivity extends AppCompatActivity implements View.OnClic
         mTextCourierName.setText(getString(R.string.default_courier_name));
     }
 
-    private void showCourierPicker() {
+    private void showSelectCourierPicker() {
         final String[] items = prepareCourierArray();
+        mCourierPickerDialog = new AlertDialog.Builder(this);
+        mCourierPickerDialog.setTitle(getString(R.string.courier_sel_dialog_title));
+        int defaultIdx = (int)mTextCourierName.getTag();
+        final List selectedItems = new ArrayList<>();
+        selectedItems.add(defaultIdx);
+
+        mCourierPickerDialog.setSingleChoiceItems(items, defaultIdx, new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialogInterface, int pos) {
+                selectedItems.clear();
+                selectedItems.add(pos);
+            }
+        }).setPositiveButton(R.string.yes, new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialogInterface, int pos) {
+                Log.d(LOG_TAG, "Select button is pressed");
+                    if (!selectedItems.isEmpty()) {
+                        int index = (int) selectedItems.get(0);
+                        mTextCourierName.setText(items[index]);
+                        mTextCourierName.setTag(index);
+                    }
+                    refreshList(mTextCourierName.getText().toString());
+            }
+        }).setNegativeButton(R.string.cancel, new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialogInterface, int pos) {
+                Log.d(LOG_TAG, "Cancel button is pressed");
+                dialogInterface.cancel();
+            }
+        });
+        mCourierPickerDialog.show();
+    }
+
+    private void showAssignCourierPicker() {
+        final String[] items = Utils.makeCourierUserList();
         mCourierPickerDialog = new AlertDialog.Builder(this);
         mCourierPickerDialog.setTitle(getString(R.string.courier_sel_dialog_title));
         int defaultIdx = 0;
@@ -639,12 +666,28 @@ public class ParcelListActivity extends AppCompatActivity implements View.OnClic
             @Override
             public void onClick(DialogInterface dialogInterface, int pos) {
                 Log.d(LOG_TAG, "Select button is pressed");
-
                 if (!selectedItems.isEmpty()) {
                     int index = (int) selectedItems.get(0);
-                    mTextCourierName.setText(items[index]);
+                    String assignCourier = items[index];
+
+                    Log.i(LOG_TAG, "likepaul " + mListView.getCheckedItemCount());
+                    Log.i(LOG_TAG, "likepaul " + mListView.getCheckedItemIds().length);
+                    Log.i(LOG_TAG, "likepaul " + mListView.getCheckedItemPositions().size());
+/*
+                    SparseBooleanArray checkedItems = mListView.getCheckedItemPositions();
+
+                    int count = mArrayAdapter.getCount() ;
+
+                    for (int i = 0; i < count; i++) {
+                        Log.i(LOG_TAG, "likepaul" + checkedItems.get(i));
+                        if (checkedItems.get(i).) {
+                        }
+                    }
+                    mListView.clearChoices() ;
+                    if (mArrayAdapter != null) {
+                        mArrayAdapter.notifyDataSetChanged();
+                    }*/
                 }
-                refreshList(mTextCourierName.getText().toString());
             }
         }).setNegativeButton(R.string.cancel, new DialogInterface.OnClickListener() {
             @Override
@@ -653,7 +696,6 @@ public class ParcelListActivity extends AppCompatActivity implements View.OnClic
                 dialogInterface.cancel();
             }
         });
-
         mCourierPickerDialog.show();
     }
 
@@ -811,9 +853,11 @@ public class ParcelListActivity extends AppCompatActivity implements View.OnClic
                 holder.checkBox.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener(){
                     @Override
                     public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-                        int pos = Integer.parseInt(buttonView.getTag().toString());
-                        TmsParcelItem item = (TmsParcelItem) getItem(pos);
-                        item.setChecked(isChecked);
+
+                int pos = Integer.parseInt(buttonView.getTag().toString());
+                TmsParcelItem item = (TmsParcelItem) getItem(pos);
+                item.setChecked(isChecked);
+
                     }
                 });
                 holder.checkBox.setChecked(item.getChecked());

@@ -94,6 +94,7 @@ public class AddressFacade {
     ValueEventListener mValueEventListener = new ValueEventListener() {
         @Override
         public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+            mLastParcelItemInSectorOnDB.clear();
             long initValueOfParcelId = 0;
             for (DataSnapshot postSnapshot : dataSnapshot.getChildren()) {
                 TmsParcelItem value = postSnapshot.getValue(TmsParcelItem.class);
@@ -177,8 +178,9 @@ public class AddressFacade {
     void addRecordToParcelList(List<TmsParcelItem> list, String dateRecord, String[] record) {
 
         TmsParcelItem item = new TmsParcelItem(dateRecord, record);
-        if (mCourierHash.size() > 0) {
-            item.sectorId = Integer.valueOf(mCourierHash.get(item.courierName).id);
+        TmsCourierItem courierItem = mCourierHash.get(item.courierName);
+        if (courierItem != null && mCourierHash.size() > 0) {
+            item.sectorId = courierItem.sectorid;
         }
         list.add(item);
     }
@@ -187,26 +189,27 @@ public class AddressFacade {
         for (int i = 0; i < mParcelList.size(); i++) {
             TmsParcelItem item = mParcelList.get(i);
             item.id = startIdx + i + 1;
-
-            if (Utils.isAdminAuth()) {
+            if (item.sectorId != -1 && Utils.isAdminAuth()) {
                 TmsParcelItem lastItemInHash = mPreviousParcelItemInSector.get(item.sectorId);
+                TmsCourierItem courierItem = mCourierHash.get(item.courierName);
                 if (lastItemInHash != null) {
                     lastItemInHash.nextParcel = item.id;
                 } else {
-                    if (mCourierHash.get(item.courierName).startparcelid == -1) {
-                        mCourierHash.get(item.courierName).startparcelid = item.id;
+                    if (courierItem.startparcelid == -1) {
+                        courierItem.startparcelid = item.id;
                     } else {
                         TmsParcelItem tailItem = mLastParcelItemInSectorOnDB.get(item.courierName);
                         tailItem.nextParcel = item.id;
-
-                        DatabaseReference ref = FirebaseDatabase.getInstance().getReference().child(mFbConnector.PARCEL_REF_NAME);
+                        DatabaseReference parcelref = FirebaseDatabase.getInstance().getReference().child(mFbConnector.PARCEL_REF_NAME);
                         Map<String, Object> childUpdates = new HashMap<>();
                         childUpdates.put("/" + mDateStr + "/" + tailItem.id, tailItem.toMap());
-                        ref.updateChildren(childUpdates);
+                        parcelref.updateChildren(childUpdates);
                     }
-
                 }
                 mPreviousParcelItemInSector.put(item.sectorId, item);
+                if (i == mParcelList.size() -1) { // last item set to tail
+                    mCourierHash.get(item.courierName).endparcelid = item.id;
+                }
             }
         }
     }
@@ -257,13 +260,12 @@ public class AddressFacade {
         protected void onPostExecute(String o) {
             super.onPostExecute(o);
             asyncDialog.dismiss();
-
+            initParcelId(startIdx);
             if (Utils.isAdminAuth()){
                 List<TmsCourierItem> couriers = buildTmsCouriers();
                 mFbConnector.postCourierListToFirbaseDatabase(mDateStr, (ArrayList<TmsCourierItem>) couriers);
                 mFbConnector.postJobStatusFromFirebaseDatabase(mDateStr);
             }
-            initParcelId(startIdx);
             mFbConnector.postParcelListToFirebaseDatabase2(mDateStr, (ArrayList<TmsParcelItem>) mParcelList, new DatabaseReference.CompletionListener() {
                 @Override
                 public void onComplete(@Nullable DatabaseError databaseError, @NonNull DatabaseReference databaseReference) {

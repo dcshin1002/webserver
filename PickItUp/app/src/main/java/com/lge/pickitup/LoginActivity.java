@@ -95,15 +95,16 @@ public class LoginActivity extends AppCompatActivity {
                 Utils.ARR_COURIER_UIDS.clear();
                 for (DataSnapshot snapshot : dataSnapshot.getChildren()) {
                     String key = snapshot.getKey();
-                    String value = snapshot.child(Utils.KEY_USERTYPE).getValue().toString();
-
-                    if (value.equals(Utils.usertype_admin)) {
+                    String usertypevalue = snapshot.child(Utils.KEY_USERTYPE).getValue().toString();
+                    String usernamevalue = snapshot.child(Utils.KEY_USERNAME).getValue().toString();
+                    if (usertypevalue.equals(Utils.usertype_admin)) {
                         Utils.ARR_ADMIN_UIDS.add(key);
-                    } else if (value.equals(Utils.usertype_consignor)) {
+                    } else if (usertypevalue.equals(Utils.usertype_consignor)) {
                         Utils.ARR_CONSIGNOR_UIDS.add(key);
-                    } else if (value.equals(Utils.usertype_courier)) {
+                    } else if (usertypevalue.equals(Utils.usertype_courier)) {
                         Utils.ARR_COURIER_UIDS.add(key);
                     }
+                    Utils.mUserList.put(usernamevalue, usertypevalue);
                 }
                 mAuth.addAuthStateListener(mAuthListener);
             }

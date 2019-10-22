@@ -843,7 +843,7 @@ public class MapViewActivity extends AppCompatActivity
                                 getFirebaseList();
                             }
                         };
-                        mFbConnector.proceedChangeOrder(item, prevOrder, newOrder, mSelectedCourierName, mSelectedDate, listener, mCourierDatabaseHash);
+                        mFbConnector.proceedChangeOrder(mArrayValues, item, prevOrder, newOrder, mSelectedCourierName, mSelectedDate, listener, mCourierDatabaseHash);
                     }
                 })
                 .setNegativeButton(R.string.cancel, new DialogInterface.OnClickListener() {
