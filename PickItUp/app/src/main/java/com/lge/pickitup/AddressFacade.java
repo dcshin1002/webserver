@@ -207,9 +207,7 @@ public class AddressFacade {
                     }
                 }
                 mPreviousParcelItemInSector.put(item.sectorId, item);
-                if (i == mParcelList.size() -1) { // last item set to tail
-                    mCourierHash.get(item.courierName).endparcelid = item.id;
-                }
+                mCourierHash.get(item.courierName).endparcelid = item.id;
             }
         }
     }
