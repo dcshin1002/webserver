@@ -6,41 +6,34 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
 
-/*
-        // courierName, listParcel
-        HashMap<String, LinkedList<TmsParcelItem>> parcelItems;
-
-
-     */
 public class AssignParcelsUtil {
     private String date;
-    private TmsCourierItem assignedCourier;
+
+    // <courier name, list of parcels> pair
     private HashMap<String, LinkedList<TmsParcelItem>> mParcelItems;
     private HashSet<TmsCourierItem> mCourierItems;
 
-    public AssignParcelsUtil(String date, HashMap<String, LinkedList<TmsParcelItem>> checkedItems,  HashSet<TmsCourierItem> couriers, TmsCourierItem courierToAssign) {
+    public AssignParcelsUtil(String date, HashMap<String, LinkedList<TmsParcelItem>> parcels, HashSet<TmsCourierItem> couriers) {
         this.date = date;
         this.mCourierItems = couriers;
-        this.mParcelItems = checkedItems;
-        this.assignedCourier = courierToAssign;
+        this.mParcelItems = parcels;
     }
 
-
-    public void assignCourier() {
+    public void assignCourier(ArrayList<TmsParcelItem> checkedParcels, TmsCourierItem checkedCourier) {
 
     }
 
     private LinkedList<TmsParcelItem> removeParcelsFromList(ArrayList<TmsParcelItem> parcelsToRemove) {
-        LinkedList<TmsParcelItem> tmp = new LinkedList<>();
-        return tmp;
+        LinkedList<TmsParcelItem> ret = new LinkedList<>();
+
     }
 
     private LinkedList<TmsParcelItem> attachParcelsToCourier(LinkedList<TmsParcelItem> parcelsToAttach, String courierName) {
         LinkedList<TmsParcelItem> tmp = new LinkedList<>();
         return tmp;
     }
+
     private void setToFirebaseDB() {
 
     }
-
 }
