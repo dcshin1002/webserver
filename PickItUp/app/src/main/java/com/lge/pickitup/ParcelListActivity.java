@@ -47,10 +47,13 @@ import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.Query;
 import com.google.firebase.database.ValueEventListener;
 
+import java.lang.reflect.Array;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.List;
 
 public class ParcelListActivity extends AppCompatActivity implements View.OnClickListener {
@@ -669,24 +672,13 @@ public class ParcelListActivity extends AppCompatActivity implements View.OnClic
                 if (!selectedItems.isEmpty()) {
                     int index = (int) selectedItems.get(0);
                     String assignCourier = items[index];
+                    ArrayList<TmsParcelItem> checkedItems = getCheckedParcelItems();
+                    Log.d(LOG_TAG, "checkedItems.size : " + checkedItems.size());
 
-                    Log.i(LOG_TAG, "likepaul " + mListView.getCheckedItemCount());
-                    Log.i(LOG_TAG, "likepaul " + mListView.getCheckedItemIds().length);
-                    Log.i(LOG_TAG, "likepaul " + mListView.getCheckedItemPositions().size());
-/*
-                    SparseBooleanArray checkedItems = mListView.getCheckedItemPositions();
-
-                    int count = mArrayAdapter.getCount() ;
-
-                    for (int i = 0; i < count; i++) {
-                        Log.i(LOG_TAG, "likepaul" + checkedItems.get(i));
-                        if (checkedItems.get(i).) {
-                        }
-                    }
-                    mListView.clearChoices() ;
+                    assignParcelItemToCourier(checkedItems, assignCourier);
                     if (mArrayAdapter != null) {
                         mArrayAdapter.notifyDataSetChanged();
-                    }*/
+                    }
                 }
             }
         }).setNegativeButton(R.string.cancel, new DialogInterface.OnClickListener() {
@@ -697,6 +689,34 @@ public class ParcelListActivity extends AppCompatActivity implements View.OnClic
             }
         });
         mCourierPickerDialog.show();
+    }
+
+    public void assignParcelItemToCourier(ArrayList<TmsParcelItem> items, String couriername) {
+        for (TmsParcelItem item : items) {
+            assignParcelItemToCourier(item, couriername);
+        }
+    }
+
+    public void assignParcelItemToCourier(TmsParcelItem item, String couriername) {
+        if (!item.consigneeName.isEmpty()) {
+            // this parcel is already assigned
+
+        }
+
+        item.courierName = couriername;
+
+    }
+
+
+    private ArrayList<TmsParcelItem> getCheckedParcelItems(){
+        ArrayList<TmsParcelItem> checkedItems = new ArrayList<>();
+        for (int i = 0; i < mArrayAdapter.getCount(); i++) {
+            TmsParcelItem item = (TmsParcelItem)mArrayAdapter.getItem(i);
+            if (item.getChecked()) {
+                checkedItems.add(item);
+            }
+        }
+        return checkedItems;
     }
 
     private String[] prepareCourierArray() {
@@ -853,11 +873,9 @@ public class ParcelListActivity extends AppCompatActivity implements View.OnClic
                 holder.checkBox.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener(){
                     @Override
                     public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-
-                int pos = Integer.parseInt(buttonView.getTag().toString());
-                TmsParcelItem item = (TmsParcelItem) getItem(pos);
-                item.setChecked(isChecked);
-
+                        int pos = Integer.parseInt(buttonView.getTag().toString());
+                        TmsParcelItem item = (TmsParcelItem) getItem(pos);
+                        item.setChecked(isChecked);
                     }
                 });
                 holder.checkBox.setChecked(item.getChecked());

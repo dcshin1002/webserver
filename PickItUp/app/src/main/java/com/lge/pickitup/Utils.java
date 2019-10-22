@@ -364,6 +364,8 @@ public class Utils {
 
 
 
+
+
     private static void postParcelItem(String date, TmsParcelItem item) {
         DatabaseReference ref = FirebaseDatabase.getInstance().getReference().child(FirebaseDatabaseConnector.PARCEL_REF_NAME);
         Map<String, Object> childUpdates = new HashMap<>();
@@ -392,6 +394,9 @@ public class Utils {
         }
         return courierlist.toArray(new String[courierlist.size()]);
     }
+
+
+
 
     @SuppressLint("MissingPermission")
     public static void setCurrentLocation() {
