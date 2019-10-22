@@ -1,9 +1,11 @@
 package com.lge.pickitup;
 
 
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
+
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.ListIterator;
 import java.util.Map;
@@ -28,6 +30,7 @@ public class AssignParcelsUtil {
             if (itemEntry.getKey().equals(checkedCourier.name)) continue;
 
             LinkedList<TmsParcelItem> eachList = removeParcelsFromList(itemEntry.getValue(), checkedParcels);
+            if (eachList.isEmpty()) continue;
 
             if (!tailList.isEmpty()) {
                 tailList.getLast().nextParcel = eachList.getFirst().id;
@@ -43,7 +46,6 @@ public class AssignParcelsUtil {
     // Return : removed parcels from original list in order
     private LinkedList<TmsParcelItem> removeParcelsFromList(LinkedList<TmsParcelItem> parcelList, ArrayList<TmsParcelItem> parcelsToRemove) {
         LinkedList<TmsParcelItem> ret = new LinkedList<>();
-
         ListIterator<TmsParcelItem> iter = parcelList.listIterator();
         TmsParcelItem prev, cur;
         if (iter.hasNext()) {
@@ -83,13 +85,17 @@ public class AssignParcelsUtil {
             }
 
             TmsCourierItem courier = mCourierItems.get(prev.courierName);
-            courier.endparcelid = prev.id;
+            if (courier != null) {
+                courier.endparcelid = prev.id;
+            }
         }
-
         return ret;
     }
 
     private void attachParcelsToCourier(LinkedList<TmsParcelItem> parcelsToAttach, String courierName) {
+        if (parcelsToAttach.isEmpty())
+            return;
+
         int sectorId = mCourierItems.get(courierName).sectorid;
         for (TmsParcelItem item : parcelsToAttach) {
             item.courierName = courierName;
@@ -99,11 +105,33 @@ public class AssignParcelsUtil {
         LinkedList<TmsParcelItem> listItems = mParcelItems.get(courierName);
         if (!listItems.isEmpty()) {
             listItems.getLast().nextParcel = parcelsToAttach.getFirst().id;
+            TmsCourierItem courier = mCourierItems.get(listItems.getLast().courierName);
+            if (courier != null) {
+                courier.endparcelid = parcelsToAttach.getLast().id;
+            }
         }
         listItems.addAll(parcelsToAttach);
     }
 
     private void setToFirebaseDB() {
-
+        DatabaseReference parcelref = FirebaseDatabase.getInstance().getReference().child(FirebaseDatabaseConnector.PARCEL_REF_NAME);
+        DatabaseReference courierref = FirebaseDatabase.getInstance().getReference().child(FirebaseDatabaseConnector.COURIER_REF_NAME);
+        Map<String, Object> childUpdates = new HashMap<>();
+        Map<String, Object> postValues = null;
+        for (Map.Entry<String, LinkedList<TmsParcelItem>> itemEntry : mParcelItems.entrySet()) {
+            for (TmsParcelItem item : itemEntry.getValue()) {
+                postValues = item.toMap();
+                childUpdates.put("/" + date + "/" + item.id, postValues);
+            }
+        }
+        parcelref.updateChildren(childUpdates);
+        childUpdates = new HashMap<>();
+        postValues = null;
+        for (Map.Entry<String, TmsCourierItem> itemEntry : mCourierItems.entrySet()) {
+            TmsCourierItem courierItem = itemEntry.getValue();
+            postValues = courierItem.toMap();
+            childUpdates.put("/" + date + "/" + courierItem.id, postValues);
+        }
+        courierref.updateChildren(childUpdates);
     }
 }

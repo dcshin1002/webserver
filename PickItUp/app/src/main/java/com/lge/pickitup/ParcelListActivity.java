@@ -693,12 +693,32 @@ public class ParcelListActivity extends AppCompatActivity implements View.OnClic
 
     public void assignParcelItemToCourier(ArrayList<TmsParcelItem> items, String couriername) {
         String date = mTextCourierDate.getText().toString();
-        HashSet<TmsCourierItem> couriers = new HashSet<>();
-        for (TmsParcelItem item : items) {
-            couriers.add(mCourierDatabaseHash.get(item.courierName));
+
+        HashMap<String, LinkedList<TmsParcelItem>> parcels = new HashMap<>();
+        HashMap<String, TmsCourierItem> couriers = new HashMap<>();
+
+        for (TmsParcelItem item : mParcelArrayValues) {
+            String courierName = item.courierName;
+
+            LinkedList<TmsParcelItem> linkedlist_parcelItems;
+            if (parcels.containsKey(courierName)) {
+                linkedlist_parcelItems = parcels.get(courierName);
+            } else {
+                linkedlist_parcelItems = new LinkedList<>();
+            }
+            linkedlist_parcelItems.add(item);
+            parcels.put(courierName, linkedlist_parcelItems);
         }
-        //AssignParcelsUtil assignUtil = new AssignParcelsUtil(date, items, couriers, mCourierDatabaseHash.get(couriername));
-        //assignUtil.assignCourier();
+
+        for (TmsCourierItem item : mCourierArrayValues) {
+            couriers.put(item.name, mCourierDatabaseHash.get(item.name));
+        }
+
+
+        AssignParcelsUtil assignUtil = new AssignParcelsUtil(date, parcels, couriers);
+
+        TmsCourierItem assignCourier = mCourierDatabaseHash.get(couriername);
+        assignUtil.assignCourier(items, assignCourier);
     }
 
 
