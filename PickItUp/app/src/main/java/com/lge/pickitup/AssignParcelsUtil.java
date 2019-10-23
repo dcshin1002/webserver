@@ -103,6 +103,7 @@ public class AssignParcelsUtil {
         for (TmsParcelItem item : parcelsToAttach) {
             item.courierName = courierName;
             item.sectorId = sectorId;
+            item.status = TmsParcelItem.STATUS_ASSIGNED;
         }
 
         LinkedList<TmsParcelItem> listItems = mParcelItems.get(courierName);

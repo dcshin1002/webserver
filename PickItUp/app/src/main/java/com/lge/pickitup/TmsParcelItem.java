@@ -50,13 +50,14 @@ public class TmsParcelItem implements Comparable<TmsParcelItem>, Parcelable {
 
     public String getStatusStringByCurrentStatus() {
         switch (this.status) {
-            case STATUS_COLLECTED :
+            case STATUS_COLLECTED:
                 return "등록완료";
-            case STATUS_ASSIGNED :
+            case STATUS_GEOCODED:
+            case STATUS_ASSIGNED:
                 return "기사배정완료";
-            case STATUS_DELIVERED :
+            case STATUS_DELIVERED:
                 return "배송완료";
-            default :
+            default:
                 return "이상상태";
         }
     }

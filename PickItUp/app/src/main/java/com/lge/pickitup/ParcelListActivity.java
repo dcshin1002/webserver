@@ -885,6 +885,12 @@ public class ParcelListActivity extends AppCompatActivity implements View.OnClic
                 });
                 holder.checkBox.setChecked(item.getChecked());
 
+                if (item.status.equals(TmsParcelItem.STATUS_COLLECTED)) {
+                    convertView.setBackgroundColor(0xFFD5D5D5);
+                } else {
+                    convertView.setBackgroundColor(0xFFFFFFFF);
+                }
+
                 btn_complete.setOnClickListener(ParcelListActivity.this);
                 btn_complete.setTag(R.id.btn_complete, item);
                 //btn_deliveryinfo.setOnClickListener(ParcelListActivity.this);
