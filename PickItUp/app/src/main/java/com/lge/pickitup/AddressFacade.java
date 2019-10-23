@@ -270,10 +270,9 @@ public class AddressFacade {
             super.onPostExecute(o);
             asyncDialog.dismiss();
             initParcelId(startIdx);
-            if (Utils.isAdminAuth()){
+            if (Utils.isAdminAuth() || Utils.isConsignorAuth()){
                 List<TmsCourierItem> couriers = buildTmsCouriers();
                 mFbConnector.postCourierListToFirbaseDatabase(mDateStr, (ArrayList<TmsCourierItem>) couriers);
-                mFbConnector.postJobStatusFromFirebaseDatabase(mDateStr);
             }
             mFbConnector.postParcelListToFirebaseDatabase2(mDateStr, (ArrayList<TmsParcelItem>) mParcelList, new DatabaseReference.CompletionListener() {
                 @Override

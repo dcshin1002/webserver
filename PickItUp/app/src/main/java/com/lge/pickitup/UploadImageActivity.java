@@ -428,6 +428,8 @@ public class UploadImageActivity extends AppCompatActivity {
 
             }
         });
+        mBtnAssignCourier.setVisibility(View.GONE);
+        mTvChooseCourier.setVisibility(View.GONE);
     }
 
     private void makeDialog() {
