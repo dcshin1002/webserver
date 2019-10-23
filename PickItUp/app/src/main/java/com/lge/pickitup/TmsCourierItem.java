@@ -1,5 +1,7 @@
 package com.lge.pickitup;
 
+import androidx.annotation.Nullable;
+
 import com.google.firebase.database.Exclude;
 import com.google.firebase.database.IgnoreExtraProperties;
 
@@ -24,9 +26,7 @@ public class TmsCourierItem {
     public int startparcelid = -1;
     public int endparcelid = -1;
 
-    public TmsCourierItem() {
-
-    }
+    public TmsCourierItem() {}
 
     public TmsCourierItem(String id, String name) {
         this.id = id;

@@ -699,23 +699,15 @@ public class ParcelListActivity extends AppCompatActivity implements View.OnClic
         HashMap<String, LinkedList<TmsParcelItem>> parcels = new HashMap<>();
         HashMap<String, TmsCourierItem> couriers = new HashMap<>();
 
+        for (TmsCourierItem courier : mCourierArrayValues) {
+            parcels.put(courier.name, new LinkedList<TmsParcelItem>());
+            couriers.put(courier.name, mCourierDatabaseHash.get(courier.name));
+        }
+        parcels.put("", new LinkedList<TmsParcelItem>());
+
         for (TmsParcelItem item : mParcelArrayValues) {
-            String courierName = item.courierName;
-
-            LinkedList<TmsParcelItem> linkedlist_parcelItems;
-            if (parcels.containsKey(courierName)) {
-                linkedlist_parcelItems = parcels.get(courierName);
-            } else {
-                linkedlist_parcelItems = new LinkedList<>();
-            }
-            linkedlist_parcelItems.add(item);
-            parcels.put(courierName, linkedlist_parcelItems);
+            parcels.get(item.courierName).add(item);
         }
-
-        for (TmsCourierItem item : mCourierArrayValues) {
-            couriers.put(item.name, mCourierDatabaseHash.get(item.name));
-        }
-
 
         AssignParcelsUtil assignUtil = new AssignParcelsUtil(date, parcels, couriers);
 
@@ -854,10 +846,6 @@ public class ParcelListActivity extends AppCompatActivity implements View.OnClic
             mTextCount.setText(getItemString(mParcelArrayValues));
         }
 
-        public class ViewHolder {
-            public CheckBox checkBox;
-        }
-
         @Override
         public View getView(int position, View convertView, ViewGroup parent) {
             ViewHolder holder = null;
@@ -951,6 +939,10 @@ public class ParcelListActivity extends AppCompatActivity implements View.OnClic
 
             }
             return convertView;
+        }
+
+        public class ViewHolder {
+            public CheckBox checkBox;
         }
 
         private class TmsItemFilter extends Filter {
