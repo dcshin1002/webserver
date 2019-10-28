@@ -19,6 +19,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.Map;
 
 public class FirebaseDatabaseConnector {
@@ -358,73 +359,20 @@ public class FirebaseDatabaseConnector {
     }
 
     public void proceedChangeOrder(ArrayList<TmsParcelItem> arrayParcelList, TmsParcelItem item, int prevOrder, int newOrder, String selectedCourierName, String selectedDate, DatabaseReference.CompletionListener listener, HashMap<String, TmsCourierItem> courierDatabaseHash) {
-        TmsParcelItem insertedNodePrev = null;
-        TmsParcelItem insertedNodeNext;
-        TmsParcelItem originNodePrev = null;
-        for (TmsParcelItem parcel : arrayParcelList) {
-            if (parcel.nextParcel == item.id) {
-                originNodePrev = parcel;
-                break;
-            }
+        LinkedList<TmsParcelItem> linkedParcelList = new LinkedList<>(arrayParcelList);
+        TmsCourierItem courierItem = courierDatabaseHash.get(selectedCourierName);
+        linkedParcelList.remove(prevOrder-1);
+        linkedParcelList.add(newOrder-1, item);
+
+        courierItem.startparcelid = linkedParcelList.getFirst().id;
+        courierItem.endparcelid = linkedParcelList.getLast().id;
+        for (int i=0; i < linkedParcelList.size()-1; i++) {
+            linkedParcelList.get(i).nextParcel = linkedParcelList.get(i+1).id;
         }
-        if (prevOrder > newOrder) { // 뒷번호에서 앞번호으로  변경
+        linkedParcelList.getLast().nextParcel = -1;
 
-            if (prevOrder == arrayParcelList.size()) {
-                TmsCourierItem courierItem = courierDatabaseHash.get(selectedCourierName);
-                courierItem.endparcelid = originNodePrev.id;
-                postCourierItemToFirebaseDatabase(selectedDate, courierItem);
-            }
-
-           if (newOrder == 1) {
-                TmsCourierItem courierItem = courierDatabaseHash.get(selectedCourierName);
-                courierItem.startparcelid = item.id;
-                postCourierItemToFirebaseDatabase(selectedDate, courierItem);
-            } else {
-                insertedNodePrev = arrayParcelList.get(newOrder - 2);
-                insertedNodePrev.nextParcel = item.id;
-            }
-            insertedNodeNext = arrayParcelList.get(newOrder - 1);
-            if (originNodePrev != null) {
-                if (item.nextParcel != -1) {
-                    originNodePrev.nextParcel = item.nextParcel;
-                } else {
-                    originNodePrev.nextParcel = -1;
-                }
-            }
-            item.nextParcel = insertedNodeNext.id;
-        } else { // 앞번호에서 뒷번호로 변경
-            if (prevOrder == 1) {
-                TmsCourierItem courierItem = courierDatabaseHash.get(selectedCourierName);
-                courierItem.startparcelid = item.nextParcel;
-                postCourierItemToFirebaseDatabase(selectedDate, courierItem);
-            }
-            if (newOrder == arrayParcelList.size()){
-                TmsCourierItem courierItem = courierDatabaseHash.get(selectedCourierName);
-                courierItem.endparcelid = item.id;
-                postCourierItemToFirebaseDatabase(selectedDate, courierItem);
-            }
-            if (originNodePrev != null) {
-                if (item.nextParcel != -1) {
-                    originNodePrev.nextParcel = item.nextParcel;
-                } else {
-                    originNodePrev.nextParcel = -1;
-                }
-            }
-            insertedNodePrev = arrayParcelList.get(newOrder - 1);
-            item.nextParcel = insertedNodePrev.nextParcel;
-            insertedNodePrev.nextParcel = item.id;
-        }
-
-
-        ArrayList<TmsParcelItem> list_parcelitem = new ArrayList<>();
-        if (originNodePrev != null)
-            list_parcelitem.add(originNodePrev);
-
-        list_parcelitem.add(item);
-
-        if (insertedNodePrev != null)
-            list_parcelitem.add(insertedNodePrev);
-        postParcelListToFirebaseDatabase2(selectedDate, list_parcelitem, listener);
+        postCourierItemToFirebaseDatabase(selectedDate, courierItem);
+        postParcelListToFirebaseDatabase2(selectedDate, new ArrayList<>(linkedParcelList), listener);
     }
 
     private String getNumString(ArrayList<TmsParcelItem> items) {

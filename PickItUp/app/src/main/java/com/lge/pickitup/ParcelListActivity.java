@@ -600,8 +600,6 @@ public class ParcelListActivity extends AppCompatActivity implements View.OnClic
                             }
                         };
                         mFbConnector.proceedChangeOrder(mParcelArrayValues, item, prevOrder, newOrder, selectedCourierName, selectedDate, listener, mCourierDatabaseHash);
-
-
                     }
                 })
                 .setNegativeButton(R.string.cancel, new DialogInterface.OnClickListener() {
