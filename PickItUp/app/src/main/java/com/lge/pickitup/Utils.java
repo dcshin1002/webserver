@@ -20,6 +20,8 @@ import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
@@ -27,6 +29,7 @@ import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.Query;
 import com.google.firebase.database.ValueEventListener;
 
+import java.lang.reflect.Array;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.text.SimpleDateFormat;
@@ -36,6 +39,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Optional;
 
 public class Utils {
 
@@ -61,6 +65,8 @@ public class Utils {
     public static final int SEND_COMPLETED_MESSAGE = 1;
     public static final String ACTION_MAKE_DELIVERED = "makedeliveried";
     public static final String ACTION_SHOWINFO = "showinfo";
+
+    static FirebaseUser mCurrentUser;
 
     static Location mCurrent;
     static LocationManager mLocationMgr;
@@ -118,8 +124,8 @@ public class Utils {
 
         }
     };
-    static String mCurrentUserId;
-    static String mCurrentUserName;
+
+
 
     public static String getKeyHash(final Context context) {
         PackageManager pm = context.getPackageManager();
@@ -206,21 +212,34 @@ public class Utils {
     }
 
     public static boolean isAdminAuth() {
-        return ARR_ADMIN_UIDS.contains(mCurrentUserId);
+        if (mCurrentUser != null) {
+            return ARR_ADMIN_UIDS.contains(mCurrentUser.getUid());
+        } else {
+            return false;
+        }
+
     }
 
     public static boolean isConsignorAuth() {
-        return ARR_CONSIGNOR_UIDS.contains(mCurrentUserId);
+        if (mCurrentUser != null) {
+            return ARR_CONSIGNOR_UIDS.contains(mCurrentUser.getUid());
+        } else {
+            return false;
+        }
     }
 
     public static boolean isCourierAuth() {
-        return ARR_COURIER_UIDS.contains(mCurrentUserId);
+        if (mCurrentUser != null) {
+            return ARR_COURIER_UIDS.contains(mCurrentUser.getUid());
+        } else {
+            return false;
+        }
     }
 
 
     public static boolean checkConsignorItem(TmsParcelItem item) {
         if (isConsignorAuth()) {
-            if (mCurrentUserName.equals(item.consignorName)) {
+            if (mCurrentUser.getDisplayName().equals(item.consignorName)) {
                 return true;
             } else {
                 return false;
@@ -395,8 +414,36 @@ public class Utils {
         return courierlist;
     }
 
+    public static void getUserListFromFirebase(final FirebaseAuth auth, final FirebaseAuth.AuthStateListener authStateListener) {
+        Query firebaseQuery;
+        firebaseQuery = FirebaseDatabase.getInstance().getReference().child(FirebaseDatabaseConnector.USER_REF_NAME).orderByChild(Utils.KEY_USERTYPE);
+        firebaseQuery.addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                Utils.ARR_ADMIN_UIDS.clear();
+                Utils.ARR_CONSIGNOR_UIDS.clear();
+                Utils.ARR_COURIER_UIDS.clear();
+                for (DataSnapshot snapshot : dataSnapshot.getChildren()) {
+                    String key = snapshot.getKey();
+                    String usertypevalue = snapshot.child(Utils.KEY_USERTYPE).getValue().toString();
+                    String usernamevalue = snapshot.child(Utils.KEY_USERNAME).getValue().toString();
+                    if (usertypevalue.equals(Utils.usertype_admin)) {
+                        Utils.ARR_ADMIN_UIDS.add(key);
+                    } else if (usertypevalue.equals(Utils.usertype_consignor)) {
+                        Utils.ARR_CONSIGNOR_UIDS.add(key);
+                    } else if (usertypevalue.equals(Utils.usertype_courier)) {
+                        Utils.ARR_COURIER_UIDS.add(key);
+                    }
+                    Utils.mUserList.put(usernamevalue, usertypevalue);
+                }
+                auth.addAuthStateListener(authStateListener);
+            }
+            @Override
+            public void onCancelled(@NonNull DatabaseError databaseError) {
+            }
+        });
 
-
+    }
 
     @SuppressLint("MissingPermission")
     public static void setCurrentLocation() {

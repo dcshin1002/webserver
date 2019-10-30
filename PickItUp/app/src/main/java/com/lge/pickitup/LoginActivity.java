@@ -85,34 +85,6 @@ public class LoginActivity extends AppCompatActivity {
         } else {
             Utils.initLocation(this);
         }
-        Query firebaseQuery;
-        firebaseQuery = mDatabaseRef.child(FirebaseDatabaseConnector.USER_REF_NAME).orderByChild(Utils.KEY_USERTYPE);
-        firebaseQuery.addListenerForSingleValueEvent(new ValueEventListener() {
-            @Override
-            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-                Utils.ARR_ADMIN_UIDS.clear();
-                Utils.ARR_CONSIGNOR_UIDS.clear();
-                Utils.ARR_COURIER_UIDS.clear();
-                for (DataSnapshot snapshot : dataSnapshot.getChildren()) {
-                    String key = snapshot.getKey();
-                    String usertypevalue = snapshot.child(Utils.KEY_USERTYPE).getValue().toString();
-                    String usernamevalue = snapshot.child(Utils.KEY_USERNAME).getValue().toString();
-                    if (usertypevalue.equals(Utils.usertype_admin)) {
-                        Utils.ARR_ADMIN_UIDS.add(key);
-                    } else if (usertypevalue.equals(Utils.usertype_consignor)) {
-                        Utils.ARR_CONSIGNOR_UIDS.add(key);
-                    } else if (usertypevalue.equals(Utils.usertype_courier)) {
-                        Utils.ARR_COURIER_UIDS.add(key);
-                    }
-                    Utils.mUserList.put(usernamevalue, usertypevalue);
-                }
-                mAuth.addAuthStateListener(mAuthListener);
-            }
-            @Override
-            public void onCancelled(@NonNull DatabaseError databaseError) {
-            }
-        });
-
         mAuth = FirebaseAuth.getInstance();
         mAuthListener = new FirebaseAuth.AuthStateListener() {
             @Override
@@ -121,9 +93,7 @@ public class LoginActivity extends AppCompatActivity {
 
                 if (user != null) {
                     Log.d(LOG_TAG, "onAuthStateChanged:signed_in:" + user.getUid());
-
-                    Utils.mCurrentUserId = user.getUid();
-                    Utils.mCurrentUserName = user.getDisplayName();
+                    Utils.mCurrentUser = user;
                     mEditTextEmail.setText("");
                     mEditTextPassword.setText("");
 
@@ -146,6 +116,7 @@ public class LoginActivity extends AppCompatActivity {
                 }
             }
         };
+        Utils.getUserListFromFirebase(mAuth, mAuthListener);
 
     }
 
@@ -228,7 +199,6 @@ public class LoginActivity extends AppCompatActivity {
     @Override
     public void onStop() {
         super.onStop();
-        //remove AuthStateListener
         if (mAuthListener != null) {
             mAuth.removeAuthStateListener(mAuthListener);
         }

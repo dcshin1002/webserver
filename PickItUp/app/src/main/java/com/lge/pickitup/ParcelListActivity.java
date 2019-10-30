@@ -36,6 +36,7 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.view.ActionMode;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 
@@ -64,7 +65,6 @@ public class ParcelListActivity extends AppCompatActivity implements View.OnClic
     final Calendar myCalendar = Calendar.getInstance();
     private FirebaseAuth mAuth;
     private FirebaseAuth.AuthStateListener mAuthListener;
-    private FirebaseUser mCurrentUser;
     private FirebaseDatabaseConnector mFbConnector;
     private TmsItemAdapter mArrayAdapter;
     private TmsParcelItem mCompleteTarget;
@@ -162,7 +162,7 @@ public class ParcelListActivity extends AppCompatActivity implements View.OnClic
             DatabaseReference databaseRef = FirebaseDatabase.getInstance().getReference();
             Query firebaseQuery;
             if (Utils.isConsignorAuth()) {
-                firebaseQuery = databaseRef.child(FirebaseDatabaseConnector.PARCEL_REF_NAME).child(selectedDate).orderByChild(TmsParcelItem.KEY_CONSIGNOR_NAME).equalTo(Utils.mCurrentUserName);
+                firebaseQuery = databaseRef.child(FirebaseDatabaseConnector.PARCEL_REF_NAME).child(selectedDate).orderByChild(TmsParcelItem.KEY_CONSIGNOR_NAME).equalTo(Utils.mCurrentUser.getDisplayName());
             } else {
                 if (courierName.equals(getString(R.string.all_couriers))) {
                     firebaseQuery = databaseRef.child(FirebaseDatabaseConnector.PARCEL_REF_NAME).child(selectedDate).orderByChild(TmsParcelItem.KEY_ID);
@@ -205,15 +205,14 @@ public class ParcelListActivity extends AppCompatActivity implements View.OnClic
             @Override
             public void onAuthStateChanged(@NonNull FirebaseAuth firebaseAuth) {
                 FirebaseUser user = firebaseAuth.getCurrentUser();
-
                 if (user != null) {
                     // User is signed in
-                    mCurrentUser = user;
-                    Log.d(LOG_TAG, "onAuthStateChanged: signed in to UID :" + user.getUid());
-                    Log.d(LOG_TAG, "onAuthStateChanged: signed in to email:" + user.getEmail());
-                    Log.d(LOG_TAG, "onAuthStateChanged: signed in to display name:" + user.getDisplayName());
+                    Utils.mCurrentUser = user;
+                    Log.e(LOG_TAG, "onAuthStateChanged: signed in to UID :" + user.getUid());
+                    Log.e(LOG_TAG, "onAuthStateChanged: signed in to email:" + user.getEmail());
+                    Log.e(LOG_TAG, "onAuthStateChanged: signed in to display name:" + user.getDisplayName());
                 } else {
-                    mCurrentUser = null;
+                    Utils.mCurrentUser = null;
                     // User is signed out
                     Log.d(LOG_TAG, "onAuthStateChanged: signed_out");
 
@@ -222,8 +221,6 @@ public class ParcelListActivity extends AppCompatActivity implements View.OnClic
                     startActivity(intent);
                 }
                 updateConnectUI(courierStr);
-
-
             }
         };
 
@@ -254,8 +251,12 @@ public class ParcelListActivity extends AppCompatActivity implements View.OnClic
         } else {
             Utils.initLocation(this);
         }
-
-        refreshList(courierStr);
+        if (Utils.ARR_ADMIN_UIDS.size() == 0) {
+            Utils.getUserListFromFirebase(mAuth, mAuthListener);
+        } else {
+            mAuth.addAuthStateListener(mAuthListener);
+            refreshList(courierStr);
+        }
     }
 
     @Override
@@ -321,7 +322,6 @@ public class ParcelListActivity extends AppCompatActivity implements View.OnClic
     @Override
     protected void onStart() {
         super.onStart();
-        mAuth.addAuthStateListener(mAuthListener);
     }
 
     @Override
@@ -331,11 +331,10 @@ public class ParcelListActivity extends AppCompatActivity implements View.OnClic
     }
 
     private void updateConnectUI(String courierName) {
-        if (mCurrentUser != null) {
+        if (Utils.mCurrentUser != null) {
             mIvConnStatus.setImageDrawable(getDrawable(R.mipmap.activity_connect_account_settings_connected));
-            if (mCurrentUser.getDisplayName() != null)
-                courierName = mCurrentUser.getDisplayName();
-            mTvAccountName.setText(courierName + " (" + mCurrentUser.getEmail() + ")");
+            courierName = Utils.mCurrentUser.getDisplayName();
+            mTvAccountName.setText(courierName + " (" + Utils.mCurrentUser.getEmail() + ")");
             mTvAccountName.setBackground(getDrawable(R.drawable.connected_account_border));
             mTvSignOutText.setBackground(getDrawable(R.drawable.active_border2));
             mTvSignOutText.setClickable(true);
@@ -345,6 +344,12 @@ public class ParcelListActivity extends AppCompatActivity implements View.OnClic
             mTvAccountName.setBackground(getDrawable(R.drawable.disconnected_account_border));
             mTvSignOutText.setBackground(getDrawable(R.drawable.disconnected_account_border));
             mTvSignOutText.setClickable(false);
+        }
+
+        if (Utils.isAdminAuth()) {
+            mTextCourierName.setOnClickListener(this);
+            mBtnResetdb.setVisibility(View.VISIBLE);
+            mBtnAssign.setVisibility(View.VISIBLE);
         }
     }
 
@@ -424,11 +429,7 @@ public class ParcelListActivity extends AppCompatActivity implements View.OnClic
         mBtnResetdb.setOnClickListener(this);
         mTextCourierDate.setOnClickListener(this);
 
-        if (Utils.isAdminAuth()) {
-            mTextCourierName.setOnClickListener(this);
-            mBtnResetdb.setVisibility(View.VISIBLE);
-            mBtnAssign.setVisibility(View.VISIBLE);
-        }
+
 
 
         mSdf = new SimpleDateFormat("yyyy-MM-dd");
