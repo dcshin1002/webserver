@@ -29,7 +29,7 @@ public class Accounts {
         if (acc.equals(this)) return true;
 
         for (Accounts child : this.children) {
-            if (acc.hasChild(child)) return true;
+            if (child.hasChild(acc)) return true;
         }
         return false;
     }
