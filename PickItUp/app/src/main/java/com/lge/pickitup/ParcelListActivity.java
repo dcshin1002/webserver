@@ -150,8 +150,10 @@ public class ParcelListActivity extends AppCompatActivity implements View.OnClic
             Log.d(LOG_TAG, "mapview CourierList size : " + dataSnapshot.getChildrenCount());
             for (DataSnapshot postSnapshot : dataSnapshot.getChildren()) {
                 TmsCourierItem item = postSnapshot.getValue(TmsCourierItem.class);
-                mCourierDatabaseHash.put(item.name, item);
-                mCourierArrayValues.add(item);
+                if (Utils.mCurrentUserItem.hasChild(item.name)) {
+                    mCourierDatabaseHash.put(item.name, item);
+                    mCourierArrayValues.add(item);
+                }
             }
             String courierName = mTextCourierName.getText().toString();
             String selectedDate = mTextCourierDate.getText().toString();
@@ -346,6 +348,9 @@ public class ParcelListActivity extends AppCompatActivity implements View.OnClic
         if (Utils.isRootAuth()) {
             mTextCourierName.setOnClickListener(this);
             mBtnResetdb.setVisibility(View.VISIBLE);
+            mBtnAssign.setVisibility(View.VISIBLE);
+        } else if (Utils.isAdminAuth()) {
+            mTextCourierName.setOnClickListener(this);
             mBtnAssign.setVisibility(View.VISIBLE);
         }
     }

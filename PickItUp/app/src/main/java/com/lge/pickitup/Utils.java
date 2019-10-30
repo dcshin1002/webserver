@@ -255,9 +255,12 @@ public class Utils {
 
     public static ArrayList<String> makeCourierUserList() {
         ArrayList<String> courierlist = new ArrayList<>();
-        for (String username : mUserList.keySet()) {
-            if (mUserList.get(username).equals(usertype_courier)) {
-                courierlist.add(username);
+        for (String uid : mHashUserList.keySet()) {
+            TmsUserItem item = mHashUserList.get(uid);
+            if (item.usertype.equals(usertype_courier) ) {
+                if (mCurrentUserItem.hasChild(item.username)) {
+                    courierlist.add(mHashUserList.get(uid).username);
+                }
             }
         }
         return courierlist;
@@ -273,7 +276,7 @@ public class Utils {
                     String key = snapshot.getKey();
                     TmsUserItem useritem = snapshot.getValue(TmsUserItem.class);
                     mHashUserList.put(useritem.uid, useritem);
-                    if (useritem.parentId.isEmpty()) {
+                    if (useritem.usertype.equals(usertype_admin) && useritem.parentId.isEmpty()) {
                         mRootUserItem.add(useritem);
                     }
                     String usertypevalue = snapshot.child(Utils.KEY_USERTYPE).getValue().toString();
