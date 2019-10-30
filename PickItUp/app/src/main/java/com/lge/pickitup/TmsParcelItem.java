@@ -3,8 +3,6 @@ package com.lge.pickitup;
 import android.os.Parcel;
 import android.os.Parcelable;
 
-import androidx.annotation.Nullable;
-
 import com.google.firebase.database.Exclude;
 import com.google.firebase.database.IgnoreExtraProperties;
 
@@ -148,7 +146,7 @@ public class TmsParcelItem implements Comparable<TmsParcelItem>, Parcelable {
         this.consigneeContact = record[5];
         this.remark = record[6];
         this.deliveryNote = record[7];
-        if (Utils.isAdminAuth() && record.length > 8) {
+        if (Utils.isRootAuth() && record.length > 8) {
             this.regionalCode = record[8];
             this.zipCode = record[9];
             this.courierName = record[10];

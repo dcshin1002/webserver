@@ -1,19 +1,20 @@
 package com.lge.pickitup;
 
+import androidx.annotation.Nullable;
+
 import java.util.ArrayList;
 
 public class TmsUserItem {
-    private static final String usertype_admin = "admin";
-    private static final String usertype_courier = "courier";
-    private static final String usertype_consignor = "consignor";
+    public static final String usertype_admin = "admin";
+    public static final String usertype_courier = "courier";
+    public static final String usertype_consignor = "consignor";
 
     public String uid = "";
     public String username = "";
     public String usertype = "";
     public String parentId = "";
     public String brand = "";
-    public ArrayList<TmsUserItem> children;
-    public ArrayList<String> brands;
+    public ArrayList<TmsUserItem> children = new ArrayList<>();
 
     public TmsUserItem() { /* empty */}
 
@@ -23,8 +24,6 @@ public class TmsUserItem {
         this.usertype = usertype;
         this.parentId = parentId;
         this.brand = brand;
-        this.children = new ArrayList<>();
-        this.brands = new ArrayList<>();
     }
 
     public void addChild(TmsUserItem acc) {
@@ -35,8 +34,21 @@ public class TmsUserItem {
         children.remove(acc);
     }
 
+    public boolean hasChild() {
+        return !children.isEmpty();
+    }
+
+    public boolean hasChild(String name) {
+        if (name.equals(this.username)) return true;
+
+        for (TmsUserItem child : this.children) {
+            if (child.hasChild(name)) return true;
+        }
+        return false;
+    }
+
     public boolean hasChild(TmsUserItem acc) {
-        if (acc.equals(this)) return true;
+        if (acc.uid.equals(this.uid)) return true;
 
         for (TmsUserItem child : this.children) {
             if (child.hasChild(acc)) return true;
@@ -44,15 +56,14 @@ public class TmsUserItem {
         return false;
     }
 
-    public void addBrand(String brand) {
-        brands.add(brand);
+    @Override
+    public boolean equals(@Nullable Object obj) {
+        TmsUserItem item = (TmsUserItem)obj;
+        return this.uid.equals(item.uid);
     }
 
-    public void removeBrand(String brand) {
-        brands.remove(brand);
-    }
-
-    public boolean hasBrand(String brand) {
-        return brands.contains(brand);
+    @Override
+    public int hashCode() {
+        return uid.hashCode();
     }
 }

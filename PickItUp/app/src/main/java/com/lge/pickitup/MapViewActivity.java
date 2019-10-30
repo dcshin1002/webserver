@@ -157,7 +157,7 @@ public class MapViewActivity extends AppCompatActivity
         ViewGroup mapViewContainer = (ViewGroup) findViewById(R.id.map_view);
         mapViewContainer.addView(mapLayout);
         //addCurrentLocationMarker();
-        if (!Utils.isAdminAuth()) {
+        if (!Utils.isRootAuth()) {
             turnOnTrackingMode();
             mMapView.setCurrentLocationEventListener(this);
             mMapView.setCustomCurrentLocationMarkerTrackingImage(R.drawable.location_map_pin_pink, new MapPOIItem.ImageOffset(28, 28));
@@ -441,7 +441,7 @@ public class MapViewActivity extends AppCompatActivity
 
     protected void addMarker() {
         mMapView.removeAllPOIItems();
-        if (Utils.isAdminAuth()) {
+        if (Utils.isRootAuth()) {
             addCourierMarker();
         }
         int num = 1;
@@ -677,7 +677,7 @@ public class MapViewActivity extends AppCompatActivity
     }
 
     private void addCourierMarker(TmsCourierItem courierItem) {
-        if (!Utils.isAdminAuth()) {
+        if (!Utils.isRootAuth()) {
             return;
         }
         if (!courierItem.latitude.isEmpty() && !courierItem.longitude.isEmpty()) {

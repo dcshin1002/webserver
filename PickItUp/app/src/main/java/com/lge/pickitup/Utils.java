@@ -57,21 +57,21 @@ public class Utils {
     static final String usertype_courier = "courier";
     static final String usertype_consignor = "consignor";
 
-    static final ArrayList<String> ARR_ADMIN_UIDS = new ArrayList<>();
-    static final ArrayList<String> ARR_CONSIGNOR_UIDS = new ArrayList<>();
-    static final ArrayList<String> ARR_COURIER_UIDS = new ArrayList<>();
-
     public static final int NO_NEED_RESULT = 0;
     public static final int SEND_COMPLETED_MESSAGE = 1;
     public static final String ACTION_MAKE_DELIVERED = "makedeliveried";
     public static final String ACTION_SHOWINFO = "showinfo";
 
     static FirebaseUser mCurrentUser;
+    static TmsUserItem mCurrentUserItem;
+    static ArrayList<TmsUserItem> mRootUserItem = new ArrayList<>();
 
     static Location mCurrent;
     static LocationManager mLocationMgr;
     static Context mContext;
     static HashMap<String, String> mUserList = new HashMap<>();
+    static HashMap<String, TmsUserItem> mHashUserList = new HashMap<>();
+    static HashMap<String, String> mHashUserNameUID = new HashMap<>();
     private static int BIAS_HOUR = 7;
     private static final LocationListener mGPSLocationListener = new LocationListener() {
         @Override
@@ -211,179 +211,28 @@ public class Utils {
         //mArrayAdapter.notifyDataSetChanged();
     }
 
+    public static boolean isRootAuth() {
+        return mRootUserItem.contains(mCurrentUserItem);
+    }
     public static boolean isAdminAuth() {
-        if (mCurrentUser != null) {
-            return ARR_ADMIN_UIDS.contains(mCurrentUser.getUid());
-        } else {
-            return false;
-        }
-
+        return !mCurrentUserItem.children.isEmpty();
     }
 
     public static boolean isConsignorAuth() {
-        if (mCurrentUser != null) {
-            return ARR_CONSIGNOR_UIDS.contains(mCurrentUser.getUid());
+        if (mCurrentUserItem != null) {
+            return mCurrentUserItem.usertype.equals(TmsUserItem.usertype_consignor);
         } else {
             return false;
         }
     }
 
     public static boolean isCourierAuth() {
-        if (mCurrentUser != null) {
-            return ARR_COURIER_UIDS.contains(mCurrentUser.getUid());
+        if (mCurrentUserItem != null) {
+            return mCurrentUserItem.usertype.equals(TmsUserItem.usertype_courier);
         } else {
             return false;
         }
     }
-
-
-    public static boolean checkConsignorItem(TmsParcelItem item) {
-        if (isConsignorAuth()) {
-            if (mCurrentUser.getDisplayName().equals(item.consignorName)) {
-                return true;
-            } else {
-                return false;
-            }
-        } else {
-            return true;
-        }
-    }
-
-    public static void assignCourier(ArrayList<TmsParcelItem> items, String date, String courierName) {
-        for (TmsParcelItem item : items) {
-            assignCourier(item, date, courierName);
-        }
-    }
-    public static TmsParcelItem getEndParcelPrevItem(TmsParcelItem parcelItem, String date, String prevCourierName) {
-        TmsParcelItem retParcel = null;
-
-
-        return retParcel;
-    }
-
-
-    public static void assignCourier(final TmsParcelItem parcelItem, final String date, final String prevCourierName, final String newCourierName) {
-        final DatabaseReference ref = FirebaseDatabase.getInstance().getReference();
-        Query query = ref.child(FirebaseDatabaseConnector.COURIER_REF_NAME).
-                child(date).orderByChild(TmsCourierItem.KEY_NAME).equalTo(prevCourierName);
-        query.addListenerForSingleValueEvent(
-            new ValueEventListener() {
-                @Override
-                public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-                    TmsCourierItem courieritem = null;
-                    for (DataSnapshot postSnapshot : dataSnapshot.getChildren()) {
-                        if (postSnapshot.getValue(TmsCourierItem.class).name.equals(prevCourierName)) {
-                            courieritem = postSnapshot.getValue(TmsCourierItem.class);
-                        };
-                    }
-                    if (courieritem != null) {
-                        if (courieritem.startparcelid == parcelItem.id) {
-                            courieritem.startparcelid = parcelItem.nextParcel;
-                            assignCourier(parcelItem, date, newCourierName);
-                        } else if (courieritem.endparcelid == parcelItem.id) {
-                            DatabaseReference ref = FirebaseDatabase.getInstance().getReference();
-                            Query query = ref.child(FirebaseDatabaseConnector.PARCEL_REF_NAME).
-                                    child(date).orderByChild(TmsParcelItem.KEY_COURIER_NAME).equalTo(prevCourierName);
-                            query.addValueEventListener(new ValueEventListener() {
-                                @Override
-                                public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-                                    for (DataSnapshot postSnapshot : dataSnapshot.getChildren()) {
-                                        TmsParcelItem item = postSnapshot.getValue(TmsParcelItem.class);
-                                        if (item.nextParcel == parcelItem.id ) {
-                                            item.nextParcel = -1;
-                                        }
-                                    }
-                                }
-
-                                @Override
-                                public void onCancelled(@NonNull DatabaseError databaseError) {
-
-                                }
-                            });
-                            courieritem.endparcelid = getEndParcelPrevItem(parcelItem, date, prevCourierName).id;
-
-                        } else {
-                            // parcelitem.prev.nextparcelid = parcelitem.nextparcelid;
-
-
-                        }
-                    }
-
-                }
-                @Override
-                public void onCancelled(@NonNull DatabaseError databaseError) {}
-            });
-
-    }
-
-    public static void assignCourier(final TmsParcelItem parcelItem, final String date, final String courierName) {
-        final DatabaseReference ref = FirebaseDatabase.getInstance().getReference();
-        Query query = ref.child(FirebaseDatabaseConnector.COURIER_REF_NAME).
-                child(date).orderByChild(TmsCourierItem.KEY_SECTOR_ID);
-        query.addListenerForSingleValueEvent(new ValueEventListener() {
-            @Override
-            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-                int sectorid = 0;
-                int lastSectorIdOnCourierItem = 0;
-                int prevEndParcelId = -1;
-                TmsCourierItem selectedCourierItem = null;
-                for (DataSnapshot postSnapshot : dataSnapshot.getChildren()) {
-                    TmsCourierItem value = postSnapshot.getValue(TmsCourierItem.class);
-                    lastSectorIdOnCourierItem = value.sectorid;
-                    if (value.name.equals(courierName)) {
-                        selectedCourierItem = value;
-                        sectorid = value.sectorid;
-                        prevEndParcelId = value.endparcelid;
-                    }
-                }
-                if (sectorid == 0) {
-                    // there is no courier item of selected courier name, so need to make new courier item on DB.
-                    TmsCourierItem courierItem;
-                    if (lastSectorIdOnCourierItem == 0) {
-                        // No Courier item on DB
-                        sectorid = 1;
-                    } else {
-                        sectorid = lastSectorIdOnCourierItem+1;
-                    }
-                    courierItem = new TmsCourierItem(sectorid, courierName);
-                    courierItem.startparcelid = courierItem.endparcelid = parcelItem.id;
-                    postCourierItem(date, courierItem);
-                } else {
-                    // update tail parcel item's next parcel to new parcel item
-                    Query query = ref.child(FirebaseDatabaseConnector.PARCEL_REF_NAME).child(date).orderByChild(TmsParcelItem.KEY_ID).equalTo(prevEndParcelId);
-                    query.addValueEventListener(new ValueEventListener() {
-                        @Override
-                        public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-                            for (DataSnapshot snapshot : dataSnapshot.getChildren()) {
-                                TmsParcelItem value = snapshot.getValue(TmsParcelItem.class);
-                                value.nextParcel = parcelItem.id;
-                                postParcelItem(date, value);
-                            }
-                        }
-
-                        @Override
-                        public void onCancelled(@NonNull DatabaseError databaseError) {
-                        }
-                    });
-                    selectedCourierItem.endparcelid = parcelItem.id;
-                    postCourierItem(date, selectedCourierItem);
-                }
-                parcelItem.nextParcel = -1;
-                parcelItem.courierName = courierName;
-                parcelItem.sectorId = sectorid;
-                parcelItem.status = TmsParcelItem.STATUS_ASSIGNED;
-                postParcelItem(date, parcelItem);
-            }
-
-            @Override
-            public void onCancelled(@NonNull DatabaseError databaseError) {
-            }
-        });
-    }
-
-
-
-
 
     private static void postParcelItem(String date, TmsParcelItem item) {
         DatabaseReference ref = FirebaseDatabase.getInstance().getReference().child(FirebaseDatabaseConnector.PARCEL_REF_NAME);
@@ -420,22 +269,26 @@ public class Utils {
         firebaseQuery.addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-                Utils.ARR_ADMIN_UIDS.clear();
-                Utils.ARR_CONSIGNOR_UIDS.clear();
-                Utils.ARR_COURIER_UIDS.clear();
                 for (DataSnapshot snapshot : dataSnapshot.getChildren()) {
                     String key = snapshot.getKey();
+                    TmsUserItem useritem = snapshot.getValue(TmsUserItem.class);
+                    mHashUserList.put(useritem.uid, useritem);
+                    if (useritem.parentId.isEmpty()) {
+                        mRootUserItem.add(useritem);
+                    }
                     String usertypevalue = snapshot.child(Utils.KEY_USERTYPE).getValue().toString();
                     String usernamevalue = snapshot.child(Utils.KEY_USERNAME).getValue().toString();
-                    if (usertypevalue.equals(Utils.usertype_admin)) {
-                        Utils.ARR_ADMIN_UIDS.add(key);
-                    } else if (usertypevalue.equals(Utils.usertype_consignor)) {
-                        Utils.ARR_CONSIGNOR_UIDS.add(key);
-                    } else if (usertypevalue.equals(Utils.usertype_courier)) {
-                        Utils.ARR_COURIER_UIDS.add(key);
-                    }
-                    Utils.mUserList.put(usernamevalue, usertypevalue);
+                    mUserList.put(usernamevalue, usertypevalue);
+
                 }
+                for (String uid : mHashUserList.keySet()) {
+                    TmsUserItem item = mHashUserList.get(uid);
+                    String parentId = item.parentId;
+                    if (!parentId.isEmpty()) {
+                        mHashUserList.get(item.parentId).addChild(item);
+                    }
+                }
+
                 auth.addAuthStateListener(authStateListener);
             }
             @Override

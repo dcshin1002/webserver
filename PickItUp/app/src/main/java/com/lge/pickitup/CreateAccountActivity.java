@@ -15,7 +15,6 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Spinner;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -37,7 +36,6 @@ import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.Query;
 import com.google.firebase.database.ValueEventListener;
 
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.regex.Matcher;
@@ -265,7 +263,7 @@ public class CreateAccountActivity extends AppCompatActivity {
                             FirebaseUser user = mAuth.getCurrentUser();
                             user.updateProfile(pofileReq);
                             setUserToDatabase(usertype, user.getUid(), mEtDisplayName.getText().toString());
-                            if (Utils.isAdminAuth() || Utils.isConsignorAuth()) {
+                            if (Utils.isRootAuth() || Utils.isConsignorAuth()) {
                                 startActivity(new Intent(CreateAccountActivity.this, MainMenuActivity.class));
                             } else {
                                 Intent intent_service = new Intent(CreateAccountActivity.this, CourierLocationUploadService.class);

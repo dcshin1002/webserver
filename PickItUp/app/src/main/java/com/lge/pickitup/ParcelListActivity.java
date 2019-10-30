@@ -7,7 +7,6 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
-import android.graphics.Color;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.InputType;
@@ -36,7 +35,6 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.appcompat.view.ActionMode;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 
@@ -49,12 +47,10 @@ import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.Query;
 import com.google.firebase.database.ValueEventListener;
 
-import java.lang.reflect.Array;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -98,10 +94,13 @@ public class ParcelListActivity extends AppCompatActivity implements View.OnClic
                 String key = postSnapshot.getKey();
                 TmsParcelItem value = postSnapshot.getValue(TmsParcelItem.class);
 
-                value.orderInRoute = -1;
-                mParcelDatabaseHash.put(key, value);
-                mParcelArrayKeys.add(key);
-                mParcelArrayValues.add(value);
+                String courier = value.courierName;
+                String brand = value.consignorName;
+                if (Utils.isRootAuth() || Utils.mCurrentUserItem.brand.equals(brand) || Utils.mCurrentUserItem.hasChild(courier)) {
+                    mParcelDatabaseHash.put(key, value);
+                    mParcelArrayKeys.add(key);
+                    mParcelArrayValues.add(value);
+                }
                 Log.d(LOG_TAG, "mParcelArrayValues size = " + mParcelArrayValues.size());
             }
 
@@ -159,7 +158,7 @@ public class ParcelListActivity extends AppCompatActivity implements View.OnClic
             DatabaseReference databaseRef = FirebaseDatabase.getInstance().getReference();
             Query firebaseQuery;
             if (Utils.isConsignorAuth()) {
-                firebaseQuery = databaseRef.child(FirebaseDatabaseConnector.PARCEL_REF_NAME).child(selectedDate).orderByChild(TmsParcelItem.KEY_CONSIGNOR_NAME).equalTo(Utils.mCurrentUser.getDisplayName());
+                firebaseQuery = databaseRef.child(FirebaseDatabaseConnector.PARCEL_REF_NAME).child(selectedDate).orderByChild(TmsParcelItem.KEY_CONSIGNOR_NAME).equalTo(Utils.mCurrentUserItem.brand);
             } else {
                 if (courierName.equals(getString(R.string.all_couriers))) {
                     firebaseQuery = databaseRef.child(FirebaseDatabaseConnector.PARCEL_REF_NAME).child(selectedDate).orderByChild(TmsParcelItem.KEY_ID);
@@ -205,6 +204,7 @@ public class ParcelListActivity extends AppCompatActivity implements View.OnClic
                 if (user != null) {
                     // User is signed in
                     Utils.mCurrentUser = user;
+                    Utils.mCurrentUserItem = Utils.mHashUserList.get(user.getUid());
                     Log.e(LOG_TAG, "onAuthStateChanged: signed in to UID :" + user.getUid());
                     Log.e(LOG_TAG, "onAuthStateChanged: signed in to email:" + user.getEmail());
                     Log.e(LOG_TAG, "onAuthStateChanged: signed in to display name:" + user.getDisplayName());
@@ -248,7 +248,7 @@ public class ParcelListActivity extends AppCompatActivity implements View.OnClic
         } else {
             Utils.initLocation(this);
         }
-        if (Utils.ARR_ADMIN_UIDS.size() == 0) {
+        if (Utils.mRootUserItem.size() == 0) {
             Utils.getUserListFromFirebase(mAuth, mAuthListener);
         } else {
             mAuth.addAuthStateListener(mAuthListener);
@@ -343,7 +343,7 @@ public class ParcelListActivity extends AppCompatActivity implements View.OnClic
             mTvSignOutText.setClickable(false);
         }
 
-        if (Utils.isAdminAuth()) {
+        if (Utils.isRootAuth()) {
             mTextCourierName.setOnClickListener(this);
             mBtnResetdb.setVisibility(View.VISIBLE);
             mBtnAssign.setVisibility(View.VISIBLE);
@@ -473,7 +473,7 @@ public class ParcelListActivity extends AppCompatActivity implements View.OnClic
                 newDate.set(year, monthOfYear, dayOfMonth);
                 String newDateStr = mSdf.format(newDate.getTime());
 
-                if (!newDateStr.equals(mOldDateStr) && Utils.isAdminAuth()) {
+                if (!newDateStr.equals(mOldDateStr) && Utils.isRootAuth()) {
                     resetCourierText();
                 }
                 mTextCourierDate.setText(newDateStr);

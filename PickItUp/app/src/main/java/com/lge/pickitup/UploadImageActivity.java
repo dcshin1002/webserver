@@ -408,13 +408,6 @@ public class UploadImageActivity extends AppCompatActivity {
                 askAssignDialog.setPositiveButton("확인", new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialogInterface, int i) {
-                        String prevAssignCourier = mSelectedParcelItem.courierName;
-                        if (prevAssignCourier.isEmpty()){
-                            // courier is not assigned yet.
-                            Utils.assignCourier(mSelectedParcelItem, mSelectedDate, selectedCourier);
-                        } else {
-                            Utils.assignCourier(mSelectedParcelItem, mSelectedDate, prevAssignCourier, selectedCourier);
-                        }
 
                     }
                 });

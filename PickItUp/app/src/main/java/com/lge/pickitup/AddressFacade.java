@@ -3,7 +3,6 @@ package com.lge.pickitup;
 import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.Intent;
-import android.icu.util.UniversalTimeScale;
 import android.os.AsyncTask;
 import android.util.Log;
 
@@ -15,7 +14,6 @@ import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
-import com.google.firebase.storage.internal.Util;
 import com.opencsv.CSVReader;
 
 import org.json.JSONArray;
@@ -30,7 +28,6 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.lang.reflect.Array;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -200,7 +197,7 @@ public class AddressFacade {
         for (int i = 0; i < mParcelList.size(); i++) {
             TmsParcelItem item = mParcelList.get(i);
             item.id = startIdx + i + 1;
-            if (item.sectorId != -1 && Utils.isAdminAuth()) {
+            if (item.sectorId != -1 && Utils.isRootAuth()) {
                 TmsParcelItem lastItemInHash = mPreviousParcelItemInSector.get(item.sectorId);
                 TmsCourierItem courierItem = mCourierHash.get(item.courierName);
                 if (lastItemInHash != null) {
@@ -270,7 +267,7 @@ public class AddressFacade {
             super.onPostExecute(o);
             asyncDialog.dismiss();
             initParcelId(startIdx);
-            if (Utils.isAdminAuth() || Utils.isConsignorAuth()){
+            if (Utils.isRootAuth() || Utils.isConsignorAuth()){
                 List<TmsCourierItem> couriers = buildTmsCouriers();
                 mFbConnector.postCourierListToFirbaseDatabase(mDateStr, (ArrayList<TmsCourierItem>) couriers);
             }
