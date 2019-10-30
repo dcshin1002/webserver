@@ -98,9 +98,6 @@ public class ParcelListActivity extends AppCompatActivity implements View.OnClic
                 String key = postSnapshot.getKey();
                 TmsParcelItem value = postSnapshot.getValue(TmsParcelItem.class);
 
-                if (value.orderInRoute == -1) {
-                    isRouted = false;
-                }
                 value.orderInRoute = -1;
                 mParcelDatabaseHash.put(key, value);
                 mParcelArrayKeys.add(key);
