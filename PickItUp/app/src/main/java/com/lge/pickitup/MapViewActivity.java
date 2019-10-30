@@ -605,7 +605,7 @@ public class MapViewActivity extends AppCompatActivity
         Query firebaseQuery;
         mDatabaseRef = FirebaseDatabase.getInstance().getReference();
         if (Utils.isConsignorAuth()) {
-            firebaseQuery = mDatabaseRef.child(mFbConnector.PARCEL_REF_NAME).child(pathString).orderByChild(TmsParcelItem.KEY_CONSIGNOR_NAME).equalTo(Utils.mCurrentUserName);
+            firebaseQuery = mDatabaseRef.child(mFbConnector.PARCEL_REF_NAME).child(pathString).orderByChild(TmsParcelItem.KEY_CONSIGNOR_NAME).equalTo(Utils.mCurrentUser.getDisplayName());
         } else {
             if (select.equals(getString(R.string.all_couriers))) {
                 firebaseQuery = mDatabaseRef.child(mFbConnector.PARCEL_REF_NAME).child(pathString).orderByChild(orderBy);
