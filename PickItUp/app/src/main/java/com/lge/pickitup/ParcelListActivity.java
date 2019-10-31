@@ -28,6 +28,7 @@ import android.widget.EditText;
 import android.widget.Filter;
 import android.widget.Filterable;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -105,14 +106,14 @@ public class ParcelListActivity extends AppCompatActivity implements View.OnClic
             }
 
             String courierName = mTextCourierName.getText().toString();
-            if (!courierName.equals(R.string.all_couriers) ) {
+            if (!courierName.equals(R.string.all_couriers)) {
                 TmsCourierItem courierItem = mCourierDatabaseHash.get(courierName);
-                if(courierItem != null) {
+                if (courierItem != null) {
                     TmsParcelItem parcelItem = mParcelDatabaseHash.get(String.valueOf(courierItem.startparcelid));
                     if (parcelItem != null) {
                         mParcelArrayValues.clear();
                         mParcelArrayValues.add(parcelItem);
-                        while(parcelItem != null && parcelItem.nextParcel != -1) {
+                        while (parcelItem != null && parcelItem.nextParcel != -1) {
                             parcelItem = mParcelDatabaseHash.get(String.valueOf(parcelItem.nextParcel));
                             mParcelArrayValues.add(parcelItem);
                         }
@@ -124,6 +125,7 @@ public class ParcelListActivity extends AppCompatActivity implements View.OnClic
                 mArrayAdapter.notifyDataSetChanged();
             }
         }
+
         @Override
         public void onCancelled(@NonNull DatabaseError databaseError) {
         }
@@ -139,7 +141,7 @@ public class ParcelListActivity extends AppCompatActivity implements View.OnClic
         public void onComplete(@Nullable DatabaseError databaseError, @NonNull DatabaseReference databaseReference) {
             String selectedDate = mTextCourierDate.getText().toString();
             Log.i(LOG_TAG, "mParcelListRemove is called");
-            Toast.makeText(ParcelListActivity.this, selectedDate + " 날짜의 정보가 초기화 되었습니다. csv 파일을 다시 올려주세요",Toast.LENGTH_LONG).show();
+            Toast.makeText(ParcelListActivity.this, selectedDate + " 날짜의 정보가 초기화 되었습니다. csv 파일을 다시 올려주세요", Toast.LENGTH_LONG).show();
         }
     };
     private ValueEventListener mCourierValueEventListener = new ValueEventListener() {
@@ -386,6 +388,26 @@ public class ParcelListActivity extends AppCompatActivity implements View.OnClic
         mTextCourierName = findViewById(R.id.text_courier_name);
         mTextCourierDate = findViewById(R.id.text_courier_date);
 
+        final boolean checkBoxEnabled[] = {false};
+        final ImageView mIvCheckBox = findViewById(R.id.checkbox_icon);
+        mIvCheckBox.setOnClickListener(new View.OnClickListener() {
+            public void onClick(View v) {
+                // TODO: icon image should toggled base on status
+                if (!checkBoxEnabled[0]) {
+                    checkBoxEnabled[0] = true;
+                    mAllCheckbox.setVisibility(View.VISIBLE);
+                    mBtnAssign.setVisibility(View.VISIBLE);
+                    mArrayAdapter.setCheckboxVisible(true);
+                } else {
+                    checkBoxEnabled[0] = false;
+                    mAllCheckbox.setVisibility(View.GONE);
+                    mBtnAssign.setVisibility(View.GONE);
+                    mArrayAdapter.setCheckboxVisible(false);
+                }
+                mArrayAdapter.notifyDataSetChanged();
+            }
+        });
+
         mAllCheckbox = findViewById(R.id.all_parcels_checkbox);
         mAllCheckbox.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
@@ -432,8 +454,6 @@ public class ParcelListActivity extends AppCompatActivity implements View.OnClic
         mTextCourierDate.setOnClickListener(this);
 
 
-
-
         mSdf = new SimpleDateFormat("yyyy-MM-dd");
 
         mTextCount = findViewById(R.id.show_item_num);
@@ -454,9 +474,9 @@ public class ParcelListActivity extends AppCompatActivity implements View.OnClic
         mEditTextFilter.addTextChangedListener(new TextWatcher() {
             @Override
             public void afterTextChanged(Editable edit) {
-                String filterText = edit.toString() ;
+                String filterText = edit.toString();
                 if (filterText.length() > 0) {
-                    mListView.setFilterText(filterText) ;
+                    mListView.setFilterText(filterText);
                 } else {
                     mListView.clearTextFilter();
                 }
@@ -469,7 +489,7 @@ public class ParcelListActivity extends AppCompatActivity implements View.OnClic
             @Override
             public void onTextChanged(CharSequence s, int start, int before, int count) {
             }
-        }) ;
+        });
 
         mDatePickerDialog = new DatePickerDialog(this, new DatePickerDialog.OnDateSetListener() {
             @Override
@@ -511,11 +531,11 @@ public class ParcelListActivity extends AppCompatActivity implements View.OnClic
 
                             }
                         }).setNegativeButton(getText(R.string.text_no), new DialogInterface.OnClickListener() {
-                            @Override
-                            public void onClick(DialogInterface dialogInterface, int i) {
-                                dialogInterface.dismiss();
-                            }
-                        }).show();
+                    @Override
+                    public void onClick(DialogInterface dialogInterface, int i) {
+                        dialogInterface.dismiss();
+                    }
+                }).show();
                 break;
 
             case R.id.btn_assign:
@@ -539,16 +559,16 @@ public class ParcelListActivity extends AppCompatActivity implements View.OnClic
                 showSelectCourierPicker();
                 break;
             case R.id.btn_deliveryinfo:
-                item = (TmsParcelItem)view.getTag(R.id.btn_deliveryinfo);
+                item = (TmsParcelItem) view.getTag(R.id.btn_deliveryinfo);
                 goToUploadImageActivity(item, Utils.NO_NEED_RESULT);
                 break;
             case R.id.btn_complete:
-                item = (TmsParcelItem)view.getTag(R.id.btn_complete);
+                item = (TmsParcelItem) view.getTag(R.id.btn_complete);
                 processListBtnClick(item);
                 break;
             case R.id.btn_changeorder:
-                item = (TmsParcelItem)view.getTag(R.id.btn_changeorder);
-                int prevOrder = (int)view.getTag(R.id.status_icon);
+                item = (TmsParcelItem) view.getTag(R.id.btn_changeorder);
+                int prevOrder = (int) view.getTag(R.id.status_icon);
                 processChangeOrderDialog(item, prevOrder);
                 break;
         }
@@ -556,7 +576,7 @@ public class ParcelListActivity extends AppCompatActivity implements View.OnClic
     }
 
 
-    private void processChangeOrderDialog( final TmsParcelItem item, final int prevOrder) {
+    private void processChangeOrderDialog(final TmsParcelItem item, final int prevOrder) {
 
         final String selectedCourierName = mTextCourierName.getText().toString();
         final String selectedDate = mTextCourierDate.getText().toString();
@@ -571,7 +591,7 @@ public class ParcelListActivity extends AppCompatActivity implements View.OnClic
         edittext.setInputType(InputType.TYPE_CLASS_NUMBER);
         final int sizeofParcels = mParcelArrayValues.size();
         AlertDialog.Builder changeOrderDialog = new AlertDialog.Builder(this)
-                .setTitle(prevOrder +"번 순서변경")
+                .setTitle(prevOrder + "번 순서변경")
                 .setMessage(item.consigneeName + ": " + item.consigneeAddr + "\n\n변경되길 원하는 순서를 입력하세요.\n" + " (1 ~ " + sizeofParcels + ")")
                 .setView(edittext)
                 .setPositiveButton(R.string.dialog_title_confirm, new DialogInterface.OnClickListener() {
@@ -599,7 +619,7 @@ public class ParcelListActivity extends AppCompatActivity implements View.OnClic
                             @Override
                             public void onComplete(@Nullable DatabaseError databaseError, @NonNull DatabaseReference databaseReference) {
                                 getFirebaseList();
-                                Toast.makeText(ParcelListActivity.this, item.consigneeName +": " + item.consigneeAddr + "\n\n" + newOrder + "번으로 변경완료되었습니다.", Toast.LENGTH_SHORT).show();
+                                Toast.makeText(ParcelListActivity.this, item.consigneeName + ": " + item.consigneeAddr + "\n\n" + newOrder + "번으로 변경완료되었습니다.", Toast.LENGTH_SHORT).show();
                             }
                         };
                         mFbConnector.proceedChangeOrder(mParcelArrayValues, item, prevOrder, newOrder, selectedCourierName, selectedDate, listener, mCourierDatabaseHash);
@@ -622,7 +642,7 @@ public class ParcelListActivity extends AppCompatActivity implements View.OnClic
         final String[] items = prepareCourierArray();
         mCourierPickerDialog = new AlertDialog.Builder(this);
         mCourierPickerDialog.setTitle(getString(R.string.courier_sel_dialog_title));
-        int defaultIdx = (int)mTextCourierName.getTag();
+        int defaultIdx = (int) mTextCourierName.getTag();
         final List selectedItems = new ArrayList<>();
         selectedItems.add(defaultIdx);
 
@@ -636,12 +656,12 @@ public class ParcelListActivity extends AppCompatActivity implements View.OnClic
             @Override
             public void onClick(DialogInterface dialogInterface, int pos) {
                 Log.d(LOG_TAG, "Select button is pressed");
-                    if (!selectedItems.isEmpty()) {
-                        int index = (int) selectedItems.get(0);
-                        mTextCourierName.setText(items[index]);
-                        mTextCourierName.setTag(index);
-                    }
-                    refreshList(mTextCourierName.getText().toString());
+                if (!selectedItems.isEmpty()) {
+                    int index = (int) selectedItems.get(0);
+                    mTextCourierName.setText(items[index]);
+                    mTextCourierName.setTag(index);
+                }
+                refreshList(mTextCourierName.getText().toString());
             }
         }).setNegativeButton(R.string.cancel, new DialogInterface.OnClickListener() {
             @Override
@@ -717,11 +737,10 @@ public class ParcelListActivity extends AppCompatActivity implements View.OnClic
     }
 
 
-
-    private ArrayList<TmsParcelItem> getCheckedParcelItems(){
+    private ArrayList<TmsParcelItem> getCheckedParcelItems() {
         ArrayList<TmsParcelItem> checkedItems = new ArrayList<>();
         for (int i = 0; i < mArrayAdapter.getCount(); i++) {
-            TmsParcelItem item = (TmsParcelItem)mArrayAdapter.getItem(i);
+            TmsParcelItem item = (TmsParcelItem) mArrayAdapter.getItem(i);
             if (item.getChecked()) {
                 checkedItems.add(item);
             }
@@ -763,7 +782,6 @@ public class ParcelListActivity extends AppCompatActivity implements View.OnClic
             startActivity(intent);
         }
     }
-
 
 
     private String getItemString(ArrayList<TmsParcelItem> items) {
@@ -808,6 +826,11 @@ public class ParcelListActivity extends AppCompatActivity implements View.OnClic
         ArrayList<TmsParcelItem> totalItemList = new ArrayList<TmsParcelItem>();
         ArrayList<TmsParcelItem> filteredItemList = totalItemList;
         Filter listFilter;
+        boolean isCheckboxVisible = false;
+
+        public void setCheckboxVisible(boolean checkboxVisible) {
+            isCheckboxVisible = checkboxVisible;
+        }
 
         public TmsItemAdapter(ArrayList<TmsParcelItem> list) {
             totalItemList = list;
@@ -817,20 +840,20 @@ public class ParcelListActivity extends AppCompatActivity implements View.OnClic
         @Override
         public Filter getFilter() {
             if (listFilter == null) {
-                listFilter = new TmsItemFilter() ;
+                listFilter = new TmsItemFilter();
             }
 
-            return listFilter ;
+            return listFilter;
         }
 
         @Override
         public int getCount() {
-            return filteredItemList.size() ;
+            return filteredItemList.size();
         }
 
         @Override
         public long getItemId(int position) {
-            return position ;
+            return position;
         }
 
         @Override
@@ -876,7 +899,7 @@ public class ParcelListActivity extends AppCompatActivity implements View.OnClic
                 ImageView statusIcon = convertView.findViewById(R.id.status_icon);
 
                 holder.checkBox.setTag(String.valueOf(position));   // to properly track the actual position
-                holder.checkBox.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener(){
+                holder.checkBox.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
                     @Override
                     public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
                         int pos = Integer.parseInt(buttonView.getTag().toString());
@@ -885,6 +908,15 @@ public class ParcelListActivity extends AppCompatActivity implements View.OnClic
                     }
                 });
                 holder.checkBox.setChecked(item.getChecked());
+
+                LinearLayout checkBoxRegion = convertView.findViewById(R.id.checkbox_layout);
+                if (isCheckboxVisible) {
+                    holder.checkBox.setVisibility(View.VISIBLE);
+                    checkBoxRegion.setVisibility(View.VISIBLE);
+                } else {
+                    holder.checkBox.setVisibility(View.GONE);
+                    checkBoxRegion.setVisibility(View.GONE);
+                }
 
                 if (item.status.equals(TmsParcelItem.STATUS_COLLECTED)) {
                     convertView.setBackgroundColor(0xFFD5D5D5);
@@ -899,11 +931,11 @@ public class ParcelListActivity extends AppCompatActivity implements View.OnClic
                 btn_deliveryinfo.setVisibility(View.GONE);
                 btn_changeorder.setOnClickListener(ParcelListActivity.this);
                 btn_changeorder.setTag(R.id.btn_changeorder, item);
-                btn_changeorder.setTag(R.id.status_icon, position+1);
+                btn_changeorder.setTag(R.id.status_icon, position + 1);
                 if (addrText != null) {
                     String addrTextValue = "";
                     if (!mTextCourierName.getText().toString().equals(getString(R.string.all_couriers))) {
-                        addrTextValue = (position+1) + " : ";
+                        addrTextValue = (position + 1) + " : ";
                     }
                     addrText.setText(addrTextValue + item.consigneeAddr);
                     if (isDeliverd) {
@@ -955,22 +987,22 @@ public class ParcelListActivity extends AppCompatActivity implements View.OnClic
         private class TmsItemFilter extends Filter {
             @Override
             protected FilterResults performFiltering(CharSequence constraint) {
-                FilterResults results = new FilterResults() ;
+                FilterResults results = new FilterResults();
 
                 if (constraint == null || constraint.length() == 0) {
-                    results.values = totalItemList ;
-                    results.count = totalItemList.size() ;
+                    results.values = totalItemList;
+                    results.count = totalItemList.size();
                 } else {
-                    ArrayList<TmsParcelItem> itemList = new ArrayList<TmsParcelItem>() ;
+                    ArrayList<TmsParcelItem> itemList = new ArrayList<TmsParcelItem>();
 
                     for (TmsParcelItem item : totalItemList) {
                         if (item.getDesc().toUpperCase().contains(constraint.toString().toUpperCase())) {
-                            itemList.add(item) ;
+                            itemList.add(item);
                         }
                     }
 
-                    results.values = itemList ;
-                    results.count = itemList.size() ;
+                    results.values = itemList;
+                    results.count = itemList.size();
                 }
                 return results;
             }
@@ -978,13 +1010,13 @@ public class ParcelListActivity extends AppCompatActivity implements View.OnClic
             @Override
             protected void publishResults(CharSequence constraint, FilterResults results) {
                 // update listview by filtered data list.
-                filteredItemList = (ArrayList<TmsParcelItem>) results.values ;
+                filteredItemList = (ArrayList<TmsParcelItem>) results.values;
 
                 // notify
                 if (results.count > 0) {
-                    notifyDataSetChanged() ;
+                    notifyDataSetChanged();
                 } else {
-                    notifyDataSetInvalidated() ;
+                    notifyDataSetInvalidated();
                 }
             }
         }

@@ -112,17 +112,26 @@
         android:layout_marginTop="15dp"
         android:paddingTop="5dp"
         android:paddingBottom="5dp"
-        android:paddingLeft="20dp"
-        android:paddingRight="20dp"
-        android:layout_centerHorizontal="true"
-        android:layout_below="@id/text_courier_date">
+        android:layout_alignParentStart="true"
+        android:layout_below="@id/text_courier_date" >
+
+        <ImageView
+            android:id="@+id/checkbox_icon"
+            android:layout_width="wrap_content"
+            android:layout_height="30dp"
+            android:layout_alignParentStart="true"
+            android:layout_weight="1"
+            android:layout_marginLeft="10dp"
+            app:srcCompat="@drawable/ic_check_circle_24dp" />
+
         <Button
             android:id="@+id/btn_resetdb"
             android:layout_width="100dp"
             android:layout_height="30dp"
+            android:layout_marginLeft="20dp"
+            android:layout_toRightOf="@id/checkbox_icon"
             android:layout_weight="1"
             android:background="#42A5F5"
-            android:layout_alignParentStart="true"
             android:text="초기화"
             android:textColor="#FFFFFF"
             android:textSize="15dp"
@@ -168,7 +177,8 @@
         android:id="@+id/info_relative_layout"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:padding="5dp"
+        android:paddingLeft="5dp"
+        android:paddingBottom="5dp"
         android:layout_below="@id/divider">
 
         <CheckBox
@@ -179,7 +189,8 @@
             android:layout_alignParentStart="true"
             android:paddingTop="19dp"
             android:background="#EFEFEF"
-            android:textColor="#6F6F6F" />
+            android:textColor="#6F6F6F"
+            android:visibility="gone" />
 
         <TextView
             android:id="@+id/filter_text"
