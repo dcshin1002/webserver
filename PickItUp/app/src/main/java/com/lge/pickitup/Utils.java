@@ -212,10 +212,20 @@ public class Utils {
     }
 
     public static boolean isRootAuth() {
-        return mRootUserItem.contains(mCurrentUserItem);
+        if (mRootUserItem != null) {
+            return mRootUserItem.contains(mCurrentUserItem);
+        } else {
+            return false;
+        }
     }
+
     public static boolean isAdminAuth() {
-        return !mCurrentUserItem.children.isEmpty();
+        if (mCurrentUserItem != null) {
+            return mCurrentUserItem.usertype.equals(TmsUserItem.usertype_admin);
+        } else {
+            return false;
+        }
+
     }
 
     public static boolean isConsignorAuth() {
