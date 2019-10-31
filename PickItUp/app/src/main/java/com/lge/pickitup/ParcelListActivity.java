@@ -82,6 +82,7 @@ public class ParcelListActivity extends AppCompatActivity implements View.OnClic
     private Button mBtnResetdb;
     private Button mBtnAssign;
     private Button mBtnChangeView;
+
     ValueEventListener mParcelListEventListener = new ValueEventListener() {
         @Override
         public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
@@ -350,10 +351,8 @@ public class ParcelListActivity extends AppCompatActivity implements View.OnClic
         if (Utils.isRootAuth()) {
             mTextCourierName.setOnClickListener(this);
             mBtnResetdb.setVisibility(View.VISIBLE);
-            mBtnAssign.setVisibility(View.VISIBLE);
         } else if (Utils.isAdminAuth()) {
             mTextCourierName.setOnClickListener(this);
-            mBtnAssign.setVisibility(View.VISIBLE);
         }
     }
 
@@ -390,23 +389,27 @@ public class ParcelListActivity extends AppCompatActivity implements View.OnClic
 
         final boolean checkBoxEnabled[] = {false};
         final ImageView mIvCheckBox = findViewById(R.id.checkbox_icon);
-        mIvCheckBox.setOnClickListener(new View.OnClickListener() {
-            public void onClick(View v) {
-                // TODO: icon image should toggled base on status
-                if (!checkBoxEnabled[0]) {
-                    checkBoxEnabled[0] = true;
-                    mAllCheckbox.setVisibility(View.VISIBLE);
-                    mBtnAssign.setVisibility(View.VISIBLE);
-                    mArrayAdapter.setCheckboxVisible(true);
-                } else {
-                    checkBoxEnabled[0] = false;
-                    mAllCheckbox.setVisibility(View.GONE);
-                    mBtnAssign.setVisibility(View.GONE);
-                    mArrayAdapter.setCheckboxVisible(false);
+        if (Utils.isRootAuth() || Utils.isAdminAuth()) {
+            mIvCheckBox.setOnClickListener(new View.OnClickListener() {
+                public void onClick(View v) {
+                    // TODO: icon image should toggled base on status
+                    if (!checkBoxEnabled[0]) {
+                        checkBoxEnabled[0] = true;
+                        mAllCheckbox.setVisibility(View.VISIBLE);
+                        mBtnAssign.setVisibility(View.VISIBLE);
+                        mArrayAdapter.setCheckboxVisible(true);
+                    } else {
+                        checkBoxEnabled[0] = false;
+                        mAllCheckbox.setVisibility(View.GONE);
+                        mBtnAssign.setVisibility(View.GONE);
+                        mArrayAdapter.setCheckboxVisible(false);
+                    }
+                    mArrayAdapter.notifyDataSetChanged();
                 }
-                mArrayAdapter.notifyDataSetChanged();
-            }
-        });
+            });
+            mIvCheckBox.setVisibility(View.VISIBLE);
+        }
+
 
         mAllCheckbox = findViewById(R.id.all_parcels_checkbox);
         mAllCheckbox.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
