@@ -157,7 +157,7 @@ public class MapViewActivity extends AppCompatActivity
         ViewGroup mapViewContainer = (ViewGroup) findViewById(R.id.map_view);
         mapViewContainer.addView(mapLayout);
         //addCurrentLocationMarker();
-        if (!Utils.isRootAuth()) {
+        if (Utils.isCourierAuth()) {
             turnOnTrackingMode();
             mMapView.setCurrentLocationEventListener(this);
             mMapView.setCustomCurrentLocationMarkerTrackingImage(R.drawable.location_map_pin_pink, new MapPOIItem.ImageOffset(28, 28));
@@ -586,8 +586,10 @@ public class MapViewActivity extends AppCompatActivity
             mCourierArrayValues.clear();
             for (DataSnapshot postSnapshot : dataSnapshot.getChildren()) {
                 TmsCourierItem item = postSnapshot.getValue(TmsCourierItem.class);
-                mCourierDatabaseHash.put(item.name, item);
-                mCourierArrayValues.add(item);
+                if (Utils.mCurrentUserItem.hasChild(item.name)) {
+                    mCourierDatabaseHash.put(item.name, item);
+                    mCourierArrayValues.add(item);
+                }
             }
             if (mSelectedCourierName != null) {
                 getParcelListFromFirebaseDatabase(mSelectedDate, TmsParcelItem.KEY_COURIER_NAME, mSelectedCourierName);
@@ -628,10 +630,14 @@ public class MapViewActivity extends AppCompatActivity
             for (DataSnapshot postSnapshot : dataSnapshot.getChildren()) {
                 String key = postSnapshot.getKey();
                 TmsParcelItem value = postSnapshot.getValue(TmsParcelItem.class);
-                mParcelDatabaseHash.put(key, value);
-                mArrayKeys.add(key);
-                mArrayValues.add(value);
-                addMarkerHash(value);
+                String courier = value.courierName;
+                String brand = value.consignorName;
+                if (Utils.isRootAuth() || Utils.mCurrentUserItem.brand.equals(brand) || Utils.mCurrentUserItem.hasChild(courier)) {
+                    mParcelDatabaseHash.put(key, value);
+                    mArrayKeys.add(key);
+                    mArrayValues.add(value);
+                    addMarkerHash(value);
+                }
             }
 
             String courierName = mSelectedCourierName;
