@@ -407,7 +407,7 @@ public class ParcelListActivity extends AppCompatActivity implements View.OnClic
                     mArrayAdapter.notifyDataSetChanged();
                 }
             });
-            mIvCheckBox.setVisibility(View.VISIBLE);
+            //mIvCheckBox.setVisibility(View.VISIBLE);
         }
 
 
