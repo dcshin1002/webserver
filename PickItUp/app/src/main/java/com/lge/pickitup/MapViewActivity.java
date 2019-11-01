@@ -337,7 +337,7 @@ public class MapViewActivity extends AppCompatActivity
                     String addrTextValue = "";
 
                     if (!mSelectedCourierName.equals(getString(R.string.all_couriers))) {
-                        addrTextValue = mArrayValuesOrder.get(position) + " : ";
+                        addrTextValue = item.orderInRoute + " : ";
                     }
                     addrText.setText(addrTextValue + item.consigneeAddr);
                     if (isDeliverd) {

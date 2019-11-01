@@ -3,6 +3,8 @@ package com.lge.pickitup;
 import android.os.Parcel;
 import android.os.Parcelable;
 
+import androidx.annotation.Nullable;
+
 import com.google.firebase.database.Exclude;
 import com.google.firebase.database.IgnoreExtraProperties;
 
@@ -168,12 +170,20 @@ public class TmsParcelItem implements Comparable<TmsParcelItem>, Parcelable {
 
     @Override
     public int compareTo(TmsParcelItem s) {
-        if (this.id < s.id) {
-            return -1;
-        } else if (this.id > s.id) {
-            return 1;
+
+        if (s.status.equals(TmsParcelItem.STATUS_DELIVERED)) {
+            if (this.status.equals(TmsParcelItem.STATUS_DELIVERED)) {
+                if (s.orderInRoute > this.orderInRoute) {
+                    return -1;
+                } else {
+                    return 1;
+                }
+            } else {
+                return -1;
+            }
+        } else {
+            return 0;
         }
-        return 0;
     }
 
     @Exclude
@@ -248,5 +258,16 @@ public class TmsParcelItem implements Comparable<TmsParcelItem>, Parcelable {
 
     public boolean getChecked() {
         return this.checked;
+    }
+
+    @Override
+    public boolean equals(@Nullable Object obj) {
+        TmsParcelItem item = (TmsParcelItem) obj;
+        return (this.id == item.id);
+    }
+
+    @Override
+    public int hashCode() {
+        return id;
     }
 }

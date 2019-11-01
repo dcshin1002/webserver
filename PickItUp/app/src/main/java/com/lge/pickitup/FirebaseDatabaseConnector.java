@@ -368,8 +368,10 @@ public class FirebaseDatabaseConnector {
         courierItem.endparcelid = linkedParcelList.getLast().id;
         for (int i=0; i < linkedParcelList.size()-1; i++) {
             linkedParcelList.get(i).nextParcel = linkedParcelList.get(i+1).id;
+            linkedParcelList.get(i).orderInRoute = i+1;
         }
-        linkedParcelList.getLast().nextParcel = -1;
+        linkedParcelList.getLast().nextParcel   = -1;
+        linkedParcelList.getLast().orderInRoute = linkedParcelList.size();
 
         postCourierItemToFirebaseDatabase(selectedDate, courierItem);
         postParcelListToFirebaseDatabase2(selectedDate, new ArrayList<>(linkedParcelList), listener);
