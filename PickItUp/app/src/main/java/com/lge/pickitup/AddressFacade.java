@@ -1,10 +1,13 @@
 package com.lge.pickitup;
 
+import android.app.AlertDialog;
 import android.app.ProgressDialog;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.AsyncTask;
 import android.util.Log;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -34,8 +37,10 @@ import java.net.URL;
 import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import javax.net.ssl.HttpsURLConnection;
 
@@ -68,7 +73,7 @@ public class AddressFacade {
         public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
             mCourierHash.clear();
             int maxCourierIdInDB = 0;
-            Log.d(LOG_TAG, "likepaul getCourierListFromFirebaseDatabase : size " + dataSnapshot.getChildrenCount());
+            Log.d(LOG_TAG, "getCourierListFromFirebaseDatabase : size " + dataSnapshot.getChildrenCount());
             for (DataSnapshot postSnapshot : dataSnapshot.getChildren()) {
                 String key = postSnapshot.getKey();
                 TmsCourierItem value = postSnapshot.getValue(TmsCourierItem.class);
@@ -79,14 +84,14 @@ public class AddressFacade {
             }
 
             ArrayList<String> courierList = Utils.makeCourierUserList();
-            Log.d(LOG_TAG, "likepaul mCourierHash.size()" + mCourierHash.size());
+            Log.d(LOG_TAG, "mCourierHash.size()" + mCourierHash.size());
             for (String courier : courierList) {
                 if (!mCourierHash.containsKey(courier)) {
                     TmsCourierItem item = new TmsCourierItem(++maxCourierIdInDB, courier);
                     mCourierHash.put(courier, item);
                 }
             }
-            Log.d(LOG_TAG, "likepaul mCourierHash.size()" + mCourierHash.size());
+            Log.d(LOG_TAG, "mCourierHash.size()" + mCourierHash.size());
             initFile(mFileName, maxCourierIdInDB);
         }
         @Override
@@ -148,6 +153,7 @@ public class AddressFacade {
             InputStreamReader is = new InputStreamReader(fis, "EUC-KR");
             CSVReader reader = new CSVReader(is);
             String[] record = null;
+            HashSet<String> notDefinedCourier = new HashSet<>();
             boolean firstLine = true;
             while ((record = reader.readNext()) != null) {
                 if (firstLine) {
@@ -159,12 +165,23 @@ public class AddressFacade {
                 if (record.length > 10) {
                     String courierName = record[10];
                     if (!mCourierHash.containsKey(courierName)) {
-                        startIdx++;
-                        TmsCourierItem item = new TmsCourierItem(String.valueOf(startIdx), courierName);
-                        mCourierHash.put(record[10], item);
+                        notDefinedCourier.add(courierName);
                     }
                 }
                 addRecordToParcelList(mParcelList, mDateStr, record);
+            }
+            if (notDefinedCourier.size() > 0) {
+                AlertDialog.Builder wrongCourier = new AlertDialog.Builder(mContext);
+                String list_Courier = notDefinedCourier.toString().replace("[", "").replace("]", "");
+                wrongCourier.setTitle("잘못된 배송기사")
+                        .setMessage("등록되지 않은 기사에게 할당되었습니다.\n[ " + list_Courier + " ]\n기사명 확인 후 다시 csv 파일을 작성해 주세요.")
+                        .setPositiveButton("확인", new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialogInterface, int i) {
+                                dialogInterface.dismiss();
+                    }
+                }).show();
+                return;
             }
 
             // make valueeventlistner
