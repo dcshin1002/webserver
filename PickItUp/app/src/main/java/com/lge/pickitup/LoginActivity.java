@@ -92,7 +92,7 @@ public class LoginActivity extends AppCompatActivity {
                     mEditTextEmail.setText("");
                     mEditTextPassword.setText("");
 
-                    if (Utils.isAdminAuth() || Utils.isConsignorAuth()) {
+                    if (Utils.isRootAuth() || Utils.isConsignorAuth()) {
                         startActivity(new Intent(LoginActivity.this, MainMenuActivity.class));
                     } else {
                         Intent intent_service = new Intent(LoginActivity.this, CourierLocationUploadService.class);

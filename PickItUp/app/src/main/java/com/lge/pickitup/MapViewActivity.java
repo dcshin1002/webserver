@@ -444,7 +444,6 @@ public class MapViewActivity extends AppCompatActivity
         if (Utils.isRootAuth()) {
             addCourierMarker();
         }
-        int num = 1;
 
         for (TmsParcelItem item : mArrayValues) {
             String strLatitude = item.consigneeLatitude;
@@ -482,7 +481,7 @@ public class MapViewActivity extends AppCompatActivity
             boolean isDeliverd = item.status.equals(TmsParcelItem.STATUS_DELIVERED);
 
             if (!mSelectedCourierName.equals(GlobalRes.getString(R.string.all_couriers))) {
-                int textVal = num;
+                int textVal = item.orderInRoute;
                 Paint paint = new Paint();
                 paint.setStyle(Paint.Style.FILL);
                 paint.setColor(Color.BLACK); // Text Color
@@ -513,7 +512,7 @@ public class MapViewActivity extends AppCompatActivity
             if (mSelectedCourierName.equals(GlobalRes.getString(R.string.all_couriers))) {
                 marker.setTag(-1);
             } else {
-                marker.setTag(num);
+                marker.setTag(item.orderInRoute);
             }
 
             MarkerItem markeritem = new MarkerItem(strLatitude, strLongitude);
@@ -556,7 +555,6 @@ public class MapViewActivity extends AppCompatActivity
                     }
                 }
             }
-            num++;
         }
     }
 

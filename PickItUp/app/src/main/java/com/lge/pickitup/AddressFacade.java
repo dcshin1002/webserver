@@ -118,7 +118,7 @@ public class AddressFacade {
             // Get longitude and latitude from address through Daum Kakao API
             AddressTranslate addressTranslate = new AddressTranslate();
             addressTranslate.execute(String.valueOf(initValueOfParcelId));
-
+            /*
             String[] date_piece = mDateStr.split("-");
             String setUrl = Utils.SERVER_URL + "/route";
             String getUrl = Utils.SERVER_URL + "/job";
@@ -129,6 +129,7 @@ public class AddressFacade {
             Log.d(LOG_TAG, "processing url = " + setUrl + ", " + getUrl);
             ProcessingBackTask processingBackTask = new ProcessingBackTask();
             processingBackTask.execute(setUrl, getUrl);
+            */
         }
 
         @Override

@@ -115,9 +115,9 @@ public class ParcelListActivity extends AppCompatActivity implements View.OnClic
                 if (Utils.mCurrentUserItem.hasChild(item.name)) {
                     mCourierDatabaseHash.put(item.name, item);
                     mCourierArrayValues.add(item);
-                    mHashParcels.put(item.name, new LinkedList<TmsParcelItem>());
                     mHashCouriers.put(item.name, item);
                 }
+                mHashParcels.put(item.name, new LinkedList<TmsParcelItem>());
             }
             mHashParcels.put("", new LinkedList<TmsParcelItem>());
             Log.d(LOG_TAG, "mCourierValueEventListener, size = " + mCourierDatabaseHash.size());
@@ -164,7 +164,6 @@ public class ParcelListActivity extends AppCompatActivity implements View.OnClic
                 }
 
             }
-            Log.i(LOG_TAG, "mParcelArrayValues size = " + mParcelArrayValues.size());
             String courierName = mTextCourierName.getText().toString();
             if (!courierName.equals(R.string.all_couriers)) {
                 TmsCourierItem courierItem = mCourierDatabaseHash.get(courierName);
@@ -765,7 +764,14 @@ public class ParcelListActivity extends AppCompatActivity implements View.OnClic
         Log.d(LOG_TAG, "prepareCourierArray, size = " + mCourierDatabaseHash.size());
         courierArrayList.addAll(mCourierDatabaseHash.values());
         for (TmsCourierItem item : courierArrayList) {
-            strArrayList.add(item.name + " (" + mHashParcels.get(item.name).size() + ")");
+            int cnt_delivered = 0;
+            LinkedList<TmsParcelItem> list_parcels =  mHashParcels.get(item.name);
+            for (TmsParcelItem parcelItem : list_parcels) {
+                if (parcelItem.status.equals(TmsParcelItem.STATUS_DELIVERED))
+                    cnt_delivered++;
+
+            }
+            strArrayList.add(item.name + " (" + cnt_delivered + "/" + list_parcels.size() + ")");
         }
         Collections.sort(strArrayList);
         strArrayList.add(0, getString(R.string.default_courier_name));
