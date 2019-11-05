@@ -22,7 +22,10 @@ import android.os.Environment;
 import android.provider.MediaStore;
 import android.util.Log;
 import android.util.Pair;
+import android.view.ContextMenu;
 import android.view.LayoutInflater;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
@@ -83,6 +86,7 @@ public class UploadImageActivity extends AppCompatActivity {
     private Button mBtnSendMsg;
     private Button mBtnAssignCourier;
     private ImageView mIvPreviewImage;
+    private TextView mEtMessageText;
     private EditText mEtMessageContent;
     private TextView mTvDeliveryTime;
     private TextView mTvChooseCourier;
@@ -102,6 +106,9 @@ public class UploadImageActivity extends AppCompatActivity {
     private int KEY_IMVSTATUS = 1;
     private int IMGVIEW_INIT = 0;
     private int IMGVIEW_CAPTURED = 1;
+    private String mMessagePrefix;
+    private String[] mMessageTypes;
+    private int mMessageTypeId = 0;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -168,7 +175,6 @@ public class UploadImageActivity extends AppCompatActivity {
     }
 
 
-
     private void setParcelInfoText() {
 
         ArrayList<Pair> detail = new ArrayList<Pair>();
@@ -182,7 +188,7 @@ public class UploadImageActivity extends AppCompatActivity {
         detail.add(new Pair("배송기사", mSelectedParcelItem.courierName));
         detail.add(new Pair("지역코드", mSelectedParcelItem.regionalCode));
 
-        for (int i=0; i < detail.size(); i++) {
+        for (int i = 0; i < detail.size(); i++) {
             View layout_row = inflator.inflate(R.layout.detailview_row, mTableDetail, false);
             TextView col1 = (TextView) layout_row.findViewById(R.id.txt_title);
             TextView col2 = (TextView) layout_row.findViewById(R.id.txt_contents);
@@ -304,6 +310,52 @@ public class UploadImageActivity extends AppCompatActivity {
         }
     }
 
+    @Override
+    public void onCreateContextMenu(ContextMenu menu, View v, ContextMenu.ContextMenuInfo menuInfo) {
+        MenuInflater inflater = getMenuInflater();
+        inflater.inflate(R.menu.message_selection_menu, menu);
+    }
+
+    public boolean onContextItemSelected(MenuItem item) {
+        mEtMessageText.setText(item.getTitle());
+        int messageTypeTobe = 0;
+        switch (item.getItemId()) {
+            case R.id.message_normal_door_front:
+                messageTypeTobe = 0;
+                break;
+            case R.id.message_return_address_unknown:
+                messageTypeTobe = 1;
+                break;
+            case R.id.message_return_cannot_enter:
+                messageTypeTobe = 2;
+                break;
+            case R.id.message_return_broken_product:
+                messageTypeTobe = 3;
+                break;
+            case R.id.message_special_security_office:
+            case R.id.message_special_delivery_box:
+            case R.id.message_special_public_door_front:
+                messageTypeTobe = 4;
+                break;
+            case R.id.message_special_etc:
+                messageTypeTobe = 5;
+                break;
+            case R.id.message_special_delayed:
+                messageTypeTobe = 6;
+                break;
+        }
+
+        if (mMessageTypeId != messageTypeTobe) {
+            mMessageTypeId = messageTypeTobe;
+
+            // reload message contents
+            mEtMessageContent.setText(mMessagePrefix + mMessageTypes[mMessageTypeId]);
+        }
+
+        return super.onContextItemSelected(item);
+    }
+
+
     private void initResources() {
         mBtnCapture = findViewById(R.id.btnCameraCapture);
         mBtnPickImgFromGallery = findViewById(R.id.btnPickImageFromGallery);
@@ -315,7 +367,12 @@ public class UploadImageActivity extends AppCompatActivity {
         mBtnAssignCourier = findViewById(R.id.btn_assign_courier);
         mTableDetail = findViewById(R.id.table_detail);
 
-        mEtMessageContent.setText("고객(" + mSelectedParcelItem.consigneeName + ")님께서 배송요청하신 물품이 배송완료되었습니다.");
+        mEtMessageText = findViewById(R.id.etMessageText);
+        registerForContextMenu(mEtMessageText);
+
+        mMessagePrefix = "안녕하세요. " + mSelectedParcelItem.consignorName + " 입니다. ";
+        mMessageTypes = getResources().getStringArray(R.array.sms_messages);
+        mEtMessageContent.setText(mMessagePrefix + mMessageTypes[mMessageTypeId]);
         mIvPreviewImage.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -369,46 +426,46 @@ public class UploadImageActivity extends AppCompatActivity {
         mTvChooseCourier.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                    ArrayList<String> arr_couriers = Utils.makeCourierUserList();
-                    final String[] items = arr_couriers.toArray(new String[arr_couriers.size()]);
-                    AlertDialog.Builder courierDialog = new AlertDialog.Builder(UploadImageActivity.this);
-                    courierDialog.setTitle(getString(R.string.courier_sel_dialog_title));
+                ArrayList<String> arr_couriers = Utils.makeCourierUserList();
+                final String[] items = arr_couriers.toArray(new String[arr_couriers.size()]);
+                AlertDialog.Builder courierDialog = new AlertDialog.Builder(UploadImageActivity.this);
+                courierDialog.setTitle(getString(R.string.courier_sel_dialog_title));
 
-                    int defaultIdx = (int)mTvChooseCourier.getTag();
-                    final List selectedItems = new ArrayList<>();
-                    selectedItems.add(defaultIdx);
+                int defaultIdx = (int) mTvChooseCourier.getTag();
+                final List selectedItems = new ArrayList<>();
+                selectedItems.add(defaultIdx);
 
-                    courierDialog.setSingleChoiceItems(items, defaultIdx, new DialogInterface.OnClickListener() {
-                        @Override
-                        public void onClick(DialogInterface dialogInterface, int pos) {
-                            selectedItems.clear();
-                            selectedItems.add(pos);
+                courierDialog.setSingleChoiceItems(items, defaultIdx, new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialogInterface, int pos) {
+                        selectedItems.clear();
+                        selectedItems.add(pos);
+                    }
+                }).setPositiveButton(R.string.yes, new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialogInterface, int pos) {
+                        Log.d(LOG_TAG, "Select button is pressed");
+                        if (!selectedItems.isEmpty()) {
+                            int index = (int) selectedItems.get(0);
+                            mTvChooseCourier.setText(items[index]);
+                            mTvChooseCourier.setTag(index); // set selected index to mTvChooseCourier's tag
                         }
-                    }).setPositiveButton(R.string.yes, new DialogInterface.OnClickListener() {
-                        @Override
-                        public void onClick(DialogInterface dialogInterface, int pos) {
-                            Log.d(LOG_TAG, "Select button is pressed");
-                            if (!selectedItems.isEmpty()) {
-                                int index = (int) selectedItems.get(0);
-                                mTvChooseCourier.setText(items[index]);
-                                mTvChooseCourier.setTag(index); // set selected index to mTvChooseCourier's tag
-                            }
-                        }
-                    }).setNegativeButton(R.string.cancel, new DialogInterface.OnClickListener() {
-                        @Override
-                        public void onClick(DialogInterface dialogInterface, int pos) {
-                            Log.d(LOG_TAG, "Cancel button is pressed");
-                            dialogInterface.cancel();
-                        }
-                    });
-                    courierDialog.show();
-                }
+                    }
+                }).setNegativeButton(R.string.cancel, new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialogInterface, int pos) {
+                        Log.d(LOG_TAG, "Cancel button is pressed");
+                        dialogInterface.cancel();
+                    }
+                });
+                courierDialog.show();
+            }
         });
 
         mBtnAssignCourier.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                final String selectedCourier =  mTvChooseCourier.getText().toString();
+                final String selectedCourier = mTvChooseCourier.getText().toString();
                 AlertDialog.Builder askAssignDialog = new AlertDialog.Builder(UploadImageActivity.this);
                 askAssignDialog.setTitle("배송기사 배정");
                 askAssignDialog.setMessage("해당 배송건을 " + selectedCourier + " 기사에게 배정하시겠습니까?");
@@ -524,7 +581,7 @@ public class UploadImageActivity extends AppCompatActivity {
         this.sendBroadcast(mediaScanIntent);
     }
 
-    private void setResizedTakenPic()  {
+    private void setResizedTakenPic() {
         // Get the dimensions of the View
         int targetW = mIvPreviewImage.getWidth();
         int targetH = mIvPreviewImage.getHeight();
@@ -627,11 +684,11 @@ public class UploadImageActivity extends AppCompatActivity {
     }
 
     public int exifOrientationToDegrees(int exifOrientation) {
-        if(exifOrientation == ExifInterface.ORIENTATION_ROTATE_90) {
+        if (exifOrientation == ExifInterface.ORIENTATION_ROTATE_90) {
             return 90;
-        } else if(exifOrientation == ExifInterface.ORIENTATION_ROTATE_180) {
+        } else if (exifOrientation == ExifInterface.ORIENTATION_ROTATE_180) {
             return 180;
-        } else if(exifOrientation == ExifInterface.ORIENTATION_ROTATE_270)  {
+        } else if (exifOrientation == ExifInterface.ORIENTATION_ROTATE_270) {
             return 270;
         }
         return 0;
@@ -642,25 +699,23 @@ public class UploadImageActivity extends AppCompatActivity {
         int exifOrientation = exif.getAttributeInt(ExifInterface.TAG_ORIENTATION, ExifInterface.ORIENTATION_NORMAL);
         int degrees = exifOrientationToDegrees(exifOrientation);
 
-        if(degrees != 0 && bitmap != null) {
+        if (degrees != 0 && bitmap != null) {
             Matrix m = new Matrix();
             m.setRotate(degrees, (float) bitmap.getWidth() / 2,
                     (float) bitmap.getHeight() / 2);
             try {
                 Bitmap converted = Bitmap.createBitmap(bitmap, 0, 0,
                         bitmap.getWidth(), bitmap.getHeight(), m, true);
-                if(bitmap != converted) {
+                if (bitmap != converted) {
                     bitmap.recycle();
                     bitmap = converted;
                 }
-            }
-            catch(OutOfMemoryError ex) {
+            } catch (OutOfMemoryError ex) {
                 // 메모리가 부족하여 회전을 시키지 못할 경우 그냥 원본을 반환합니다.
             }
         }
         return bitmap;
     }
-
 
 
     private void uploadImageToServer() {

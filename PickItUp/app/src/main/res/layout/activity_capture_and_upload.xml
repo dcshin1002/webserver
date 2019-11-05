@@ -4,7 +4,6 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
-
     <ImageView
         android:id="@+id/ivImagePreview"
         android:layout_width="300dp"
@@ -13,17 +12,27 @@
         android:layout_marginTop="10dp"
         android:scaleType="fitCenter" />
 
+    <TextView
+        android:id="@+id/etMessageText"
+        android:text="집앞 배송"
+        android:layout_width="120dp"
+        android:layout_height="wrap_content"
+        android:layout_alignLeft="@id/ivImagePreview"
+        android:layout_marginTop="5dp"
+        android:layout_below="@id/ivImagePreview" />
+
     <EditText
         android:id="@+id/etMessageContent"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_below="@id/ivImagePreview"
+        android:layout_below="@id/etMessageText"
         android:layout_alignLeft="@id/ivImagePreview"
         android:layout_alignRight="@id/ivImagePreview"
-        android:layout_marginTop="10dp"
+        android:layout_marginTop="5dp"
         android:ems="10"
         android:inputType="textMultiLine"
         android:text="Here is area for message contents" />
+
 
     <Button
         android:id="@+id/btnCameraCapture"
@@ -43,8 +52,8 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_below="@id/btnCameraCapture"
-        android:layout_alignLeft="@id/btnCameraCapture"
-        android:layout_alignRight="@id/btnCameraCapture"
+        android:layout_alignLeft="@id/etMessageContent"
+        android:layout_alignRight="@id/etMessageContent"
         android:layout_marginTop="10dp"
         android:background="#42A5F5"
         android:padding="5dp"
@@ -57,8 +66,8 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_below="@id/btnPickImageFromGallery"
-        android:layout_alignLeft="@id/btnPickImageFromGallery"
-        android:layout_alignRight="@id/btnPickImageFromGallery"
+        android:layout_alignLeft="@id/etMessageContent"
+        android:layout_alignRight="@id/etMessageContent"
         android:layout_marginTop="10dp"
         android:background="#42A5F5"
         android:padding="5dp"

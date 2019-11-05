@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <item
+        android:id="@+id/message_normal_door_front"
+        android:title="집앞 배송" />
+    <item
+        android:id="@+id/message_return_address_unknown"
+        android:title="주소 불분명" />
+    <item
+        android:id="@+id/message_return_cannot_enter"
+        android:title="출입 불가" />
+    <item
+        android:id="@+id/message_return_broken_product"
+        android:title="제품 파손" />
+    <item
+        android:id="@+id/message_special_security_office"
+        android:title="경비실 배송" />
+    <item
+        android:id="@+id/message_special_delivery_box"
+        android:title="무인택배함 배송" />
+    <item
+        android:id="@+id/message_special_public_door_front"
+        android:title="1층현관앞 배송" />
+    <item
+        android:id="@+id/message_special_etc"
+        android:title="기타 배송" />
+    <item
+        android:id="@+id/message_special_delayed"
+        android:title="지연 배송" />
+</menu>
