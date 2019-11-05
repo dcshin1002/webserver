@@ -1,7 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    android:layout_width="match_parent" android:layout_height="match_parent">
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
 
     <ImageView
         android:id="@+id/ivImagePreview"
@@ -9,16 +11,16 @@
         android:layout_height="300dp"
         android:layout_centerHorizontal="true"
         android:layout_marginTop="10dp"
-        android:scaleType="fitCenter"/>
+        android:scaleType="fitCenter" />
 
     <EditText
         android:id="@+id/etMessageContent"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_below="@id/ivImagePreview"
-        android:layout_marginTop="10dp"
         android:layout_alignLeft="@id/ivImagePreview"
         android:layout_alignRight="@id/ivImagePreview"
+        android:layout_marginTop="10dp"
         android:ems="10"
         android:inputType="textMultiLine"
         android:text="Here is area for message contents" />
@@ -27,98 +29,100 @@
         android:id="@+id/btnCameraCapture"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:padding="5dp"
-        android:layout_marginTop="10dp"
         android:layout_below="@id/etMessageContent"
         android:layout_alignLeft="@id/etMessageContent"
         android:layout_alignRight="@id/etMessageContent"
+        android:layout_marginTop="10dp"
         android:background="#42A5F5"
-        android:textColor="#FFFFFF"
-        android:text="@string/capture_camera" />
+        android:padding="5dp"
+        android:text="@string/capture_camera"
+        android:textColor="#FFFFFF" />
 
     <Button
         android:id="@+id/btnPickImageFromGallery"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:padding="5dp"
         android:layout_below="@id/btnCameraCapture"
-        android:layout_marginTop="10dp"
         android:layout_alignLeft="@id/btnCameraCapture"
         android:layout_alignRight="@id/btnCameraCapture"
+        android:layout_marginTop="10dp"
         android:background="#42A5F5"
-        android:textColor="#FFFFFF"
-        android:text="@string/pick_image_from_gallery" />
+        android:padding="5dp"
+        android:text="@string/pick_image_from_gallery"
+        android:textColor="#FFFFFF" />
 
 
     <Button
         android:id="@+id/btnSendMessage"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:padding="5dp"
-        android:layout_marginTop="10dp"
         android:layout_below="@id/btnPickImageFromGallery"
         android:layout_alignLeft="@id/btnPickImageFromGallery"
         android:layout_alignRight="@id/btnPickImageFromGallery"
+        android:layout_marginTop="10dp"
         android:background="#42A5F5"
-        android:textColor="#FFFFFF"
-        android:text="@string/send_message_with_image" />
+        android:padding="5dp"
+        android:text="@string/send_message_with_image"
+        android:textColor="#FFFFFF" />
 
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_below="@id/etMessageContent"
+        android:layout_marginBottom="10dp"
+        >
+
+        <TableLayout
+            android:id="@+id/table_detail"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_margin="10dp"
+            android:paddingBottom="15dp"
+            >
+
+        </TableLayout>
+    </ScrollView>
 
     <TextView
         android:id="@+id/tvDeliveryTime"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:padding="5dp"
-        android:layout_marginTop="10dp"
-        android:textSize="18dp"
         android:layout_below="@id/etMessageContent"
+        android:layout_marginTop="10dp"
+        android:padding="5dp"
+        android:textSize="18dp"
         android:visibility="gone" />
-        <!--android:layout_alignLeft="@id/etMessageContent"
-        android:layout_alignRight="@id/etMessageContent" -->
 
     <LinearLayout
         android:id="@+id/layout_assigncourier"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_alignLeft="@id/etMessageContent"
-        android:layout_alignRight="@id/etMessageContent"
         android:layout_below="@id/tvDeliveryTime"
+        android:layout_alignLeft="@id/etMessageContent"
+        android:layout_alignRight="@id/etMessageContent">
 
-        >
         <TextView
             android:id="@+id/tv_choosecourier"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:padding="5dp"            android:textSize="16dp"
             android:layout_marginTop="10dp"
+            android:layout_weight="1"
+            android:padding="5dp"
+            android:text="배송기사 선택"
             android:textColor="#000000"
-            android:text="배송기사 선택" />
+            android:textSize="16dp" />
 
         <Button
             android:id="@+id/btn_assign_courier"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:padding="5dp"
             android:layout_marginTop="10dp"
-            android:background="#42A5F5"
-            android:textColor="#FFFFFF"
             android:layout_weight="1"
-            android:text="배송기사 할당" />
+            android:background="#42A5F5"
+            android:padding="5dp"
+            android:text="배송기사 할당"
+            android:textColor="#FFFFFF" />
 
     </LinearLayout>
-    <Button
-        android:id="@+id/btnFinishActivity"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:padding="5dp"
-        android:layout_marginTop="10dp"
-        android:layout_below="@id/layout_assigncourier"
-        android:layout_alignLeft="@id/etMessageContent"
-        android:layout_alignRight="@id/etMessageContent"
-        android:background="#42A5F5"
-        android:textColor="#FFFFFF"
-        android:visibility="gone"
-        android:text="이전화면 돌아가기" />
 
 </RelativeLayout>

@@ -11,6 +11,7 @@ import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.Color;
 import android.graphics.Matrix;
 import android.graphics.drawable.BitmapDrawable;
 import android.media.ExifInterface;
@@ -20,10 +21,14 @@ import android.os.Bundle;
 import android.os.Environment;
 import android.provider.MediaStore;
 import android.util.Log;
+import android.util.Pair;
+import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
+import android.widget.TableLayout;
+import android.widget.TableRow;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -48,9 +53,11 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
+import java.lang.reflect.Array;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
 
 public class UploadImageActivity extends AppCompatActivity {
@@ -74,12 +81,12 @@ public class UploadImageActivity extends AppCompatActivity {
     private Button mBtnCapture;
     private Button mBtnPickImgFromGallery;
     private Button mBtnSendMsg;
-    private Button mBtnFinishActivity;
     private Button mBtnAssignCourier;
     private ImageView mIvPreviewImage;
     private EditText mEtMessageContent;
     private TextView mTvDeliveryTime;
     private TextView mTvChooseCourier;
+    private TableLayout mTableDetail;
     private FirebaseStorage mStorage;
     private StorageReference mStorageRef;
     private FirebaseAuth mAuth;
@@ -142,14 +149,14 @@ public class UploadImageActivity extends AppCompatActivity {
         } else {
             mBtnCapture.setEnabled(true);
             mBtnPickImgFromGallery.setEnabled(true);
-            mIvPreviewImage.setClickable(true);
             if (isShowInfoAction()) {
                 showCompleteImage();
                 setShowDeliveryInfoUI();
                 if (mSelectedParcelItem.status.equals(TmsParcelItem.STATUS_DELIVERED)) {
                     mIvPreviewImage.setImageDrawable(getResources().getDrawable(R.drawable.img_downloading, UploadImageActivity.this.getTheme()));
+                    mIvPreviewImage.setClickable(false);
                 } else {
-                    mIvPreviewImage.setVisibility(View.INVISIBLE);
+                    mIvPreviewImage.setVisibility(View.GONE);
                 }
 
 
@@ -159,21 +166,30 @@ public class UploadImageActivity extends AppCompatActivity {
             }
         }
     }
+
+
+
     private void setParcelInfoText() {
 
-        StringBuilder ret = new StringBuilder();
-        ret.append("배송상태").append(": ").append(mSelectedParcelItem.getStatusStringByCurrentStatus()).append(("\n"));
-        if (mSelectedParcelItem.status.equals(TmsParcelItem.STATUS_DELIVERED)) {
-            ret.append("배송완료시간: ").append(": ").append(mSelectedParcelItem.completeTime).append(("\n"));;
+        ArrayList<Pair> detail = new ArrayList<Pair>();
+        LayoutInflater inflator = getLayoutInflater();
+
+        detail.add(new Pair("고객명", mSelectedParcelItem.consignorName));
+        detail.add(new Pair("고객주소", mSelectedParcelItem.consigneeAddr));
+        detail.add(new Pair("배송메모", mSelectedParcelItem.deliveryNote));
+        detail.add(new Pair("특이사항", mSelectedParcelItem.remark));
+        detail.add(new Pair("업체명", mSelectedParcelItem.consignorName));
+        detail.add(new Pair("배송기사", mSelectedParcelItem.courierName));
+        detail.add(new Pair("지역코드", mSelectedParcelItem.regionalCode));
+
+        for (int i=0; i < detail.size(); i++) {
+            View layout_row = inflator.inflate(R.layout.detailview_row, mTableDetail, false);
+            TextView col1 = (TextView) layout_row.findViewById(R.id.txt_title);
+            TextView col2 = (TextView) layout_row.findViewById(R.id.txt_contents);
+            col1.setText(detail.get(i).first.toString());
+            col2.setText(detail.get(i).second.toString());
+            mTableDetail.addView(layout_row);
         }
-        ret.append("고객명").append(": ").append(mSelectedParcelItem.consigneeName).append(" (").append(mSelectedParcelItem.consigneeContact).append(")").append(("\n"));;
-        ret.append("고객주소").append(": ").append(mSelectedParcelItem.consigneeAddr).append(("\n"));;
-        ret.append("배송메모").append(": ").append(mSelectedParcelItem.deliveryNote).append(("\n"));;
-        ret.append("특이사항").append(": ").append(mSelectedParcelItem.remark).append(("\n"));;
-        ret.append("업체명").append(": ").append(mSelectedParcelItem.consignorName).append(("\n"));;
-        ret.append("배송기사").append(": ").append(mSelectedParcelItem.courierName).append(("\n"));;
-        ret.append("지역코드").append(": ").append(mSelectedParcelItem.regionalCode).append(("\n"));;
-        mTvDeliveryTime.append(ret);
         return;
     }
 
@@ -185,8 +201,6 @@ public class UploadImageActivity extends AppCompatActivity {
 
         mTvDeliveryTime.setVisibility(View.VISIBLE);
         setParcelInfoText();
-
-        mBtnFinishActivity.setVisibility(View.VISIBLE);
     }
 
     private void showCompleteImage() {
@@ -296,10 +310,10 @@ public class UploadImageActivity extends AppCompatActivity {
         mBtnSendMsg = findViewById(R.id.btnSendMessage);
         mIvPreviewImage = findViewById(R.id.ivImagePreview);
         mEtMessageContent = findViewById(R.id.etMessageContent);
-        mBtnFinishActivity = findViewById(R.id.btnFinishActivity);
         mTvDeliveryTime = findViewById(R.id.tvDeliveryTime);
         mTvChooseCourier = findViewById(R.id.tv_choosecourier);
         mBtnAssignCourier = findViewById(R.id.btn_assign_courier);
+        mTableDetail = findViewById(R.id.table_detail);
 
         mEtMessageContent.setText("고객(" + mSelectedParcelItem.consigneeName + ")님께서 배송요청하신 물품이 배송완료되었습니다.");
         mIvPreviewImage.setOnClickListener(new View.OnClickListener() {
@@ -389,13 +403,6 @@ public class UploadImageActivity extends AppCompatActivity {
                     });
                     courierDialog.show();
                 }
-        });
-
-        mBtnFinishActivity.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                finish();
-            }
         });
 
         mBtnAssignCourier.setOnClickListener(new View.OnClickListener() {

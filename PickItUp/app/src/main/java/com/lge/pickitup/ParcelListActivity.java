@@ -209,7 +209,11 @@ public class ParcelListActivity extends AppCompatActivity implements View.OnClic
 
         if (b != null) {
             dateStr = b.getString(Utils.KEY_DB_DATE);
-            courierStr = b.getString(Utils.KEY_COURIER_NAME);
+            if (Utils.isAdminAuth()) {
+                courierStr = getString(R.string.all_couriers);
+            } else {
+                courierStr = b.getString(Utils.KEY_COURIER_NAME);
+            }
         } else {
             dateStr = Utils.getTodayDateStr();
             courierStr = getString(R.string.all_couriers);
