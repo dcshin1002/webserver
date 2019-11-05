@@ -73,7 +73,6 @@ public class MapViewActivity extends AppCompatActivity
     private ArrayList<String> mArrayKeys = new ArrayList<String>();
     private static ArrayList<TmsParcelItem> mArrayValues = new ArrayList<TmsParcelItem>();
     private static ArrayList<TmsParcelItem> mArrayParcelListValues = new ArrayList<TmsParcelItem>();
-    private static ArrayList<Integer> mArrayValuesOrder = new ArrayList<>();
     private static ArrayList<TmsCourierItem> mCourierArrayValues = new ArrayList<TmsCourierItem>();
 
     private static String mSort = "id";
@@ -337,7 +336,7 @@ public class MapViewActivity extends AppCompatActivity
                     String addrTextValue = "";
 
                     if (!mSelectedCourierName.equals(getString(R.string.all_couriers))) {
-                        addrTextValue = item.orderInRoute + " : ";
+                        addrTextValue = item.orderInList + " : ";
                     }
                     addrText.setText(addrTextValue + item.consigneeAddr);
                     if (isDeliverd) {
@@ -481,7 +480,7 @@ public class MapViewActivity extends AppCompatActivity
             boolean isDeliverd = item.status.equals(TmsParcelItem.STATUS_DELIVERED);
 
             if (!mSelectedCourierName.equals(GlobalRes.getString(R.string.all_couriers))) {
-                int textVal = item.orderInRoute;
+                int textVal = item.orderInList;
                 Paint paint = new Paint();
                 paint.setStyle(Paint.Style.FILL);
                 paint.setColor(Color.BLACK); // Text Color
@@ -512,7 +511,7 @@ public class MapViewActivity extends AppCompatActivity
             if (mSelectedCourierName.equals(GlobalRes.getString(R.string.all_couriers))) {
                 marker.setTag(-1);
             } else {
-                marker.setTag(item.orderInRoute);
+                marker.setTag(item.orderInList);
             }
 
             MarkerItem markeritem = new MarkerItem(strLatitude, strLongitude);
@@ -645,12 +644,11 @@ public class MapViewActivity extends AppCompatActivity
                     TmsParcelItem parcelItem = mParcelDatabaseHash.get(String.valueOf(courierItem.startparcelid));
                     if (parcelItem != null) {
                         mArrayValues.clear();
-                        mArrayValues.add(parcelItem);
-                        makeToastToInformWrongAddress(parcelItem, mArrayValues.size());
-                        while(parcelItem.nextParcel != -1) {
-                            parcelItem = mParcelDatabaseHash.get(String.valueOf(parcelItem.nextParcel));
+                        while(parcelItem != null) {
                             mArrayValues.add(parcelItem);
+                            parcelItem.orderInList = mArrayValues.size();
                             makeToastToInformWrongAddress(parcelItem, mArrayValues.size());
+                            parcelItem = mParcelDatabaseHash.get(String.valueOf(parcelItem.nextParcel));
                         }
                     }
                 }
@@ -784,23 +782,22 @@ public class MapViewActivity extends AppCompatActivity
         final ArrayList<TmsParcelItem> sameGeoMarkerItems = mMarkerHash.get(markeritem);
         final ArrayList<MapPOIItem> sameGeoPOIItems = mMapPOItemHash.get(markeritem);
         mArrayParcelListValues.clear();
-        mArrayValuesOrder.clear();
         if (sameGeoMarkerItems != null ) {
             if (sameGeoMarkerItems.size() > 1) {
-                int deliveryed_count = 0;
+                int delivered_count = 0;
                 for (MapPOIItem poiItem : sameGeoPOIItems) {
                     TmsParcelItem parcelItem = (TmsParcelItem)poiItem.getUserObject();
                     if (parcelItem.status.equals(TmsParcelItem.STATUS_DELIVERED)) {
-                        deliveryed_count++;
+                        delivered_count++;
                     }
+                    parcelItem.orderInList = poiItem.getTag();
                     mArrayParcelListValues.add(parcelItem);
-                    mArrayValuesOrder.add(poiItem.getTag());
                 }
-                mTvCountInfo.setText("선택된 주문 총 " + mArrayParcelListValues.size()  + "개 중 " + deliveryed_count + "개 배송완료" );
+                mTvCountInfo.setText("선택된 주문 총 " + mArrayParcelListValues.size()  + "개 중 " + delivered_count + "개 배송완료" );
                 mTvCountInfo.setVisibility(View.VISIBLE);
             } else {
+                item.orderInList = sameGeoPOIItems.get(0).getTag();
                 mArrayParcelListValues.add(item);
-                mArrayValuesOrder.add(sameGeoPOIItems.get(0).getTag());
             }
         }
         mArrayAdapter.notifyDataSetChanged();

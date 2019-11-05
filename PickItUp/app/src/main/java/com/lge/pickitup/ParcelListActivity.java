@@ -178,9 +178,9 @@ public class ParcelListActivity extends AppCompatActivity implements View.OnClic
                         mHashParcels.get(courierName).clear();
                         while (parcelItem != null) {
                             mParcelArrayValues.add(parcelItem);
+                            parcelItem.orderInList = mParcelArrayValues.size();
                             mHashParcels.get(courierName).add(parcelItem);
-                            if (parcelItem.nextParcel == -1)
-                                break;
+                            if (parcelItem.nextParcel == -1) break;
                             parcelItem = mParcelDatabaseHash.get(String.valueOf(parcelItem.nextParcel));
                         }
                     }
@@ -990,14 +990,14 @@ public class ParcelListActivity extends AppCompatActivity implements View.OnClic
                 //btn_deliveryinfo.setOnClickListener(ParcelListActivity.this);
                 //btn_deliveryinfo.setTag(R.id.btn_deliveryinfo, item);
                 btn_deliveryinfo.setVisibility(View.GONE);
-                btn_changeorder.setVisibility(View.INVISIBLE);
+                btn_changeorder.setVisibility(View.GONE);
                 //btn_changeorder.setOnClickListener(ParcelListActivity.this);
                 //btn_changeorder.setTag(R.id.btn_changeorder, item);
                 //btn_changeorder.setTag(R.id.status_icon, position + 1);
                 if (addrText != null) {
                     String addrTextValue = "";
                     if (!mTextCourierName.getText().toString().equals(getString(R.string.all_couriers))) {
-                        addrTextValue = item.orderInRoute + " : ";
+                        addrTextValue = item.orderInList + " : ";
                     }
                     addrText.setText(addrTextValue + item.consigneeAddr);
                     if (isDeliverd) {

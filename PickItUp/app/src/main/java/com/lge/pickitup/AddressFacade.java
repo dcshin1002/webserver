@@ -123,7 +123,7 @@ public class AddressFacade {
             // Get longitude and latitude from address through Daum Kakao API
             AddressTranslate addressTranslate = new AddressTranslate();
             addressTranslate.execute(String.valueOf(initValueOfParcelId));
-            /*
+
             String[] date_piece = mDateStr.split("-");
             String setUrl = Utils.SERVER_URL + "/route";
             String getUrl = Utils.SERVER_URL + "/job";
@@ -134,7 +134,6 @@ public class AddressFacade {
             Log.d(LOG_TAG, "processing url = " + setUrl + ", " + getUrl);
             ProcessingBackTask processingBackTask = new ProcessingBackTask();
             processingBackTask.execute(setUrl, getUrl);
-            */
         }
 
         @Override
@@ -220,15 +219,12 @@ public class AddressFacade {
                 TmsCourierItem courierItem = mCourierHash.get(item.courierName);
                 if (lastItemInHash != null) {
                     lastItemInHash.nextParcel = item.id;
-                    item.orderInRoute = lastItemInHash.orderInRoute +1;
                 } else {
                     if (courierItem.startparcelid == -1) {
                         courierItem.startparcelid = item.id;
-                        item.orderInRoute = 1;
                     } else {
                         TmsParcelItem tailItem = mLastParcelItemInSectorOnDB.get(item.courierName);
                         tailItem.nextParcel = item.id;
-                        item.orderInRoute = tailItem.orderInRoute +1;
                         DatabaseReference parcelref = FirebaseDatabase.getInstance().getReference().child(mFbConnector.PARCEL_REF_NAME);
                         Map<String, Object> childUpdates = new HashMap<>();
                         childUpdates.put("/" + mDateStr + "/" + tailItem.id, tailItem.toMap());

@@ -89,7 +89,7 @@ public class TmsParcelItem implements Comparable<TmsParcelItem>, Parcelable {
             item.status = parcel.readString();
             item.completeImage = parcel.readString();
             item.completeTime = parcel.readString();
-
+            item.orderInList = parcel.readInt();
             return item;
         }
 
@@ -134,6 +134,8 @@ public class TmsParcelItem implements Comparable<TmsParcelItem>, Parcelable {
     public String completeImage = UNSET;
     public String completeTime = UNSET;
 
+    public int orderInList = -1;
+
     public TmsParcelItem() {
         // Default constructor required for calls to DataSnapshot.getValue(TmsParcelItem.class)
     }
@@ -173,7 +175,7 @@ public class TmsParcelItem implements Comparable<TmsParcelItem>, Parcelable {
 
         if (s.status.equals(TmsParcelItem.STATUS_DELIVERED)) {
             if (this.status.equals(TmsParcelItem.STATUS_DELIVERED)) {
-                if (s.orderInRoute > this.orderInRoute) {
+                if (s.orderInList > this.orderInList) {
                     return -1;
                 } else {
                     return 1;
@@ -245,6 +247,7 @@ public class TmsParcelItem implements Comparable<TmsParcelItem>, Parcelable {
         parcel.writeString(status);
         parcel.writeString(completeImage);
         parcel.writeString(completeTime);
+        parcel.writeInt(orderInList);
     }
 
     public String getDesc(int tag) {
