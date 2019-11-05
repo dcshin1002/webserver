@@ -14,7 +14,10 @@ import android.text.TextUtils;
 import android.text.TextWatcher;
 import android.util.Log;
 import android.util.SparseBooleanArray;
+import android.view.ContextMenu;
 import android.view.LayoutInflater;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
@@ -82,6 +85,7 @@ public class ParcelListActivity extends AppCompatActivity implements View.OnClic
     private TextView mTextCount;
     private ListView mListView;
     private CheckBox mAllCheckbox;
+    private TextView mTextFilter;
     private EditText mEditTextFilter;
     private Button mBtnResetdb;
     private Button mBtnAssign;
@@ -94,7 +98,7 @@ public class ParcelListActivity extends AppCompatActivity implements View.OnClic
     private View.OnTouchListener mTouchListner;
     private String mOldDateStr;
     private ArrayList<String> mCourierArray = new ArrayList<>(); // To list up courier name list, It is set null when date is changed
-
+    private int mFilterTypeId = 0;
 
     private DatabaseReference.CompletionListener mParcelListRemove = new DatabaseReference.CompletionListener() {
         @Override
@@ -495,6 +499,9 @@ public class ParcelListActivity extends AppCompatActivity implements View.OnClic
             }
         });
 
+        mTextFilter = (TextView) findViewById(R.id.filter_text);
+        registerForContextMenu(mTextFilter);
+
         mEditTextFilter = (EditText) findViewById(R.id.filter_edittext);
         mEditTextFilter.addTextChangedListener(new TextWatcher() {
             @Override
@@ -600,6 +607,39 @@ public class ParcelListActivity extends AppCompatActivity implements View.OnClic
                 break;
         }
 
+    }
+
+    @Override
+    public void onCreateContextMenu(ContextMenu menu, View v, ContextMenu.ContextMenuInfo menuInfo) {
+        MenuInflater inflater = getMenuInflater();
+        inflater.inflate(R.menu.filter_selection_menu, menu);
+    }
+
+    public boolean onContextItemSelected(MenuItem item) {
+        int filterTypeTobe = -1;
+        switch (item.getItemId()) {
+            case R.id.filter_address_item:
+                filterTypeTobe = 0;
+                mTextFilter.setText(item.getTitle());
+                break;
+            case R.id.filter_name_item:
+                filterTypeTobe = 1;
+                mTextFilter.setText(item.getTitle());
+                break;
+            case R.id.filter_number_item:
+                filterTypeTobe = 2;
+                mTextFilter.setText(item.getTitle());
+                break;
+        }
+
+        if (mFilterTypeId != filterTypeTobe) {
+            mFilterTypeId = filterTypeTobe;
+
+            // clear filter text
+            mEditTextFilter.setText("");
+        }
+
+        return super.onContextItemSelected(item);
     }
 
 
@@ -769,7 +809,7 @@ public class ParcelListActivity extends AppCompatActivity implements View.OnClic
         courierArrayList.addAll(mCourierDatabaseHash.values());
         for (TmsCourierItem item : courierArrayList) {
             int cnt_delivered = 0;
-            LinkedList<TmsParcelItem> list_parcels =  mHashParcels.get(item.name);
+            LinkedList<TmsParcelItem> list_parcels = mHashParcels.get(item.name);
             for (TmsParcelItem parcelItem : list_parcels) {
                 if (parcelItem.status.equals(TmsParcelItem.STATUS_DELIVERED))
                     cnt_delivered++;
@@ -1019,7 +1059,7 @@ public class ParcelListActivity extends AppCompatActivity implements View.OnClic
                     ArrayList<TmsParcelItem> itemList = new ArrayList<TmsParcelItem>();
 
                     for (TmsParcelItem item : totalItemList) {
-                        if (item.getDesc().toUpperCase().contains(constraint.toString().toUpperCase())) {
+                        if (item.getDesc(mFilterTypeId).toUpperCase().contains(constraint.toString().toUpperCase())) {
                             itemList.add(item);
                         }
                     }

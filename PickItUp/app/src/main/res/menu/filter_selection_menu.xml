@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <item
+        android:id="@+id/filter_address_item"
+        android:title="주소검색" />
+    <item
+        android:id="@+id/filter_name_item"
+        android:title="이름검색" />
+    <item
+        android:id="@+id/filter_number_item"
+        android:title="번호검색" />
+</menu>
