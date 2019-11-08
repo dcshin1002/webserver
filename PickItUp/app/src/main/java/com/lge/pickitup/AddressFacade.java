@@ -257,6 +257,7 @@ public class AddressFacade {
     class AddressTranslate extends AsyncTask<String, Void, String> {
         ProgressDialog asyncDialog = new ProgressDialog(mContext);
         int startIdx;
+
         @Override
         protected void onPreExecute() {
             asyncDialog.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
@@ -272,7 +273,7 @@ public class AddressFacade {
             asyncDialog.setProgress(0);
 
             for (int i = 0; i < mParcelList.size(); i++) {
-                makeAddressWithKakao(mParcelList.get(i));
+                Utils.makeAddressWithKakao(mParcelList.get(i));
                 asyncDialog.setProgress(i + 1);
             }
 
@@ -284,7 +285,7 @@ public class AddressFacade {
             super.onPostExecute(o);
             asyncDialog.dismiss();
             initParcelId(startIdx);
-            if (Utils.isRootAuth() || Utils.isConsignorAuth()){
+            if (Utils.isRootAuth() || Utils.isConsignorAuth()) {
                 List<TmsCourierItem> couriers = buildTmsCouriers();
                 mFbConnector.postCourierListToFirbaseDatabase(mDateStr, (ArrayList<TmsCourierItem>) couriers);
             }
@@ -294,75 +295,6 @@ public class AddressFacade {
                     goToParcelList();
                 }
             });
-        }
-
-
-        private void makeAddressWithKakao(TmsParcelItem item) {
-            String address = item.consigneeAddr;
-            String[] code = address.split("[(,]|[0-9]+호|[0-9]+동");
-
-            try {
-                URL url = new URL("https://dapi.kakao.com/v2/local/search/address.json?query="
-                        + URLEncoder.encode(code[0], "UTF-8"));
-                HttpURLConnection httpURLConnection = (HttpURLConnection) url.openConnection();
-
-                httpURLConnection.setReadTimeout(10000);
-                httpURLConnection.setConnectTimeout(10000);
-                httpURLConnection.setDoOutput(true);
-                httpURLConnection.setDoInput(true);
-                httpURLConnection.setRequestProperty("Authorization", "KakaoAK a9a4f76e68df45d99954e267b0337b44");
-                httpURLConnection.setRequestMethod("GET");
-                httpURLConnection.setUseCaches(false);
-                httpURLConnection.connect();
-
-                int responseStatusCode = httpURLConnection.getResponseCode();
-
-                InputStream inputStream;
-                if (responseStatusCode == HttpURLConnection.HTTP_OK) {
-                    inputStream = httpURLConnection.getInputStream();
-                } else {
-                    inputStream = httpURLConnection.getErrorStream();
-                }
-
-                InputStreamReader inputStreamReader = new InputStreamReader(inputStream, "UTF-8");
-                BufferedReader bufferedReader = new BufferedReader(inputStreamReader);
-
-                StringBuilder sb = new StringBuilder();
-                String line;
-
-                while ((line = bufferedReader.readLine()) != null) {
-                    sb.append(line);
-                }
-
-                JSONObject json_addr = new JSONObject(sb.toString());
-                JSONArray addr_arr = json_addr.getJSONArray("documents");
-                String latitude_y = "0";
-                String longitude_x = "0";
-                for (int i = 0; i < addr_arr.length(); i++) {
-                    latitude_y = addr_arr.getJSONObject(i).getString("y");  // Latitude
-                    longitude_x = addr_arr.getJSONObject(i).getString("x"); // Longitude
-
-                    break; // Extract first address facade
-                }
-
-                Log.d(LOG_TAG, "Address to covert : " + item.consigneeAddr);
-                Log.d(LOG_TAG, "latitude = " + latitude_y + ", longitude = " + longitude_x);
-
-                // Record coverted loc, lat to TmsParcelItem
-                item.consigneeLatitude = latitude_y;
-                item.consigneeLongitude = longitude_x;
-                if (item.courierName.isEmpty()) {
-                    item.setStatus(TmsParcelItem.STATUS_COLLECTED);
-                } else {
-                    item.setStatus(TmsParcelItem.STATUS_ASSIGNED);
-                }
-
-                bufferedReader.close();
-                httpURLConnection.disconnect();
-
-            } catch (Exception e) {
-                Log.e(LOG_TAG, "makeAddressWithKakao error =" + e.toString());
-            }
         }
     }
 

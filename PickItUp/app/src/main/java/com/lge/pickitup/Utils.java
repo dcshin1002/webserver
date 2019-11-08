@@ -29,7 +29,16 @@ import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.Query;
 import com.google.firebase.database.ValueEventListener;
 
+import org.json.JSONArray;
+import org.json.JSONObject;
+
+import java.io.BufferedReader;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.lang.reflect.Array;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.net.URLEncoder;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.text.SimpleDateFormat;
@@ -72,7 +81,7 @@ public class Utils {
     static HashMap<String, String> mUserList = new HashMap<>();
     static HashMap<String, TmsUserItem> mHashUserList = new HashMap<>();
     static HashMap<String, String> mHashUserNameUID = new HashMap<>();
-    private static int BIAS_HOUR = 7;
+    private static int BIAS_HOUR = 10;
     private static final LocationListener mGPSLocationListener = new LocationListener() {
         @Override
         public void onLocationChanged(final Location location) {
@@ -309,6 +318,83 @@ public class Utils {
             }
         });
 
+    }
+
+    public static void makeAddressWithKakao(TmsParcelItem item) {
+        String address = item.consigneeAddr;
+        String[] code = address.split("[(,]|[0-9]+호|[0-9]+동");
+
+        try {
+            URL url = new URL("https://dapi.kakao.com/v2/local/search/address.json?query="
+                    + URLEncoder.encode(code[0], "UTF-8"));
+            HttpURLConnection httpURLConnection = (HttpURLConnection) url.openConnection();
+
+            httpURLConnection.setReadTimeout(10000);
+            httpURLConnection.setConnectTimeout(10000);
+            httpURLConnection.setDoOutput(true);
+            httpURLConnection.setDoInput(true);
+            httpURLConnection.setRequestProperty("Authorization", "KakaoAK a9a4f76e68df45d99954e267b0337b44");
+            httpURLConnection.setRequestMethod("GET");
+            httpURLConnection.setUseCaches(false);
+            httpURLConnection.connect();
+
+            int responseStatusCode = httpURLConnection.getResponseCode();
+
+            InputStream inputStream;
+            if (responseStatusCode == HttpURLConnection.HTTP_OK) {
+                inputStream = httpURLConnection.getInputStream();
+            } else {
+                inputStream = httpURLConnection.getErrorStream();
+            }
+
+            InputStreamReader inputStreamReader = new InputStreamReader(inputStream, "UTF-8");
+            BufferedReader bufferedReader = new BufferedReader(inputStreamReader);
+
+            StringBuilder sb = new StringBuilder();
+            String line;
+
+            while ((line = bufferedReader.readLine()) != null) {
+                sb.append(line);
+            }
+
+            JSONObject json_addr = new JSONObject(sb.toString());
+            JSONArray addr_arr = json_addr.getJSONArray("documents");
+            String latitude_y = "0";
+            String longitude_x = "0";
+            for (int i = 0; i < addr_arr.length(); i++) {
+                latitude_y = addr_arr.getJSONObject(i).getString("y");  // Latitude
+                longitude_x = addr_arr.getJSONObject(i).getString("x"); // Longitude
+
+                break; // Extract first address facade
+            }
+
+            Log.d(LOG_TAG, "Address to covert : " + item.consigneeAddr);
+            Log.d(LOG_TAG, "latitude = " + latitude_y + ", longitude = " + longitude_x);
+
+            // Record coverted loc, lat to TmsParcelItem
+            item.consigneeLatitude = latitude_y;
+            item.consigneeLongitude = longitude_x;
+            if (item.courierName.isEmpty()) {
+                item.setStatus(TmsParcelItem.STATUS_COLLECTED);
+            } else {
+                item.setStatus(TmsParcelItem.STATUS_ASSIGNED);
+            }
+
+            bufferedReader.close();
+            httpURLConnection.disconnect();
+
+        } catch (Exception e) {
+            Log.e(LOG_TAG, "makeAddressWithKakao error =" + e.toString());
+        }
+    }
+
+    public static void postParcelItemToFirebaseDatabase(String date, TmsParcelItem item) {
+        DatabaseReference ref = FirebaseDatabase.getInstance().getReference().child(FirebaseDatabaseConnector.PARCEL_REF_NAME);
+        Map<String, Object> childUpdates = new HashMap<>();
+        Map<String, Object> postValues = null;
+        postValues = item.toMap();
+        childUpdates.put("/" + date + "/" + item.id, postValues);
+        ref.updateChildren(childUpdates);
     }
 
     @SuppressLint("MissingPermission")

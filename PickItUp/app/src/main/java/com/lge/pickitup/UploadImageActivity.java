@@ -4,18 +4,17 @@ import android.Manifest;
 import android.app.AlertDialog;
 import android.app.ProgressDialog;
 import android.content.ActivityNotFoundException;
-import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
-import android.graphics.Color;
 import android.graphics.Matrix;
 import android.graphics.drawable.BitmapDrawable;
 import android.media.ExifInterface;
 import android.net.Uri;
+import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
@@ -31,7 +30,6 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.TableLayout;
-import android.widget.TableRow;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -56,11 +54,9 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
-import java.lang.reflect.Array;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.List;
 
 public class UploadImageActivity extends AppCompatActivity {
@@ -165,8 +161,7 @@ public class UploadImageActivity extends AppCompatActivity {
                 } else {
                     mIvPreviewImage.setVisibility(View.GONE);
                 }
-
-
+                mEtMessageText.setVisibility(View.GONE);
             } else {
                 mIvPreviewImage.setImageDrawable(getResources().getDrawable(R.drawable.capture_image_icon, UploadImageActivity.this.getTheme()));
                 mIvPreviewImage.setTag(R.id.ivImagePreview, IMGVIEW_INIT);
@@ -188,15 +183,87 @@ public class UploadImageActivity extends AppCompatActivity {
         detail.add(new Pair("배송기사", mSelectedParcelItem.courierName));
         detail.add(new Pair("지역코드", mSelectedParcelItem.regionalCode));
 
+        mTableDetail.removeAllViews();
         for (int i = 0; i < detail.size(); i++) {
             View layout_row = inflator.inflate(R.layout.detailview_row, mTableDetail, false);
-            TextView col1 = (TextView) layout_row.findViewById(R.id.txt_title);
-            TextView col2 = (TextView) layout_row.findViewById(R.id.txt_contents);
+            TextView col1 = layout_row.findViewById(R.id.txt_title);
+            final TextView col2 = layout_row.findViewById(R.id.txt_contents);
             col1.setText(detail.get(i).first.toString());
             col2.setText(detail.get(i).second.toString());
+
+            if (col1.getText().toString().equals("고객주소")
+                    && (mSelectedParcelItem.consigneeLatitude.equals("0") || mSelectedParcelItem.consigneeLongitude.equals("0"))) {
+                col2.setTextColor(0xFFC12F2F);
+                col2.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        processChangeAddrDialog(col2.getText().toString());
+                    }
+                });
+            }
+
             mTableDetail.addView(layout_row);
         }
         return;
+    }
+
+    private void processChangeAddrDialog(final String wrongAddr) {
+
+        final EditText edittext = new EditText(this);
+
+        edittext.setPadding(50,edittext.getPaddingTop(),50,edittext.getPaddingBottom());
+
+        edittext.setText(wrongAddr);
+        AlertDialog.Builder changeOrderDialog = new AlertDialog.Builder(this)
+                .setTitle("주소 변경")
+                .setMessage("잘못된 주소입니다.\n올바른 주소를 입력해 주세요.")
+                .setView(edittext)
+                .setPositiveButton(R.string.dialog_title_confirm, new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialogInterface, int i) {
+                        String edittextvalue = edittext.getText().toString();
+                        AddressTranslate addressTranslate = new AddressTranslate();
+                        addressTranslate.execute(edittextvalue);
+
+                    }
+                })
+                .setNegativeButton(R.string.cancel, new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialogInterface, int i) {
+                        dialogInterface.cancel();
+                    }
+                });
+        changeOrderDialog.show();
+    }
+
+    class AddressTranslate extends AsyncTask<String, Void, String> {
+        final String result_valid = "valid";
+        final String result_invalid = "invalid";
+        @Override
+        protected String doInBackground(String... strings) {
+            String newAddr = strings[0];
+            String prevAddr = mSelectedParcelItem.consigneeAddr;
+            mSelectedParcelItem.consigneeAddr = newAddr;
+            Utils.makeAddressWithKakao(mSelectedParcelItem);
+            if (mSelectedParcelItem.consigneeLongitude.equals("0") || mSelectedParcelItem.consigneeLatitude.equals("0")) {
+                mSelectedParcelItem.consigneeAddr = prevAddr;
+                return result_invalid;
+            } else {
+                return result_valid;
+            }
+
+        }
+
+        @Override
+        protected void onPostExecute(String s) {
+            super.onPostExecute(s);
+            if (s.equals(result_valid)) {
+                Utils.postParcelItemToFirebaseDatabase(mSelectedDate, mSelectedParcelItem);
+                setShowDeliveryInfoUI();
+            } else {
+                Toast.makeText(UploadImageActivity.this, "잘못된 주소입니다.\n 주소를 다시 입력해 주세요", Toast.LENGTH_SHORT).show();
+            }
+        }
     }
 
     private void setShowDeliveryInfoUI() {
